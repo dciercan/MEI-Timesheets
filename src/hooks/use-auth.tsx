@@ -66,8 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (userToLogin: User) => {
     setUser(userToLogin);
     setCookie('currentUser', JSON.stringify(userToLogin), 7);
-    // Let the middleware handle the redirect after state update
-    window.location.assign('/');
+    // The redirect is now handled by the component calling login.
   }, []);
 
   const logout = useCallback(() => {

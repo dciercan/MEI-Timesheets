@@ -45,11 +45,12 @@ export default function Welcome({ users }: WelcomeProps) {
     if (userToLogin) {
       setIsLoggingIn(true);
       await login(userToLogin);
-      // Trigger a navigation to the root. The middleware will catch this
-      // and redirect to the appropriate dashboard because the cookie is now set.
+      // Use the router for a soft navigation.
+      // The middleware will intercept this and redirect to the correct dashboard.
       router.push('/');
     } else {
         setError('Could not find user. Please try again.');
+        setIsLoggingIn(false);
     }
   };
 
