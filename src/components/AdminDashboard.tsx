@@ -19,7 +19,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -34,6 +33,7 @@ import { User as UserIcon, Calendar, Clock, Edit, ListTodo, FileText, Building, 
 import { useToast } from "@/hooks/use-toast";
 import { deleteTimesheet, findUserById, findActivityById, findUnproductiveReasonById } from "@/lib/actions";
 import EditTimesheetDialog from "./EditTimesheetDialog";
+import InfoItem from "./InfoItem";
 
 interface AdminDashboardProps {
   submissions: TimesheetSubmission[];
@@ -61,6 +61,7 @@ export default function AdminDashboard({ submissions }: AdminDashboardProps) {
       if (result.success) {
         toast({ title: 'Submission deleted successfully.' });
         // Note: You'll need to refresh the page or handle state update to see the change
+        window.location.reload();
       } else {
         toast({ variant: 'destructive', title: 'Error deleting submission.' });
       }
@@ -124,6 +125,7 @@ export default function AdminDashboard({ submissions }: AdminDashboardProps) {
                 setIsEditDialogOpen(false);
                 setSelectedSubmission(null);
                 toast({ title: "Submission updated successfully" });
+                 window.location.reload();
             }}
          />
       )}
@@ -226,23 +228,4 @@ function SubmissionAccordionItem({ submission, onEdit, onDelete }: SubmissionAcc
       </AccordionContent>
     </AccordionItem>
   );
-}
-
-
-function InfoItem({ icon: Icon, label, value, badge }: { icon: React.ElementType, label: string, value?: string | number, badge?: string | null }) {
-  if (value === undefined || value === null) return null;
-  return (
-    <div className="flex items-start gap-3">
-       <div className="p-2 bg-background rounded-full mt-1">
-          <Icon className="h-4 w-4 text-muted-foreground" />
-       </div>
-      <div>
-        <p className="text-sm text-muted-foreground">{label}</p>
-        <div className="flex items-center gap-2">
-            <p className="font-semibold">{value}</p>
-            {badge && <Badge variant="secondary">{badge}</Badge>}
-        </div>
-      </div>
-    </div>
-  )
 }

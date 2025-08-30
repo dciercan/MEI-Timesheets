@@ -8,19 +8,75 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import type { TimesheetSubmission, User, Activity, UnproductiveReason } from "@/lib/types";
 import { format } from "date-fns";
-import { User as UserIcon, Calendar, Clock, Edit, ListTodo, FileText, Building, Layers, Briefcase, Hash } from "lucide-react";
-import { findUserById, findActivityById, findUnproductiveReasonById } from "@/lib/actions";
+import { User as UserIcon, Calendar, Clock, Edit, ListTodo, FileText, Building, Layers, Trash2, MoreVertical, Briefcase, Hash } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { deleteTimesheet, findUserById, findActivityById, findUnproductiveReasonById } from "@/lib/actions";
+import EditTimesheetDialog from "./EditTimesheetDialog";
+import InfoItem from "./InfoItem";
 
 interface SupervisorDashboardProps {
   submissions: TimesheetSubmission[];
 }
 
-export default function SupervisorDashboard({ submissions }: SupervisorDashboardProps) {
+export default function SupervisorDashboard({ submissions: initialSubmissions }: SupervisorDashboardProps) {
+  const [submissions, setSubmissions] = useState(initialSubmissions);
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedSubmission, setSelectedSubmission] = useState<TimesheetSubmission | null>(null);
+  const { toast } = useToast();
 
+  const handleDelete = (submission: TimesheetSubmission) => {
+    setSelectedSubmission(submission);
+    setIsDeleteAlertOpen(true);
+  };
+
+  const handleEdit = (submission: TimesheetSubmission) => {
+    setSelectedSubmission(submission);
+    setIsEditDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (selectedSubmission) {
+      const result = await deleteTimesheet(selectedSubmission.id);
+      if (result.success) {
+        setSubmissions(submissions.filter(s => s.id !== selectedSubmission.id));
+        toast({ title: 'Submission deleted successfully.' });
+      } else {
+        toast({ variant: 'destructive', title: 'Error deleting submission.' });
+      }
+      setIsDeleteAlertOpen(false);
+      setSelectedSubmission(null);
+    }
+  };
+
+  const handleSubmissionUpdated = (updatedSubmission: TimesheetSubmission) => {
+      setSubmissions(submissions.map(s => s.id === updatedSubmission.id ? updatedSubmission : s));
+      setIsEditDialogOpen(false);
+      setSelectedSubmission(null);
+      toast({ title: "Submission updated successfully" });
+  };
+  
   return (
     <>
       <Card className="shadow-lg">
@@ -34,20 +90,56 @@ export default function SupervisorDashboard({ submissions }: SupervisorDashboard
               <SubmissionAccordionItem 
                 key={submission.id}
                 submission={submission}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
               />
             ))}
           </Accordion>
         </CardContent>
       </Card>
+      
+      <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
+          <AlertDialogContent>
+          <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the selected timesheet submission.
+              </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmDelete} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+          </AlertDialogFooter>
+          </AlertDialogContent>
+      </AlertDialog>
+
+      {selectedSubmission && (
+        <EditTimesheetDialog
+            isOpen={isEditDialogOpen}
+            onOpenChange={setIsEditDialogOpen}
+            submission={selectedSubmission}
+            onSubmissionUpdated={() => {
+                // This handler might need to be more sophisticated if the updated data isn't easily available client-side
+                // For now, just closing the dialog and showing a toast. A page refresh might be needed.
+                setIsEditDialogOpen(false);
+                setSelectedSubmission(null);
+                toast({ title: "Submission updated successfully" });
+                // Consider a page refresh or state refetch here if needed
+                window.location.reload();
+            }}
+         />
+      )}
     </>
   );
 }
 
 interface SubmissionAccordionItemProps {
   submission: TimesheetSubmission;
+  onEdit: (submission: TimesheetSubmission) => void;
+  onDelete: (submission: TimesheetSubmission) => void;
 }
 
-function SubmissionAccordionItem({ submission }: SubmissionAccordionItemProps) {
+function SubmissionAccordionItem({ submission, onEdit, onDelete }: SubmissionAccordionItemProps) {
   const [crewMember, setCrewMember] = useState<User | null>(null);
   const [activity, setActivity] = useState<Activity | null>(null);
   const [unproductiveReasons, setUnproductiveReasons] = useState<any[]>([]);
@@ -86,6 +178,21 @@ function SubmissionAccordionItem({ submission }: SubmissionAccordionItemProps) {
             </div>
           </div>
         </AccordionTrigger>
+        <div className="pl-2">
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                    <span className="sr-only">Open menu</span>
+                    <MoreVertical className="h-4 w-4" />
+                </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                    <DropdownMenuItem onClick={() => onEdit(submission)}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onDelete(submission)} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+        </div>
       </div>
       <AccordionContent className="p-4 bg-muted/20 rounded-b-md">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -120,23 +227,5 @@ function SubmissionAccordionItem({ submission }: SubmissionAccordionItemProps) {
           <p className="text-xs text-muted-foreground mt-4 text-right">Submitted on {format(new Date(submission.submittedAt), "PPP 'at' h:mm a")}</p>
       </AccordionContent>
     </AccordionItem>
-  )
-}
-
-function InfoItem({ icon: Icon, label, value, badge }: { icon: React.ElementType, label: string, value?: string | number, badge?: string | null }) {
-  if (value === undefined || value === null) return null;
-  return (
-    <div className="flex items-start gap-3">
-       <div className="p-2 bg-background rounded-full mt-1">
-          <Icon className="h-4 w-4 text-muted-foreground" />
-       </div>
-      <div>
-        <p className="text-sm text-muted-foreground">{label}</p>
-        <div className="flex items-center gap-2">
-            <p className="font-semibold">{value}</p>
-            {badge && <Badge variant="secondary">{badge}</Badge>}
-        </div>
-      </div>
-    </div>
-  )
+  );
 }
