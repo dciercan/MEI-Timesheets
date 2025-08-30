@@ -1,54 +1,12 @@
 
 'use client';
 
-import { useEffect } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { Skeleton } from './ui/skeleton';
 
 export default function AuthWrapper({ children }: { children: React.ReactNode }) {
-    const { user, isLoading } = useAuth();
-    const pathname = usePathname();
-    const router = useRouter();
+    const { isLoading } = useAuth();
 
-    useEffect(() => {
-        if (isLoading) {
-            return;
-        }
-
-        const isAuthPage = pathname === '/';
-        const isAdminRoute = pathname.startsWith('/admin');
-        
-        // If not logged in, redirect to login page from any other page.
-        if (!user && !isAuthPage) {
-            router.replace('/');
-            return;
-        }
-
-        if (user) {
-            const isUserAdmin = user.appRole === 'Admin' || user.appRole === 'Subcontractor Admin';
-
-            // If logged in, redirect from login page to the appropriate dashboard.
-            if (isAuthPage) {
-                if (isUserAdmin) {
-                    router.replace('/admin');
-                } else {
-                    router.replace('/timesheet');
-                }
-                return;
-            }
-
-            // If a non-admin user tries to access an admin route, redirect them.
-            if (isAdminRoute && !isUserAdmin) {
-                router.replace('/timesheet');
-                return;
-            }
-        }
-
-    }, [user, isLoading, pathname, router]);
-
-    // While loading, or if a redirect is imminent, show a skeleton or nothing at all
-    // to prevent flashing unauthorized content.
     if (isLoading) {
          return (
             <div className="flex flex-col min-h-screen">
@@ -64,24 +22,6 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
             </div>
         );
     }
-
-    const isAuthPage = pathname === '/';
-    const isAdminRoute = pathname.startsWith('/admin');
     
-    if (!user && !isAuthPage) {
-        return null; // Redirecting to login
-    }
-    
-    if (user) {
-        const isUserAdmin = user.appRole === 'Admin' || user.appRole === 'Subcontractor Admin';
-        if (isAuthPage) {
-            return null; // Redirecting to dashboard
-        }
-        if (isAdminRoute && !isUserAdmin) {
-            return null; // Redirecting to timesheet
-        }
-    }
-    
-    // If all checks pass, the user is authorized to see the page.
     return <>{children}</>;
 }
