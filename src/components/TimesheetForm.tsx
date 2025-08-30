@@ -196,7 +196,7 @@ export default function TimesheetForm() {
         if (a.appRole !== 'Crew Supervisor' && b.appRole === 'Crew Supervisor') return 1;
         return a.fullName.localeCompare(b.fullName);
       });
- }, [allUsers, selectedSupervisor]);
+  }, [allUsers, selectedSupervisor]);
 
   return (
     <div className="container mx-auto max-w-4xl py-8 px-4 md:px-6">
@@ -443,7 +443,7 @@ export default function TimesheetForm() {
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select an activity" />
-                            </Trigger>
+                            </SelectTrigger>
                           </FormControl>
                           <SelectContent>
                             {filteredActivities.map(act => (
