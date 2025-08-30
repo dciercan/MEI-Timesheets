@@ -26,7 +26,7 @@ export default function Welcome({ users }: WelcomeProps) {
   const filteredUsers = useMemo(() => {
     if (!selectedCompany) return [];
     if (selectedCompany === 'Spark') {
-        return users.filter(u => u.company === 'Spark' && u.appRole === 'Timesheet Admin');
+        return users.filter(u => u.company === 'Spark' && u.appRole === 'Admin');
     }
     return users.filter(u => u.company === selectedCompany && u.appRole === 'Crew Supervisor');
   }, [selectedCompany, users]);

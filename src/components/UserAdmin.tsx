@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -76,7 +77,7 @@ const userFormSchema = z.object({
   id: z.string().optional(),
   fullName: z.string().min(1, 'Full name is required.'),
   company: z.string().min(1, 'Company is required.'),
-  appRole: z.enum(['Crew Member', 'Crew Supervisor', 'Timesheet Admin']),
+  appRole: z.enum(['Crew Member', 'Crew Supervisor', 'Admin']),
 });
 
 type UserFormData = z.infer<typeof userFormSchema>;
@@ -374,7 +375,7 @@ export default function UserAdmin({ users }: { users: User[] }) {
                         <SelectContent>
                             <SelectItem value="Crew Member">Crew Member</SelectItem>
                             <SelectItem value="Crew Supervisor">Crew Supervisor</SelectItem>
-                            <SelectItem value="Timesheet Admin">Timesheet Admin</SelectItem>
+                            <SelectItem value="Admin">Admin</SelectItem>
                         </SelectContent>
                         </Select>
                         <FormMessage />

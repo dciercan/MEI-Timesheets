@@ -17,7 +17,7 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
             if (!user && !isAuthPage) {
                 router.replace('/');
             } else if (user && isAuthPage) {
-                 if (user.appRole === 'Timesheet Admin') {
+                 if (user.appRole === 'Admin') {
                     router.replace('/admin');
                  } else {
                     router.replace('/timesheet');

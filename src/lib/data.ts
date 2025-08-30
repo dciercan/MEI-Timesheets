@@ -1,3 +1,4 @@
+
 import type { User, Activity, UnproductiveReason, TimesheetSubmission } from './types';
 
 export const users: User[] = [
@@ -5,7 +6,7 @@ export const users: User[] = [
   { id: '2', fullName: 'Jane Smith', company: 'ConstructCo', appRole: 'Crew Member' },
   { id: '3', fullName: 'Mike Johnson', company: 'BuildIt', appRole: 'Crew Member' },
   { id: '4', fullName: 'Emily White', company: 'BuildIt', appRole: 'Crew Supervisor' },
-  { id: '5', fullName: 'Chris Green', company: 'Spark', appRole: 'Timesheet Admin' },
+  { id: '5', fullName: 'Chris Green', company: 'Spark', appRole: 'Admin' },
   { id: '6', fullName: 'Sarah Brown', company: 'ConstructCo', appRole: 'Crew Member' },
   { id: '7', fullName: 'David Wilson', company: 'ConstructCo', appRole: 'Crew Supervisor' },
   { id: '8', fullName: 'Jessica Garcia', company: 'BuildIt', appRole: 'Crew Member' },
@@ -14,7 +15,7 @@ export const users: User[] = [
   { id: '11', fullName: 'Robert Anderson', company: 'ConstructCo', appRole: 'Crew Member' },
   { id: '12', fullName: 'Patricia Thomas', company: 'BuildIt', appRole: 'Crew Member' },
   { id: '13', fullName: 'James Jackson', company: 'BuildIt', appRole: 'Crew Supervisor' },
-  { id: '14', fullName: 'Susan Clark', company: 'Spark', appRole: 'Timesheet Admin' },
+  { id: '14', fullName: 'Susan Clark', company: 'Spark', appRole: 'Admin' },
   { id: '15', fullName: 'Paul Walker', company: 'ConstructCo', appRole: 'Crew Supervisor' },
 ];
 

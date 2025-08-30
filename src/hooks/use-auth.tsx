@@ -36,7 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = (userToLogin: User) => {
     setUser(userToLogin);
     localStorage.setItem('currentUser', JSON.stringify(userToLogin));
-    if (userToLogin.appRole === 'Timesheet Admin') {
+    if (userToLogin.appRole === 'Admin') {
         router.push('/admin');
     } else {
         router.push('/timesheet');
@@ -75,7 +75,7 @@ export function AuthWrapper({ children }: { children: React.ReactNode }) {
             if (!user && !isAuthPage) {
                 router.replace('/');
             } else if (user && isAuthPage) {
-                 if (user.appRole === 'Timesheet Admin') {
+                 if (user.appRole === 'Admin') {
                     router.replace('/admin');
                  } else {
                     router.replace('/timesheet');
