@@ -23,6 +23,7 @@ export async function addTimesheet(data: AddTimesheetData) {
             crewMemberId,
             timesheetDate: new Date(data.timesheetDate),
             submittedAt: new Date(),
+            submittedById: data.submittedById, // This line was missing the assignment
         };
         timesheetSubmissions.unshift(newSubmission);
     }
