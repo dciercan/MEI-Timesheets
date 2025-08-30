@@ -10,24 +10,23 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
     const pathname = usePathname();
     const router = useRouter();
 
+    const isAuthPage = pathname === '/';
+    const isAdminSection = pathname.startsWith('/admin');
+    const isUserAdmin = user?.appRole === 'Admin' || user?.appRole === 'Subcontractor Admin';
+
     useEffect(() => {
-        if (isLoading) return;
-
-        const isAuthPage = pathname === '/';
-        const isAdminSection = pathname.startsWith('/admin');
-        const isUserAdmin = user?.appRole === 'Admin' || user?.appRole === 'Subcontractor Admin';
-
-        // 1. User is not logged in
-        if (!user) {
-            if (!isAuthPage) {
-                router.push('/');
-            }
+        if (isLoading) {
             return;
         }
 
-        // 2. User is logged in
-        // Redirect from auth page to appropriate dashboard
-        if (isAuthPage) {
+        // 1. Not logged in, but trying to access a protected page
+        if (!user && !isAuthPage) {
+            router.push('/');
+            return;
+        }
+
+        // 2. Logged in, but on the auth page (should be redirected)
+        if (user && isAuthPage) {
             if (isUserAdmin) {
                 router.push('/admin');
             } else {
@@ -35,40 +34,39 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
             }
             return;
         }
-
-        // Redirect non-admins trying to access admin section
-        if (isAdminSection && !isUserAdmin) {
-            router.push('/timesheet');
-            return;
+        
+        // 3. Logged in, but trying to access an unauthorized page
+        if (user && isAdminSection && !isUserAdmin) {
+             router.push('/timesheet');
+             return;
         }
 
-    }, [user, isLoading, pathname, router]);
+    }, [user, isLoading, pathname, router, isAuthPage, isAdminSection, isUserAdmin]);
 
-    // This section determines what to render to avoid page flicker during redirects.
+    
+    // Render logic to prevent flicker during redirects
     if (isLoading) {
-        return null; // Render nothing while waiting for auth state
+        return null;
     }
 
-    const isAuthPage = pathname === '/';
-    const isAdminSection = pathname.startsWith('/admin');
-    const isUserAdmin = user?.appRole === 'Admin' || user?.appRole === 'Subcontractor Admin';
-
-    // While redirecting, we want to render null to avoid showing the wrong page.
     if (!user) {
-        // If not logged in, only show the login page.
+        // If not logged in, only render the auth page.
+        // Other pages will be blank while redirecting.
         return isAuthPage ? <>{children}</> : null;
     }
-
-    // If logged in and on the login page, a redirect is happening.
+    
+    // If user is logged in, they should not see the auth page.
+    // It will be blank while redirecting.
     if (isAuthPage) {
         return null;
     }
-    
-    // If a non-admin is trying to access admin pages, a redirect is happening.
+
+    // If a non-admin tries to access admin pages,
+    // they will be blank while redirecting.
     if (isAdminSection && !isUserAdmin) {
         return null;
     }
 
-    // If all checks pass, the user is authorized for the current page.
+    // If all checks pass, the user is authorized.
     return <>{children}</>;
 }
