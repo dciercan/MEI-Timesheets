@@ -69,12 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = (userToLogin: User) => {
     setUser(userToLogin);
     setCookie('currentUser', JSON.stringify(userToLogin), 7);
-    
-    const targetUrl = (userToLogin.appRole === 'Admin' || userToLogin.appRole === 'Subcontractor Admin')
-        ? '/admin'
-        : '/timesheet';
-    
-    router.push(targetUrl);
+    router.refresh();
   };
 
   const logout = () => {
