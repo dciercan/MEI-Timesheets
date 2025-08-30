@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -6,8 +7,7 @@ import { getSupervisorSubmissions } from "@/lib/actions";
 import { useAuth } from '@/hooks/use-auth';
 import type { TimesheetSubmission } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
-
-export const dynamic = 'force-dynamic';
+import { ListTodo } from 'lucide-react';
 
 export default function SupervisorSubmissionsPage() {
     const { user, isLoading: isAuthLoading } = useAuth();
@@ -24,7 +24,7 @@ export default function SupervisorSubmissionsPage() {
                     setIsLoading(false);
                 });
         } else if (!isAuthLoading && !user) {
-            // User is not logged in, AuthWrapper will redirect
+            // User is not logged in, AuthWrapper will redirect. Stop loading.
             setIsLoading(false);
         }
     }, [user, isAuthLoading]);
@@ -44,6 +44,18 @@ export default function SupervisorSubmissionsPage() {
             </div>
         );
     }
+
+    if (submissions.length === 0) {
+        return (
+          <div className="container mx-auto max-w-6xl py-8 px-4 md:px-6">
+            <div className="flex flex-col items-center justify-center h-[50vh] text-center">
+                <ListTodo className="h-16 w-16 text-muted-foreground" />
+                <h2 className="mt-4 text-2xl font-semibold font-headline">No Timesheets Submitted Yet</h2>
+                <p className="mt-2 text-muted-foreground">Once you submit timesheets, they will appear here.</p>
+            </div>
+          </div>
+        );
+      }
     
     return (
         <div className="container mx-auto max-w-6xl py-8 px-4 md:px-6">
