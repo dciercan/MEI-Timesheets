@@ -2,12 +2,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 
 export default function AuthWrapper({ children }: { children: React.ReactNode }) {
     const { user, isLoading } = useAuth();
     const pathname = usePathname();
+    const router = useRouter();
     const [isMounted, setIsMounted] = useState(false);
 
     useEffect(() => {
@@ -16,32 +17,31 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
 
     useEffect(() => {
         if (isLoading || !isMounted) {
-            return; // Wait for auth state to be determined and component to be mounted
+            return; 
         }
 
         const isAuthPage = pathname === '/';
 
         if (!user && !isAuthPage) {
-            // If not logged in and not on the login page, redirect to login
-            window.location.href = '/';
+            router.push('/');
         } else if (user && isAuthPage) {
-            // If logged in and on the login page, redirect to the appropriate dashboard
             if (user.appRole === 'Admin') {
-                window.location.href = '/admin';
+                router.push('/admin');
             } else {
-                window.location.href = '/timesheet';
+                router.push('/timesheet');
             }
         }
-    }, [user, isLoading, pathname, isMounted]);
+    }, [user, isLoading, pathname, isMounted, router]);
 
+    // Show a loading state while we determine auth status
     if (isLoading || !isMounted) {
-        return null; // Render nothing until auth state is confirmed and mounted
+        return null; 
     }
     
-    // Logic to prevent showing content that will be redirected away from
+    // Prevent flicker of content during redirect
     const isAuthPage = pathname === '/';
     if ((user && isAuthPage) || (!user && !isAuthPage)) {
-        return null; // Render nothing during the brief moment before redirection
+        return null;
     }
 
     return <>{children}</>;

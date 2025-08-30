@@ -2,6 +2,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import type { User } from '@/lib/types';
 
 interface AuthContextType {
@@ -13,7 +14,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// A helper function to manage cookies
 function setCookie(name: string, value: string, days: number) {
     let expires = "";
     if (days) {
@@ -21,14 +21,12 @@ function setCookie(name: string, value: string, days: number) {
         date.setTime(date.getTime() + (days*24*60*60*1000));
         expires = "; expires=" + date.toUTCString();
     }
-    // Check if running on the client side before accessing document
     if (typeof window !== 'undefined') {
         document.cookie = name + "=" + (value || "")  + expires + "; path=/";
     }
 }
 
 function getCookie(name: string) {
-    // Check if running on the client side before accessing document
     if (typeof document === 'undefined') {
         return null;
     }
@@ -43,7 +41,6 @@ function getCookie(name: string) {
 }
 
 function eraseCookie(name: string) {   
-    // Check if running on the client side before accessing document
     if (typeof window !== 'undefined') {
         document.cookie = name+'=; Max-Age=-99999999; path=/';  
     }
@@ -53,44 +50,37 @@ function eraseCookie(name: string) {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
-    // This effect runs once on mount to initialize auth state from cookie.
-    const initializeAuth = () => {
-        try {
-          const storedUser = getCookie('currentUser');
-          if (storedUser) {
-            setUser(JSON.parse(storedUser));
-          }
-        } catch (error) {
-          console.error("Failed to parse user from cookie", error);
-          eraseCookie('currentUser');
-        } finally {
-          setIsLoading(false);
-        }
-    };
-    initializeAuth();
+    try {
+      const storedUser = getCookie('currentUser');
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      }
+    } catch (error) {
+      console.error("Failed to parse user from cookie", error);
+      eraseCookie('currentUser');
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   const login = (userToLogin: User) => {
-    setUser(userToLogin); // Update state immediately
-    setCookie('currentUser', JSON.stringify(userToLogin), 7); // Store for 7 days
-
-    // Redirect after a very short delay to allow state to propagate
-    setTimeout(() => {
-        if (userToLogin.appRole === 'Admin') {
-            window.location.href = '/admin';
-        } else {
-            window.location.href = '/timesheet';
-        }
-    }, 50);
+    setUser(userToLogin);
+    setCookie('currentUser', JSON.stringify(userToLogin), 7); 
+    
+    if (userToLogin.appRole === 'Admin') {
+        router.push('/admin');
+    } else {
+        router.push('/timesheet');
+    }
   };
 
   const logout = () => {
     eraseCookie('currentUser');
     setUser(null);
-    // Force a full page reload to ensure server components recognize the logged-out state.
-    window.location.href = '/';
+    router.push('/');
   };
 
   return (
