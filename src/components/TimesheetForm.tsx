@@ -132,15 +132,16 @@ export default function TimesheetForm() {
     }
   };
 
- const crewMembers = useMemo(() => {
+  const crewMembers = useMemo(() => {
+    if (!loggedInUser) return [];
     return allUsers
-      .filter(u => u.appRole === 'Crew Member' || u.appRole === 'Crew Supervisor')
+      .filter(u => u.company === loggedInUser.company && (u.appRole === 'Crew Member' || u.appRole === 'Crew Supervisor'))
       .sort((a, b) => {
         if (a.appRole === 'Crew Supervisor' && b.appRole !== 'Crew Supervisor') return -1;
         if (a.appRole !== 'Crew Supervisor' && b.appRole === 'Crew Supervisor') return 1;
         return a.fullName.localeCompare(b.fullName);
       });
- }, [allUsers]);
+ }, [allUsers, loggedInUser]);
 
   return (
     <div className="container mx-auto max-w-4xl py-8 px-4 md:px-6">
