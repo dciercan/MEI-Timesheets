@@ -121,6 +121,21 @@ export default function TimesheetForm() {
   }, [selectedAsset, selectedSubAsset]);
 
 
+  useEffect(() => {
+    if (subAssets.length === 1) {
+      form.setValue("subAsset", subAssets[0], { shouldValidate: true });
+    }
+  }, [subAssets, form]);
+
+  useEffect(() => {
+    if (filteredActivities.length === 1) {
+      const activity = filteredActivities[0];
+      form.setValue("activityId", activity.id, { shouldValidate: true });
+      setSelectedActivity(activity);
+    }
+  }, [filteredActivities, form]);
+
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!loggedInUser) {
         toast({
@@ -183,7 +198,7 @@ export default function TimesheetForm() {
     return allUsers.find(u => u.id === selectedSupervisorId) || loggedInUser;
   }, [allUsers, selectedSupervisorId, loggedInUser]);
 
-  const crewMembers = useMemo(() => {
+ const crewMembers = useMemo(() => {
     if (!selectedSupervisor) return [];
     return allUsers
       .filter(u => 
@@ -197,6 +212,7 @@ export default function TimesheetForm() {
         return a.fullName.localeCompare(b.fullName);
       });
   }, [allUsers, selectedSupervisor]);
+
 
   return (
     <div className="container mx-auto max-w-4xl py-8 px-4 md:px-6">
