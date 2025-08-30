@@ -5,13 +5,20 @@ import { useAuth } from '@/hooks/use-auth';
 import { Skeleton } from './ui/skeleton';
 import Header from './Header';
 import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 export default function AuthWrapper({ children }: { children: React.ReactNode }) {
-    const { user, isLoading } = useAuth();
-    const pathname = usePathname();
+    const { user } = useAuth();
+    const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
-    // Show a full-page loading skeleton only during the initial auth check
-    if (isLoading) {
+    // This effect runs only once on initial mount to prevent a flash of the login page
+    // if the user is already authenticated.
+    useEffect(() => {
+        setIsCheckingAuth(false);
+    }, []);
+
+    // While checking the initial auth status, show a full-page skeleton.
+    if (isCheckingAuth) {
         return (
            <div className="flex flex-col min-h-screen">
                <header className="sticky top-0 z-50 w-full border-b bg-card shadow-sm">
@@ -28,7 +35,7 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
        );
     }
     
-    // If the user is logged in, show the header and the page content
+    // If the user is logged in, show the header and the protected page content.
     if (user) {
         return (
              <div className="flex flex-col min-h-screen">
@@ -40,8 +47,7 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
         );
     }
 
-    // If the user is not logged in (and not loading), show the page content directly
-    // This allows public pages like the login page to render.
-    // The middleware is responsible for protecting routes.
+    // If the user is not logged in, show the public page content directly (e.g., the login page).
+    // The middleware is responsible for protecting routes and redirecting.
     return <>{children}</>;
 }

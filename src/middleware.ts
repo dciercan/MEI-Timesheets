@@ -9,9 +9,9 @@ export function middleware(request: NextRequest) {
 
   if (currentUserCookie?.value) {
     try {
-      currentUser = JSON.parse(currentUserCookie.value);
+      // The cookie value is URL-encoded, so we need to decode it first.
+      currentUser = JSON.parse(decodeURIComponent(currentUserCookie.value));
     } catch (e) {
-      // Invalid cookie, clear it and treat as logged out
       currentUser = null;
       const response = NextResponse.redirect(new URL('/', request.url));
       response.cookies.delete('currentUser');
@@ -22,31 +22,28 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isLoginPage = pathname === '/';
   
-  // User is logged in
   if (currentUser) {
-    const isUserAdmin = currentUser.appRole === 'Admin' || currentUser.appRole === 'Subcontractor Admin';
+    const isAdminUser = currentUser.appRole === 'Admin' || currentUser.appRole === 'Subcontractor Admin';
     const isAdminRoute = pathname.startsWith('/admin');
 
-    // If logged-in user is on the login page, redirect them to their dashboard
+    // If a logged-in user is on the login page, redirect to their dashboard
     if (isLoginPage) {
-      const targetUrl = isUserAdmin ? '/admin' : '/timesheet';
+      const targetUrl = isAdminUser ? '/admin' : '/timesheet';
       return NextResponse.redirect(new URL(targetUrl, request.url));
     }
     
-    // If a non-admin tries to access an admin route, redirect them to their default page
-    if (isAdminRoute && !isUserAdmin) {
+    // If a non-admin tries to access an admin route, redirect them.
+    if (isAdminRoute && !isAdminUser) {
        return NextResponse.redirect(new URL('/timesheet', request.url));
     }
     
   } else {
-    // User is not logged in. If they are trying to access any page other than
-    // the login page, redirect them to the login page.
+    // If user is not logged in and trying to access a protected page, redirect to login.
     if (!isLoginPage) {
       return NextResponse.redirect(new URL('/', request.url));
     }
   }
   
-  // If no redirection rules matched, allow the request to proceed
   return NextResponse.next();
 }
 
