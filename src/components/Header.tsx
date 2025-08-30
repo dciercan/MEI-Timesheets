@@ -18,7 +18,7 @@ import {
 
 
 const defaultLinks = [
-  { href: '/timesheet', label: 'Timesheet Entry', icon: User, roles: ['Crew Supervisor', 'Subcontractor Admin', 'MEI Supervisor'] },
+  { href: '/timesheet', label: 'Timesheet Entry', icon: User, roles: ['Crew Supervisor', 'Subcontractor Admin', 'MEI Supervisor', 'Admin'] },
   { href: '/timesheet/my-submissions', label: 'My Submissions', icon: FileText, roles: ['Crew Supervisor', 'MEI Supervisor'] },
 ];
 

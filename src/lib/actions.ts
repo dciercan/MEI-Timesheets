@@ -63,7 +63,7 @@ async function readUnproductiveReasons(): Promise<UnproductiveReason[]> {
 
 
 const addTimesheetSchema = z.object({
-    submittedById: z.string(),
+    submittedById: z.string().min(1, "Supervisor is required."),
     timesheetDate: z.coerce.date(),
     crewMemberIds: z.array(z.string()).min(1, "Please select at least one crew member."),
     zone: z.string().min(1, "Zone is required."),
