@@ -131,12 +131,18 @@ export default function TimesheetForm() {
         return;
     }
     try {
-        const result = await addTimesheet(values);
+        // Automatically include the supervisor in the list of crew members for submission
+        const finalValues = {
+            ...values,
+            crewMemberIds: [...new Set([...values.crewMemberIds, values.submittedById])]
+        };
+
+        const result = await addTimesheet(finalValues);
 
         if (result.success && result.submissionIds) {
              toast({
                 title: "Timesheet Submitted!",
-                description: `Created submissions: ${result.submissionIds.join(', ')}`,
+                description: `Created submissions for crew members.`,
             });
             form.reset({
                 timesheetDate: new Date(),
@@ -180,7 +186,11 @@ export default function TimesheetForm() {
   const crewMembers = useMemo(() => {
     if (!selectedSupervisor) return [];
     return allUsers
-      .filter(u => u.company === selectedSupervisor.company && (u.appRole === 'Crew Member' || u.appRole === 'Crew Supervisor'))
+      .filter(u => 
+        u.company === selectedSupervisor.company && 
+        (u.appRole === 'Crew Member' || u.appRole === 'Crew Supervisor') &&
+        u.id !== selectedSupervisor.id // Exclude the selected supervisor
+      )
       .sort((a, b) => {
         if (a.appRole === 'Crew Supervisor' && b.appRole !== 'Crew Supervisor') return -1;
         if (a.appRole !== 'Crew Supervisor' && b.appRole === 'Crew Supervisor') return 1;
@@ -273,7 +283,7 @@ export default function TimesheetForm() {
                   name="crewMemberIds"
                   render={() => (
                     <FormItem>
-                      <FormLabel>Crew Members</FormLabel>
+                      <FormLabel>Crew Members (Supervisor is automatically included)</FormLabel>
                         <ScrollArea className="h-40 w-full rounded-md border p-4">
                             <div className="space-y-2">
                             {crewMembers.map((user) => (
@@ -433,7 +443,7 @@ export default function TimesheetForm() {
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select an activity" />
-                            </SelectTrigger>
+                            </Trigger>
                           </FormControl>
                           <SelectContent>
                             {filteredActivities.map(act => (

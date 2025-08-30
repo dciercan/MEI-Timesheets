@@ -95,7 +95,11 @@ export async function addTimesheet(data: z.infer<typeof addTimesheetSchema>) {
     const allSubmissions = await readSubmissions();
     const newSubmissionIds: string[] = [];
 
-    for (const crewMemberId of crewMemberIds) {
+    // The supervisor is also a crew member for the submission.
+    // The crewMemberIds array from the form only contains the *other* crew members.
+    const allCrewForSubmission = [...new Set([...crewMemberIds, submissionData.submittedById])];
+
+    for (const crewMemberId of allCrewForSubmission) {
         const newSubmission: TimesheetSubmission = {
             id: `ts-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
             ...submissionData,
