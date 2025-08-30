@@ -115,6 +115,21 @@ export default function SubmissionsTable({ submissions: initialSubmissions, view
       },
        cell: ({ row }) => row.original.crewMember?.fullName || 'N/A'
     },
+     {
+      accessorKey: 'crewMember.company',
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          >
+            Company
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => row.original.crewMember?.company || 'N/A'
+    },
     {
       accessorKey: 'timesheetDate',
       header: ({ column }) => (
@@ -233,6 +248,7 @@ export default function SubmissionsTable({ submissions: initialSubmissions, view
         notes: false,
         submittedBy_fullName: false,
         submittedAt: false,
+        'crewMember_company': false,
       });
     }
   }, [table, view]);
