@@ -14,7 +14,6 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
                 <header className="sticky top-0 z-50 w-full border-b bg-card shadow-sm">
                     <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
                         <Skeleton className="h-8 w-40" />
-                        <Skeleton className="h-8 w-24" />
                     </div>
                 </header>
                 <main className="flex-grow container mx-auto p-4">
@@ -26,6 +25,8 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
         );
     }
     
+    // If a user is logged in, show the main app layout with the header.
+    // The middleware will handle redirecting them to the correct dashboard.
     if (user) {
         return (
              <div className="flex flex-col min-h-screen">
@@ -37,7 +38,7 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
         );
     }
 
-    // When no user is logged in, and it's not loading,
-    // just render the children (e.g., the Welcome page on the root route).
+    // When no user is logged in (and not loading), just render the children.
+    // This allows public pages like the Welcome/Login screen to display.
     return <>{children}</>;
 }
