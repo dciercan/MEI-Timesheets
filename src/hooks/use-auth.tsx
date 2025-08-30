@@ -69,7 +69,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = (userToLogin: User) => {
     setUser(userToLogin);
     setCookie('currentUser', JSON.stringify(userToLogin), 7);
-    router.refresh();
   };
 
   const logout = () => {

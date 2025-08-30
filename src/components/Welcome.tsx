@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { LogIn, Loader2 } from 'lucide-react';
 import Logo from './Logo';
+import { useRouter } from 'next/navigation';
 
 interface WelcomeProps {
   users: User[];
@@ -20,6 +21,7 @@ export default function Welcome({ users }: WelcomeProps) {
   const [error, setError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const { login } = useAuth();
+  const router = useRouter();
 
   const companies = useMemo(() => [...new Set(users.map(u => u.company))], [users]);
   
@@ -47,8 +49,15 @@ export default function Welcome({ users }: WelcomeProps) {
     if (userToLogin) {
       setIsLoggingIn(true);
       login(userToLogin);
+
+      // Redirect after setting the cookie
+      const isAdmin = userToLogin.appRole === 'Admin' || userToLogin.appRole === 'Subcontractor Admin';
+      const targetUrl = isAdmin ? '/admin' : '/timesheet';
+      router.push(targetUrl);
+      
     } else {
         setError('Could not find user. Please try again.');
+        setIsLoggingIn(false);
     }
   };
 
