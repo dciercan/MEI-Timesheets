@@ -17,32 +17,32 @@ export function middleware(request: NextRequest) {
   }
 
   const { pathname } = request.nextUrl;
-
   const isAuthPage = pathname === '/';
-  const isAdminRoute = pathname.startsWith('/admin');
-  const isTimesheetRoute = pathname.startsWith('/timesheet');
 
-  if (!currentUser && !isAuthPage) {
-    return NextResponse.redirect(new URL('/', request.url));
-  }
-
+  // If user is logged in
   if (currentUser) {
     const isUserAdmin = currentUser.appRole === 'Admin' || currentUser.appRole === 'Subcontractor Admin';
-
+    const targetUrl = isUserAdmin ? '/admin' : '/timesheet';
+    
+    // If they are on the login page, redirect them to their dashboard.
     if (isAuthPage) {
-      const url = isUserAdmin ? '/admin' : '/timesheet';
-      return NextResponse.redirect(new URL(url, request.url));
+      return NextResponse.redirect(new URL(targetUrl, request.url));
     }
     
-    if (isAdminRoute && !isUserAdmin) {
+    // If a non-admin tries to access an admin route, redirect them.
+    if (pathname.startsWith('/admin') && !isUserAdmin) {
        return NextResponse.redirect(new URL('/timesheet', request.url));
     }
 
-    if (isTimesheetRoute && isUserAdmin) {
-        // Admins can see the timesheet entry page, but shouldn't see 'my-submissions'
-        if (pathname === '/timesheet/my-submissions') {
-             return NextResponse.redirect(new URL('/admin', request.url));
-        }
+    // If an admin tries to access the 'my-submissions' page, redirect them to the admin dash.
+    if (pathname === '/timesheet/my-submissions' && isUserAdmin) {
+         return NextResponse.redirect(new URL('/admin', request.url));
+    }
+
+  } else {
+    // If user is not logged in and not on the login page, redirect to login.
+    if (!isAuthPage) {
+      return NextResponse.redirect(new URL('/', request.url));
     }
   }
   

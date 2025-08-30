@@ -57,7 +57,6 @@ export default function Welcome({ users }: WelcomeProps) {
       
     } else {
         setError('Could not find user. Please try again.');
-        setIsLoggingIn(false);
     }
   };
 
