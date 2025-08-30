@@ -3,7 +3,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import type { User } from '@/lib/types';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
   user: User | null;
@@ -22,13 +22,15 @@ function setCookie(name: string, value: string, days: number) {
         date.setTime(date.getTime() + (days*24*60*60*1000));
         expires = "; expires=" + date.toUTCString();
     }
+    // Check if running on the client side before accessing document
     if (typeof window !== 'undefined') {
         document.cookie = name + "=" + (value || "")  + expires + "; path=/";
     }
 }
 
 function getCookie(name: string) {
-    if (typeof window === 'undefined') {
+    // Check if running on the client side before accessing document
+    if (typeof document === 'undefined') {
         return null;
     }
     const nameEQ = name + "=";
@@ -42,6 +44,7 @@ function getCookie(name: string) {
 }
 
 function eraseCookie(name: string) {   
+    // Check if running on the client side before accessing document
     if (typeof window !== 'undefined') {
         document.cookie = name+'=; Max-Age=-99999999; path=/';  
     }
@@ -54,27 +57,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    try {
-      const storedUser = getCookie('currentUser');
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
-      }
-    } catch (error) {
-      console.error("Failed to parse user from cookie", error);
-      eraseCookie('currentUser');
-    } finally {
-      setIsLoading(false);
-    }
+    // This effect runs once on mount to initialize auth state from cookie.
+    const initializeAuth = () => {
+        try {
+          const storedUser = getCookie('currentUser');
+          if (storedUser) {
+            setUser(JSON.parse(storedUser));
+          }
+        } catch (error) {
+          console.error("Failed to parse user from cookie", error);
+          eraseCookie('currentUser');
+        } finally {
+          setIsLoading(false);
+        }
+    };
+    initializeAuth();
   }, []);
 
   const login = (userToLogin: User) => {
-    setUser(userToLogin);
+    setIsLoading(true); // Set loading true during login transition
     setCookie('currentUser', JSON.stringify(userToLogin), 7); // Store for 7 days
+    setUser(userToLogin);
     if (userToLogin.appRole === 'Admin') {
         router.push('/admin');
     } else {
         router.push('/timesheet');
     }
+    // No need to set loading to false here, as the page redirect will trigger a re-render
+    // and the useEffect in the new context will handle the final state.
   };
 
   const logout = () => {
