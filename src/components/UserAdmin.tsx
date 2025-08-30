@@ -234,13 +234,19 @@ export default function UserAdmin({ users }: { users: User[] }) {
             />
             <Select 
                 value={companyFilterValue ?? ''}
-                onValueChange={(value) => table.getColumn('company')?.setFilterValue(value)}
+                onValueChange={(value) => {
+                    if (value === 'all-companies') {
+                        table.getColumn('company')?.setFilterValue('');
+                    } else {
+                        table.getColumn('company')?.setFilterValue(value);
+                    }
+                }}
             >
                 <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Filter by company..." />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value=''>All Companies</SelectItem>
+                    <SelectItem value="all-companies">All Companies</SelectItem>
                     {companies.map(company => (
                         <SelectItem key={company} value={company}>{company}</SelectItem>
                     ))}
