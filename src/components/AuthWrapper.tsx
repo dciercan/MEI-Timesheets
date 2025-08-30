@@ -21,16 +21,23 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
         }
 
         const isAuthPage = pathname === '/';
+        const isAdminSection = pathname.startsWith('/admin');
 
         if (!user && !isAuthPage) {
+            // If not logged in and not on the login page, redirect to login
             router.push('/');
         } else if (user && isAuthPage) {
+            // If logged in and on the login page, redirect to the appropriate dashboard
             if (user.appRole === 'Admin' || user.appRole === 'Subcontractor Admin') {
                 router.push('/admin');
             } else {
                 router.push('/timesheet');
             }
+        } else if (user && (user.appRole !== 'Admin' && user.appRole !== 'Subcontractor Admin') && isAdminSection) {
+            // If a non-admin user tries to access an admin page, redirect them
+            router.push('/timesheet');
         }
+
     }, [user, isLoading, pathname, isMounted, router]);
 
     // Show a loading state while we determine auth status
