@@ -284,7 +284,6 @@ export default function TimesheetForm() {
                       <FormControl>
                         <Textarea placeholder="Describe the work performed to get AI-powered activity suggestions, e.g., 'fixed potholes on the main road'" {...field} />
                       </FormControl>
-                      <FormDescription>This helps in suggesting the right activity.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
