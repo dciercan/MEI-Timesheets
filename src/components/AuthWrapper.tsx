@@ -19,36 +19,38 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
         const isAdminRoute = pathname.startsWith('/admin');
         const isUserAdmin = user?.appRole === 'Admin' || user?.appRole === 'Subcontractor Admin';
 
-        // Scenario 1: User is not logged in, and not on the auth page.
-        // Redirect them to the login page.
-        if (!user && !isAuthPage) {
-            router.replace('/');
+        // Scenario 1: User is not logged in.
+        if (!user) {
+            if (!isAuthPage) {
+                // If not on login page, redirect there.
+                router.replace('/');
+            }
             return;
         }
 
         // Scenario 2: User is logged in.
-        if (user) {
-            // If they are on the login page, redirect them to their dashboard.
-            if (isAuthPage) {
-                if (isUserAdmin) {
-                    router.replace('/admin');
-                } else {
-                    router.replace('/timesheet');
-                }
-                return;
-            }
-
-            // If a non-admin user tries to access an admin route, redirect them.
-            if (isAdminRoute && !isUserAdmin) {
+        if (isAuthPage) {
+            // If on the login page, redirect to their dashboard.
+            if (isUserAdmin) {
+                router.replace('/admin');
+            } else {
                 router.replace('/timesheet');
-                return;
             }
+            return;
         }
+        
+        // Scenario 3: A non-admin user tries to access an admin route.
+        if (isAdminRoute && !isUserAdmin) {
+            router.replace('/timesheet');
+            return;
+        }
+
     }, [user, isLoading, pathname, router]);
 
     // --- Render Logic ---
     // This logic prevents flashing content during redirects.
     
+    // While loading, don't render anything.
     if (isLoading) {
         return null;
     }
@@ -57,17 +59,17 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
     const isAdminRoute = pathname.startsWith('/admin');
     const isUserAdmin = user?.appRole === 'Admin' || user?.appRole === 'Subcontractor Admin';
 
-    // While loading, or if a redirect is imminent, show nothing.
+    // If a redirect is imminent, show nothing to prevent flicker.
     if (!user && !isAuthPage) {
-        return null;
+        return null; // Will be redirected by useEffect.
     }
     if (user && isAuthPage) {
-        return null;
+        return null; // Will be redirected by useEffect.
     }
     if (user && isAdminRoute && !isUserAdmin) {
-        return null;
+        return null; // Will be redirected by useEffect.
     }
-
-    // If all checks pass, the user is authorized to see the page.
+    
+    // If all checks pass, the user is authorized to see the page content.
     return <>{children}</>;
 }
