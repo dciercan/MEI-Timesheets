@@ -26,8 +26,6 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
         );
     }
     
-    // If loading is finished, and we have a user, render the authenticated layout.
-    // The middleware handles redirecting unauthenticated users from protected pages.
     if (user) {
         return (
              <div className="flex flex-col min-h-screen">
@@ -39,7 +37,5 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
         );
     }
 
-    // If loading is finished and there's no user, it means we are on a public page (e.g., login).
-    // In this case, we just render the children for that public page.
     return <>{children}</>;
 }
