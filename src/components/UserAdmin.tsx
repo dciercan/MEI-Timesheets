@@ -92,7 +92,6 @@ export default function UserAdmin({ users }: { users: User[] }) {
   const form = useForm<UserFormData>({
     resolver: zodResolver(userFormSchema),
     defaultValues: {
-      id: '',
       fullName: '',
       company: '',
       appRole: 'Crew Member',
@@ -101,7 +100,7 @@ export default function UserAdmin({ users }: { users: User[] }) {
 
   const handleAddNew = () => {
     setSelectedUser(null);
-    form.reset({ id: '', fullName: '', company: '', appRole: 'Crew Member' });
+    form.reset({ fullName: '', company: '', appRole: 'Crew Member' });
     setIsFormOpen(true);
   };
 
