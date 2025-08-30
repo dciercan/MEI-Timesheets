@@ -9,26 +9,48 @@ import { z } from 'zod';
 // In a real app, you would not mutate an in-memory array.
 // This is for demonstration purposes only.
 
-type AddTimesheetData = Omit<TimesheetSubmission, 'id' | 'submittedAt' | 'crewMemberId'> & {
-    crewMemberIds: string[];
-};
+const addTimesheetSchema = z.object({
+    submittedById: z.string(),
+    timesheetDate: z.coerce.date(),
+    crewMemberIds: z.array(z.string()),
+    zone: z.string(),
+    section: z.string(),
+    asset: z.string(),
+    subAsset: z.string(),
+    activityId: z.string(),
+    productiveHours: z.coerce.number(),
+    quantity: z.coerce.number(),
+    unproductiveEntries: z.array(z.object({
+        reasonId: z.string(),
+        hours: z.coerce.number(),
+    })).optional(),
+    notes: z.string().optional(),
+});
+
+type AddTimesheetData = z.infer<typeof addTimesheetSchema>;
+
 
 export async function addTimesheet(data: AddTimesheetData) {
-    const { crewMemberIds, ...restOfData } = data;
+    const validation = addTimesheetSchema.safeParse(data);
+
+    if (!validation.success) {
+        console.error("Add timesheet validation failed:", validation.error.flatten());
+        return { success: false, error: "Invalid data submitted." };
+    }
+
+    const { crewMemberIds, submittedById, ...restOfData } = validation.data;
 
     for (const crewMemberId of crewMemberIds) {
         const newSubmission: TimesheetSubmission = {
             ...restOfData,
-            id: `ts-${Date.now()}-${Math.random()}`, // Add random to avoid collision in batch
+            id: `ts-${Date.now()}-${Math.random()}`,
             crewMemberId,
-            timesheetDate: new Date(data.timesheetDate),
+            submittedById,
             submittedAt: new Date(),
-            submittedById: data.submittedById,
         };
         timesheetSubmissions.unshift(newSubmission);
     }
     
-    // Revalidate paths once after the batch operation to show the new submissions
     revalidatePath('/admin');
     revalidatePath('/timesheet/my-submissions');
     
@@ -152,3 +174,4 @@ export async function deleteUser(userId: string) {
     }
     return { success: false, error: "User not found." };
 }
+

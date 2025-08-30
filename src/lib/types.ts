@@ -1,4 +1,5 @@
 
+
 export type User = {
   id: string;
   fullName: string;
@@ -34,8 +35,8 @@ export type TimesheetSubmission = {
   id:string;
   timesheetDate: Date;
   crewMemberId: string;
-  zone: string;
-  section: string;
+  zone?: string;
+  section?: string;
   asset: string;
   subAsset: string;
   activityId: string;
