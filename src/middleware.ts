@@ -17,27 +17,28 @@ export function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
+  // If a user is logged in
   if (currentUser) {
     const isUserAdmin = currentUser.appRole === 'Admin' || currentUser.appRole === 'Subcontractor Admin';
     
-    // If a logged-in user is on the auth page, redirect them to their dashboard.
+    // If they are on the login page, redirect them to their correct dashboard
     if (pathname === '/') {
       const targetUrl = isUserAdmin ? '/admin' : '/timesheet';
       return NextResponse.redirect(new URL(targetUrl, request.url));
     }
     
-    // Protect admin routes from non-admins.
+    // Protect admin routes from non-admins
     if (pathname.startsWith('/admin') && !isUserAdmin) {
        return NextResponse.redirect(new URL('/timesheet', request.url));
     }
 
-    // Protect supervisor-only pages from admins (who have a different dashboard).
+    // Protect supervisor-only pages from admins (who have their own dashboard)
     if (pathname === '/timesheet/my-submissions' && isUserAdmin) {
          return NextResponse.redirect(new URL('/admin', request.url));
     }
 
   } else {
-    // If user is not logged in and trying to access a protected page, redirect to login.
+    // If user is not logged in and tries to access any protected page, redirect to login.
     if (pathname !== '/') {
       return NextResponse.redirect(new URL('/', request.url));
     }
