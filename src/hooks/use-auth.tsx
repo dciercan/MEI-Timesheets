@@ -2,7 +2,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import type { User } from '@/lib/types';
 
 interface AuthContextType {
@@ -68,13 +68,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = (userToLogin: User) => {
     setUser(userToLogin);
-    setCookie('currentUser', JSON.stringify(userToLogin), 7); 
+    setCookie('currentUser', JSON.stringify(userToLogin), 7);
     
-    if (userToLogin.appRole === 'Admin' || userToLogin.appRole === 'Subcontractor Admin') {
-        router.push('/admin');
-    } else {
-        router.push('/timesheet');
-    }
+    // Redirect using a full page load to ensure middleware is triggered.
+    const targetUrl = (userToLogin.appRole === 'Admin' || userToLogin.appRole === 'Subcontractor Admin')
+        ? '/admin'
+        : '/timesheet';
+    
+    window.location.assign(targetUrl);
   };
 
   const logout = () => {
