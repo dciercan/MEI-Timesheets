@@ -110,10 +110,11 @@ export default function UserAdmin({ initialUsers, currentUser }: UserAdminProps)
     },
   });
 
-  const refetchUsers = async () => {
+  const refetchUsers = React.useCallback(async () => {
     const updatedUsers = await getUsers(currentUser);
     setUsers(updatedUsers);
-  };
+  }, [currentUser]);
+
 
   const handleAddNew = () => {
     setSelectedUser(null);
