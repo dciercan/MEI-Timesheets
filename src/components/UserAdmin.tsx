@@ -66,7 +66,7 @@ import {
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { MoreHorizontal, PlusCircle, ArrowUpDown, Trash2, Edit } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, ArrowUpDown, Trash2, Edit, X } from 'lucide-react';
 import type { User } from '@/lib/types';
 import { saveUser, deleteUser } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
@@ -88,6 +88,8 @@ export default function UserAdmin({ users }: { users: User[] }) {
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = React.useState(false);
   const [selectedUser, setSelectedUser] = React.useState<User | null>(null);
   const { toast } = useToast();
+
+  const companies = React.useMemo(() => [...new Set(users.map(u => u.company))], [users]);
 
   const form = useForm<UserFormData>({
     resolver: zodResolver(userFormSchema),
@@ -206,6 +208,8 @@ export default function UserAdmin({ users }: { users: User[] }) {
     },
   });
 
+  const companyFilterValue = table.getColumn('company')?.getFilterValue() as string;
+
   return (
     <Card className="shadow-lg">
     <CardHeader className="flex flex-row items-center justify-between">
@@ -219,7 +223,7 @@ export default function UserAdmin({ users }: { users: User[] }) {
       </Button>
     </CardHeader>
     <CardContent>
-        <div className="flex items-center py-4">
+        <div className="flex items-center gap-4 py-4">
             <Input
             placeholder="Filter by name..."
             value={(table.getColumn('fullName')?.getFilterValue() as string) ?? ''}
@@ -228,6 +232,26 @@ export default function UserAdmin({ users }: { users: User[] }) {
             }
             className="max-w-sm"
             />
+            <Select 
+                value={companyFilterValue ?? ''}
+                onValueChange={(value) => table.getColumn('company')?.setFilterValue(value)}
+            >
+                <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Filter by company..." />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value=''>All Companies</SelectItem>
+                    {companies.map(company => (
+                        <SelectItem key={company} value={company}>{company}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+            {companyFilterValue && (
+                 <Button variant="ghost" onClick={() => table.getColumn('company')?.setFilterValue('')}>
+                    Clear
+                    <X className="ml-2 h-4 w-4" />
+                </Button>
+            )}
         </div>
         <div className="rounded-md border">
             <Table>
