@@ -44,6 +44,8 @@ const formSchema = z.object({
   notes: z.string().optional(),
 });
 
+const zoneOptions = ['S1', 'S2', 'S3', 'S4', 'S5', 'MAN RAMPS', 'LPR RAMPS'];
+
 export default function TimesheetForm() {
   const { toast } = useToast();
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
@@ -223,9 +225,16 @@ export default function TimesheetForm() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Zone</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., North" {...field} />
-                        </FormControl>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a zone" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {zoneOptions.map(zone => <SelectItem key={zone} value={zone}>{zone}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -444,5 +453,3 @@ export default function TimesheetForm() {
     </div>
   );
 }
-
-    
