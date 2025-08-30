@@ -17,7 +17,7 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
     }, []);
 
     useEffect(() => {
-        if (!isMounted || isLoading) {
+        if (isLoading || !isMounted) {
             return;
         }
 
@@ -35,7 +35,7 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
     }, [user, isLoading, pathname, isMounted]);
     
     if (isLoading || !isMounted) {
-        return (
+         return (
              <div className="flex flex-col items-center justify-center h-screen bg-background">
                 <div className='mb-8'>
                     <Logo />
