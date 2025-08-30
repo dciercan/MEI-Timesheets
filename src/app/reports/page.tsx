@@ -9,7 +9,7 @@ import { useAuth } from "@/hooks/use-auth";
 export default function ReportsPage() {
   const { user } = useAuth();
 
-  const isSparkUser = user?.appRole === 'Admin' || user?.appRole === 'MEI Supervisor' || user?.appRole === 'Read Only';
+  const isSparkUser = user?.appRole === 'Admin' || user?.appRole === 'MEI Supervisor' || user?.appRole === 'Read Only' || user?.appRole === 'Crew Supervisor';
   const isSubbieUser = user?.appRole === 'Subcontractor Admin';
 
   return (
