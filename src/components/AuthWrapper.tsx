@@ -4,6 +4,7 @@
 import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
+import { Skeleton } from './ui/skeleton';
 
 export default function AuthWrapper({ children }: { children: React.ReactNode }) {
     const { user, isLoading } = useAuth();
@@ -12,25 +13,23 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
 
     useEffect(() => {
         if (isLoading) {
-            return;
+            return; // Wait until the user's auth status is known
         }
 
         const isAuthPage = pathname === '/';
         const isAdminRoute = pathname.startsWith('/admin');
         const isUserAdmin = user?.appRole === 'Admin' || user?.appRole === 'Subcontractor Admin';
 
-        // Scenario 1: User is not logged in.
-        if (!user) {
-            if (!isAuthPage) {
-                // If not on login page, redirect there.
-                router.replace('/');
-            }
+        // --- Handle Redirects ---
+
+        // 1. If not logged in, redirect to login page from any other page.
+        if (!user && !isAuthPage) {
+            router.replace('/');
             return;
         }
 
-        // Scenario 2: User is logged in.
-        if (isAuthPage) {
-            // If on the login page, redirect to their dashboard.
+        // 2. If logged in, redirect from login page to the appropriate dashboard.
+        if (user && isAuthPage) {
             if (isUserAdmin) {
                 router.replace('/admin');
             } else {
@@ -38,38 +37,53 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
             }
             return;
         }
-        
-        // Scenario 3: A non-admin user tries to access an admin route.
-        if (isAdminRoute && !isUserAdmin) {
+
+        // 3. If a non-admin user tries to access an admin route, redirect them.
+        if (user && isAdminRoute && !isUserAdmin) {
             router.replace('/timesheet');
             return;
         }
 
     }, [user, isLoading, pathname, router]);
 
-    // --- Render Logic ---
-    // This logic prevents flashing content during redirects.
-    
-    // While loading, don't render anything.
-    if (isLoading) {
-        return null;
-    }
 
+    // --- Handle Rendering ---
+
+    // While loading, show a basic skeleton to prevent layout shifts.
+    if (isLoading) {
+        return (
+            <div className="flex flex-col min-h-screen">
+                <header className="sticky top-0 z-50 w-full border-b bg-card shadow-sm">
+                    <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
+                        <Skeleton className="h-8 w-40" />
+                        <Skeleton className="h-8 w-24" />
+                    </div>
+                </header>
+                <main className="flex-grow container mx-auto p-4">
+                    <Skeleton className="h-96 w-full" />
+                </main>
+            </div>
+        );
+    }
+    
+    // Determine if the content should be rendered or if a redirect is in progress.
+    // This logic prevents flashing unauthorized content before a redirect occurs.
     const isAuthPage = pathname === '/';
     const isAdminRoute = pathname.startsWith('/admin');
     const isUserAdmin = user?.appRole === 'Admin' || user?.appRole === 'Subcontractor Admin';
 
-    // If a redirect is imminent, show nothing to prevent flicker.
     if (!user && !isAuthPage) {
-        return null; // Will be redirected by useEffect.
+        return null; // Redirecting to login
     }
+
     if (user && isAuthPage) {
-        return null; // Will be redirected by useEffect.
+        return null; // Redirecting to dashboard
     }
+
     if (user && isAdminRoute && !isUserAdmin) {
-        return null; // Will be redirected by useEffect.
+        return null; // Redirecting to timesheet
     }
-    
-    // If all checks pass, the user is authorized to see the page content.
+
+    // If all checks pass, the user is authorized to see the page.
     return <>{children}</>;
 }
