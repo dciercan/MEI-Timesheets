@@ -2,16 +2,17 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import type { TimesheetSubmission, User } from './types';
+import type { TimesheetSubmission, User, Activity, UnproductiveReason } from './types';
 import { z } from 'zod';
 import fs from 'fs/promises';
 import path from 'path';
-import { activities, unproductiveReasons } from './data';
 
 // In a real app, you would use a proper database.
 // For this demo, we'll use a JSON file for persistence.
 const submissionsDbPath = path.join(process.cwd(), 'src', 'lib', 'submissions.json');
 const usersDbPath = path.join(process.cwd(), 'src', 'lib', 'users.json');
+const activitiesDbPath = path.join(process.cwd(), 'src', 'lib', 'activities.json');
+const unproductiveReasonsDbPath = path.join(process.cwd(), 'src', 'lib', 'unproductiveReasons.json');
 
 // Submissions Data Functions
 async function readSubmissions(): Promise<TimesheetSubmission[]> {
@@ -50,6 +51,17 @@ async function writeUsers(users: User[]): Promise<void> {
      await fs.writeFile(usersDbPath, JSON.stringify(users, null, 2), 'utf-8');
 }
 
+// Read-only data functions
+async function readActivities(): Promise<Activity[]> {
+    const data = await fs.readFile(activitiesDbPath, 'utf-8');
+    return JSON.parse(data);
+}
+
+async function readUnproductiveReasons(): Promise<UnproductiveReason[]> {
+    const data = await fs.readFile(unproductiveReasonsDbPath, 'utf-8');
+    return JSON.parse(data);
+}
+
 
 const addTimesheetSchema = z.object({
     submittedById: z.string(),
@@ -78,7 +90,7 @@ export async function addTimesheet(data: z.infer<typeof addTimesheetSchema>) {
         return { success: false, error: "Invalid data submitted." };
     }
 
-    const { crewMemberIds, submittedById, ...submissionData } = validation.data;
+    const { crewMemberIds, ...submissionData } = validation.data;
     const newSubmissionIds: string[] = [];
     const allSubmissions = await readSubmissions();
 
@@ -97,7 +109,7 @@ export async function addTimesheet(data: z.infer<typeof addTimesheetSchema>) {
             unproductiveEntries: submissionData.unproductiveEntries || [],
             notes: submissionData.notes,
             submittedAt: new Date(),
-            submittedById: submittedById,
+            submittedById: submissionData.submittedById,
         };
         allSubmissions.unshift(newSubmission);
         newSubmissionIds.push(newSubmission.id);
@@ -243,11 +255,11 @@ export async function findUserById(userId: string): Promise<User | undefined> {
 }
 
 export async function findActivityById(activityId: string): Promise<Activity | undefined> {
-    const allActivities = await Promise.resolve(activities);
+    const allActivities = await readActivities();
     return allActivities.find(a => a.id === activityId);
 }
 
 export async function findUnproductiveReasonById(reasonId: string): Promise<any | undefined> {
-    const reasons = await Promise.resolve(unproductiveReasons);
+    const reasons = await readUnproductiveReasons();
     return reasons.find(r => r.id === reasonId);
 }
