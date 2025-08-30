@@ -7,7 +7,6 @@ import { z } from 'zod';
 import fs from 'fs/promises';
 import path from 'path';
 import { cookies } from 'next/headers';
-import { listModels } from 'genkit/introspection';
 
 // In a real app, you would use a proper database.
 // For this demo, we'll use a JSON file for persistence.
@@ -333,12 +332,4 @@ export async function findActivityById(activityId: string): Promise<Activity | u
 export async function findUnproductiveReasonById(reasonId: string): Promise<any | undefined> {
     const reasons = await readUnproductiveReasons();
     return reasons.find(r => r.id === reasonId);
-}
-
-export async function getAvailableModels() {
-    // We need to import genkit configuration to initialize it.
-    await import('@/ai/genkit');
-    const models = await listModels();
-    // Use JSON.parse and JSON.stringify to get a plain object
-    return JSON.parse(JSON.stringify(models));
 }
