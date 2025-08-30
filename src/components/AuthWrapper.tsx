@@ -2,29 +2,29 @@
 'use client';
 
 import { useAuth } from '@/hooks/use-auth';
-import { Skeleton } from './ui/skeleton';
 import Header from './Header';
+import { usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 export default function AuthWrapper({ children }: { children: React.ReactNode }) {
-    const { user, isLoading } = useAuth();
+    const { user } = useAuth();
+    const pathname = usePathname();
+    const router = useRouter();
 
-    if (isLoading) {
-       return (
-           <div className="flex flex-col min-h-screen">
-               <header className="sticky top-0 z-50 w-full border-b bg-card shadow-sm">
-                   <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
-                       <Skeleton className="h-8 w-40" />
-                   </div>
-               </header>
-               <main className="flex-grow container mx-auto p-4">
-                   <div className="flex items-center justify-center flex-grow h-[80vh]">
-                        <Skeleton className="h-96 w-full" />
-                   </div>
-               </main>
-           </div>
-       );
+    useEffect(() => {
+        const isPublicPage = pathname === '/';
+        if (!user && !isPublicPage) {
+            router.push('/');
+        }
+    }, [user, pathname, router]);
+
+    const isPublicPage = pathname === '/';
+
+    if (isPublicPage) {
+        return <>{children}</>
     }
-    
+
     if (user) {
         return (
              <div className="flex flex-col min-h-screen">
@@ -36,5 +36,10 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
         );
     }
 
-    return <>{children}</>;
+    // While redirecting, show a loader or nothing
+    return (
+        <div className="flex items-center justify-center min-h-screen bg-background">
+            {/* You might want a loader here */}
+        </div>
+    );
 }
