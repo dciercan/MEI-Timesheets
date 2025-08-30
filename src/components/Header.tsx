@@ -17,7 +17,7 @@ const defaultLinks = [
 
 const adminLinks = [
   { href: '/admin', label: 'Admin Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Subcontractor Admin'] },
-  { href: '/admin/users', label: 'User Admin', icon: Users, roles: ['Admin'] },
+  { href: '/admin/users', label: 'User Admin', icon: Users, roles: ['Admin', 'Subcontractor Admin'] },
 ]
 
 export default function Header() {

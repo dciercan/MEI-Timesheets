@@ -6,6 +6,7 @@ import type { TimesheetSubmission, User, Activity, UnproductiveReason, Timesheet
 import { z } from 'zod';
 import fs from 'fs/promises';
 import path from 'path';
+import { cookies } from 'next/headers';
 
 // In a real app, you would use a proper database.
 // For this demo, we'll use a JSON file for persistence.
@@ -183,7 +184,7 @@ async function enrichSubmissions(submissions: TimesheetSubmission[]): Promise<Ti
 }
 
 
-export async function getTimesheetSubmissions(requestingUser?: User): Promise<TimesheetSubmissionWithDetails[]> {
+export async function getTimesheetSubmissions(requestingUser?: User | null): Promise<TimesheetSubmissionWithDetails[]> {
     let submissions = await readSubmissions();
 
     if (requestingUser?.appRole === 'Subcontractor Admin') {
@@ -208,9 +209,28 @@ export async function getSupervisorSubmissions(supervisorId: string): Promise<Ti
 }
 
 
+// Server-side helper to get user from cookie
+export async function getCurrentUser(): Promise<User | null> {
+    const cookieStore = cookies();
+    const userCookie = cookieStore.get('currentUser');
+    if (userCookie?.value) {
+        try {
+            return JSON.parse(userCookie.value);
+        } catch (e) {
+            return null;
+        }
+    }
+    return null;
+}
+
 // User Admin Actions
-export async function getUsers(): Promise<User[]> {
-    const users = await readUsers();
+export async function getUsers(requestingUser?: User | null): Promise<User[]> {
+    let users = await readUsers();
+
+    if (requestingUser?.appRole === 'Subcontractor Admin') {
+        users = users.filter(u => u.company === requestingUser.company);
+    }
+
     return users.sort((a, b) => a.fullName.localeCompare(b.fullName));
 }
 

@@ -67,9 +67,9 @@ import {
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { MoreHorizontal, PlusCircle, ArrowUpDown, Trash2, Edit, X } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, ArrowUpDown, Trash2, Edit, X, Loader2 } from 'lucide-react';
 import type { User } from '@/lib/types';
-import { saveUser, deleteUser } from '@/lib/actions';
+import { saveUser, deleteUser, getUsers } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
 
@@ -82,7 +82,14 @@ const userFormSchema = z.object({
 
 type UserFormData = z.infer<typeof userFormSchema>;
 
-export default function UserAdmin({ users }: { users: User[] }) {
+interface UserAdminProps {
+    initialUsers: User[];
+    currentUser?: User | null;
+}
+
+export default function UserAdmin({ initialUsers, currentUser }: UserAdminProps) {
+  const [users, setUsers] = React.useState(initialUsers);
+  const [isSaving, setIsSaving] = React.useState(false);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [isFormOpen, setIsFormOpen] = React.useState(false);
@@ -90,7 +97,9 @@ export default function UserAdmin({ users }: { users: User[] }) {
   const [selectedUser, setSelectedUser] = React.useState<User | null>(null);
   const { toast } = useToast();
 
-  const companies = React.useMemo(() => [...new Set(users.map(u => u.company))], [users]);
+  const isSubcontractorAdmin = currentUser?.appRole === 'Subcontractor Admin';
+  
+  const allCompanies = React.useMemo(() => [...new Set(initialUsers.map(u => u.company))], [initialUsers]);
 
   const form = useForm<UserFormData>({
     resolver: zodResolver(userFormSchema),
@@ -101,9 +110,18 @@ export default function UserAdmin({ users }: { users: User[] }) {
     },
   });
 
+  const refetchUsers = async () => {
+    const updatedUsers = await getUsers(currentUser);
+    setUsers(updatedUsers);
+  };
+
   const handleAddNew = () => {
     setSelectedUser(null);
-    form.reset({ fullName: '', company: '', appRole: 'Crew Member' });
+    form.reset({ 
+        fullName: '', 
+        company: isSubcontractorAdmin ? currentUser?.company : '', 
+        appRole: 'Crew Member' 
+    });
     setIsFormOpen(true);
   };
 
@@ -123,6 +141,7 @@ export default function UserAdmin({ users }: { users: User[] }) {
       const result = await deleteUser(selectedUser.id);
       if (result.success) {
         toast({ title: 'User deleted successfully.' });
+        refetchUsers();
       } else {
         toast({ variant: 'destructive', title: 'Error deleting user.' });
       }
@@ -132,6 +151,7 @@ export default function UserAdmin({ users }: { users: User[] }) {
   };
 
   const onSubmit = async (data: UserFormData) => {
+    setIsSaving(true);
     const formData = new FormData();
     if (data.id) formData.append('id', data.id);
     formData.append('fullName', data.fullName);
@@ -143,9 +163,11 @@ export default function UserAdmin({ users }: { users: User[] }) {
     if (result.success) {
       toast({ title: `User ${data.id ? 'updated' : 'added'} successfully.` });
       setIsFormOpen(false);
+      refetchUsers();
     } else {
       toast({ variant: 'destructive', title: 'Error saving user.' });
     }
+    setIsSaving(false);
   };
 
   const columns: ColumnDef<User>[] = [
@@ -176,19 +198,21 @@ export default function UserAdmin({ users }: { users: User[] }) {
       cell: ({ row }) => {
         const user = row.original;
         return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Open menu</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => handleEdit(user)}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleDelete(user)} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className='text-right'>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                    <span className="sr-only">Open menu</span>
+                    <MoreHorizontal className="h-4 w-4" />
+                </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => handleEdit(user)}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleDelete(user)} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         );
       },
     },
@@ -233,32 +257,36 @@ export default function UserAdmin({ users }: { users: User[] }) {
             }
             className="max-w-sm"
             />
-            <Select 
-                value={companyFilterValue ?? ''}
-                onValueChange={(value) => {
-                    if (value === 'all-companies') {
-                        table.getColumn('company')?.setFilterValue('');
-                    } else {
-                        table.getColumn('company')?.setFilterValue(value);
-                    }
-                }}
-            >
-                <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Filter by company..." />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="all-companies">All Companies</SelectItem>
-                    {companies.map(company => (
-                        <SelectItem key={company} value={company}>{company}</SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-            {companyFilterValue && (
-                 <Button variant="ghost" onClick={() => table.getColumn('company')?.setFilterValue('')}>
-                    Clear
-                    <X className="ml-2 h-4 w-4" />
-                </Button>
-            )}
+           {!isSubcontractorAdmin && (
+            <>
+                <Select 
+                    value={companyFilterValue ?? ''}
+                    onValueChange={(value) => {
+                        if (value === 'all-companies') {
+                            table.getColumn('company')?.setFilterValue('');
+                        } else {
+                            table.getColumn('company')?.setFilterValue(value);
+                        }
+                    }}
+                >
+                    <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Filter by company..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all-companies">All Companies</SelectItem>
+                        {allCompanies.map(company => (
+                            <SelectItem key={company} value={company}>{company}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                {companyFilterValue && (
+                    <Button variant="ghost" onClick={() => table.getColumn('company')?.setFilterValue('')}>
+                        Clear
+                        <X className="ml-2 h-4 w-4" />
+                    </Button>
+                )}
+            </>
+           )}
         </div>
         <div className="rounded-md border">
             <Table>
@@ -267,7 +295,7 @@ export default function UserAdmin({ users }: { users: User[] }) {
                 <TableRow key={headerGroup.id}>
                     {headerGroup.headers.map((header) => {
                     return (
-                        <TableHead key={header.id}>
+                        <TableHead key={header.id} className={header.id === 'actions' ? 'text-right' : ''}>
                         {header.isPlaceholder
                             ? null
                             : flexRender(
@@ -354,7 +382,7 @@ export default function UserAdmin({ users }: { users: User[] }) {
                     <FormItem>
                         <FormLabel>Company</FormLabel>
                         <FormControl>
-                        <Input placeholder="ConstructCo" {...field} />
+                        <Input placeholder="ConstructCo" {...field} disabled={isSubcontractorAdmin} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
@@ -376,7 +404,10 @@ export default function UserAdmin({ users }: { users: User[] }) {
                             <SelectItem value="Crew Member">Crew Member</SelectItem>
                             <SelectItem value="Crew Supervisor">Crew Supervisor</SelectItem>
                             <SelectItem value="Subcontractor Admin">Subcontractor Admin</SelectItem>
-                            <SelectItem value="Admin">Admin</SelectItem>
+                            {/* Only main admins can create other admins */}
+                            {currentUser?.appRole === 'Admin' && (
+                                <SelectItem value="Admin">Admin</SelectItem>
+                            )}
                         </SelectContent>
                         </Select>
                         <FormMessage />
@@ -387,7 +418,10 @@ export default function UserAdmin({ users }: { users: User[] }) {
                     <DialogClose asChild>
                         <Button type="button" variant="secondary">Cancel</Button>
                     </DialogClose>
-                    <Button type="submit" disabled={form.formState.isSubmitting}>Save</Button>
+                    <Button type="submit" disabled={isSaving}>
+                        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Save
+                    </Button>
                 </DialogFooter>
                 </form>
             </Form>
