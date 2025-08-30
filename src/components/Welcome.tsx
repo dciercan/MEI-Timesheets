@@ -20,7 +20,7 @@ export default function Welcome({ users }: WelcomeProps) {
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [error, setError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const router = useRouter();
 
   const companies = useMemo(() => [...new Set(users.map(u => u.company))], [users]);
@@ -49,16 +49,19 @@ export default function Welcome({ users }: WelcomeProps) {
     if (userToLogin) {
       setIsLoggingIn(true);
       login(userToLogin);
-
-      // Redirect after setting the cookie
-      const isAdmin = userToLogin.appRole === 'Admin' || userToLogin.appRole === 'Subcontractor Admin';
-      const targetUrl = isAdmin ? '/admin' : '/timesheet';
-      router.push(targetUrl);
-      
+      // This will trigger the middleware to redirect
+      router.push('/');
     } else {
         setError('Could not find user. Please try again.');
+        setIsLoggingIn(false);
     }
   };
+
+  // If the user is already logged in, the middleware should handle redirection.
+  // This component shouldn't be visible for a logged-in user.
+  if (user) {
+    return null;
+  }
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">

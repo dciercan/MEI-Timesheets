@@ -7,11 +7,10 @@ export function middleware(request: NextRequest) {
   const currentUserCookie = request.cookies.get('currentUser');
   let currentUser: User | null = null;
 
-  if (currentUserCookie) {
+  if (currentUserCookie?.value) {
     try {
       currentUser = JSON.parse(currentUserCookie.value);
     } catch (e) {
-      // Invalid cookie, treat as logged out
       currentUser = null;
     }
   }
@@ -19,28 +18,27 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isAuthPage = pathname === '/';
 
-  // If user is logged in
   if (currentUser) {
     const isUserAdmin = currentUser.appRole === 'Admin' || currentUser.appRole === 'Subcontractor Admin';
     const targetUrl = isUserAdmin ? '/admin' : '/timesheet';
-    
-    // If they are on the login page, redirect them to their dashboard.
+
+    // If logged-in user is on the auth page, redirect them to their dashboard.
     if (isAuthPage) {
       return NextResponse.redirect(new URL(targetUrl, request.url));
     }
     
-    // If a non-admin tries to access an admin route, redirect them.
+    // Protect admin routes from non-admins
     if (pathname.startsWith('/admin') && !isUserAdmin) {
        return NextResponse.redirect(new URL('/timesheet', request.url));
     }
 
-    // If an admin tries to access the 'my-submissions' page, redirect them to the admin dash.
+    // Protect supervisor-only pages from admins
     if (pathname === '/timesheet/my-submissions' && isUserAdmin) {
          return NextResponse.redirect(new URL('/admin', request.url));
     }
 
   } else {
-    // If user is not logged in and not on the login page, redirect to login.
+    // If user is not logged in and trying to access a protected page, redirect to login.
     if (!isAuthPage) {
       return NextResponse.redirect(new URL('/', request.url));
     }
