@@ -110,21 +110,21 @@ export default function UserAdmin({ initialUsers, currentUser }: UserAdminProps)
   });
   
   const refetchUsersAndCompanies = React.useCallback(async () => {
-    // Regular admins get all users, sub-admins get users for their company
-    const updatedUsers = await getUsers(currentUser.appRole === 'Admin' ? undefined : currentUser);
+    const updatedUsers = await getUsers(currentUser);
     setUsers(updatedUsers);
     
     // Only main admins need the full company list for filtering
     if (currentUser.appRole === 'Admin') {
       const allSystemUsers = await getUsers();
-      setAllCompanies([...new Set(allSystemUsers.map(u => u.company))]);
+      const companies = [...new Set(allSystemUsers.map(u => u.company))].sort();
+      setAllCompanies(companies);
     }
   }, [currentUser]);
 
   React.useEffect(() => {
     if (currentUser.appRole === 'Admin') {
-       const allSystemUsers = initialUsers;
-       setAllCompanies([...new Set(allSystemUsers.map(u => u.company))]);
+       const companies = [...new Set(initialUsers.map(u => u.company))].sort();
+       setAllCompanies(companies);
     }
   },[initialUsers, currentUser.appRole]);
 
@@ -155,7 +155,7 @@ export default function UserAdmin({ initialUsers, currentUser }: UserAdminProps)
       const result = await deleteUser(selectedUser.id);
       if (result.success) {
         toast({ title: 'User deleted successfully.' });
-        refetchUsersAndCompanies();
+        await refetchUsersAndCompanies();
       } else {
         toast({ variant: 'destructive', title: 'Error deleting user.' });
       }
@@ -177,7 +177,7 @@ export default function UserAdmin({ initialUsers, currentUser }: UserAdminProps)
     if (result.success) {
       toast({ title: `User ${data.id ? 'updated' : 'added'} successfully.` });
       setIsFormOpen(false);
-      refetchUsersAndCompanies();
+      await refetchUsersAndCompanies();
     } else {
       toast({ variant: 'destructive', title: 'Error saving user.' });
     }
@@ -211,6 +211,9 @@ export default function UserAdmin({ initialUsers, currentUser }: UserAdminProps)
       id: 'actions',
       cell: ({ row }) => {
         const user = row.original;
+        // Sub-admins cannot edit themselves
+        if (isSubcontractorAdmin && user.id === currentUser.id) return null;
+        
         return (
           <div className='text-right'>
             <DropdownMenu>
