@@ -52,7 +52,7 @@ export default function Welcome({ users }: WelcomeProps) {
     }
     const userToLogin = users.find(u => u.id === selectedUserId);
     if (userToLogin) {
-      setIsLoggingI(true);
+      setIsLoggingIn(true);
       login(userToLogin);
       // The useEffect will handle the redirect
     } else {
@@ -109,7 +109,7 @@ export default function Welcome({ users }: WelcomeProps) {
             <SelectContent>
                 {filteredUsers.length > 0 ? (
                     filteredUsers.map(user => (
-                        <SelectItem key={user.id} value={user.id}>{user.fullName}</SelectItem>
+                        <SelectItem key={user.id} value={user.id}>{user.fullName} - {user.appRole}</SelectItem>
                     ))
                 ) : (
                     <div className="px-2 py-1.5 text-sm text-muted-foreground">No supervisors or admins available for this company.</div>
