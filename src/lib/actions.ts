@@ -18,6 +18,7 @@ export async function addTimesheet(data: Omit<TimesheetSubmission, 'id' | 'submi
     
     // Revalidate the admin path to show the new submission
     revalidatePath('/admin');
+    revalidatePath('/timesheet/my-submissions');
     
     return { success: true, submission: newSubmission };
 }
@@ -54,6 +55,7 @@ export async function updateTimesheet(formData: FormData) {
             timesheetDate: new Date(data.timesheetDate)
         };
         revalidatePath('/admin');
+        revalidatePath('/timesheet/my-submissions');
         return { success: true };
     }
     return { success: false, error: "Submission not found." };
@@ -64,6 +66,7 @@ export async function deleteTimesheet(submissionId: string) {
     if (submissionIndex > -1) {
         timesheetSubmissions.splice(submissionIndex, 1);
         revalidatePath('/admin');
+        revalidatePath('/timesheet/my-submissions');
         return { success: true };
     }
     return { success: false, error: "Submission not found." };
@@ -75,6 +78,12 @@ export async function getTimesheetSubmissions(): Promise<TimesheetSubmission[]> 
     // Sorting by submittedAt descending to show newest first.
     return Promise.resolve(timesheetSubmissions.sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime()));
 }
+
+export async function getSupervisorSubmissions(supervisorId: string): Promise<TimesheetSubmission[]> {
+    const submissions = timesheetSubmissions.filter(s => s.submittedById === supervisorId);
+    return Promise.resolve(submissions.sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime()));
+}
+
 
 // User Admin Actions
 export async function getUsers(): Promise<User[]> {

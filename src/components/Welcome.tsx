@@ -25,10 +25,15 @@ export default function Welcome({ users }: WelcomeProps) {
   
   const filteredUsers = useMemo(() => {
     if (!selectedCompany) return [];
+    
+    let roleToFilter: string[];
     if (selectedCompany === 'Spark') {
-        return users.filter(u => u.company === 'Spark' && u.appRole === 'Admin');
+        roleToFilter = ['Admin'];
+    } else {
+        roleToFilter = ['Crew Supervisor'];
     }
-    return users.filter(u => u.company === selectedCompany && u.appRole === 'Crew Supervisor');
+
+    return users.filter(u => u.company === selectedCompany && roleToFilter.includes(u.appRole));
   }, [selectedCompany, users]);
 
   const handleLogin = () => {

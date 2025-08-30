@@ -31,7 +31,7 @@ export type UnproductiveEntry = {
 };
 
 export type TimesheetSubmission = {
-  id: string;
+  id:string;
   timesheetDate: Date;
   crewMemberId: string;
   zone: string;
@@ -44,6 +44,7 @@ export type TimesheetSubmission = {
   unproductiveEntries: UnproductiveEntry[];
   notes?: string;
   submittedAt: Date;
+  submittedById: string;
 };
 
     

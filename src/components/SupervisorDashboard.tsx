@@ -1,0 +1,129 @@
+
+'use client';
+
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import type { TimesheetSubmission } from "@/lib/types";
+import { users, activities, unproductiveReasons } from "@/lib/data";
+import { format } from "date-fns";
+import { User, Calendar, Clock, Edit, ListTodo, FileText, Building, Layers, Briefcase, Hash } from "lucide-react";
+
+interface SupervisorDashboardProps {
+  submissions: TimesheetSubmission[];
+}
+
+const findById = <T extends { id: string }>(collection: T[], id: string): T | undefined => {
+  return collection.find(item => item.id === id);
+};
+
+export default function SupervisorDashboard({ submissions }: SupervisorDashboardProps) {
+
+  if (submissions.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[50vh] text-center">
+        <ListTodo className="h-16 w-16 text-muted-foreground" />
+        <h2 className="mt-4 text-2xl font-semibold font-headline">No Timesheets Submitted Yet</h2>
+        <p className="mt-2 text-muted-foreground">Once you submit timesheets, they will appear here.</p>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <Card className="shadow-lg">
+        <CardHeader>
+          <CardTitle className="font-headline text-3xl">My Timesheet Submissions</CardTitle>
+          <CardDescription>A record of all timesheets you have submitted.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Accordion type="single" collapsible className="w-full">
+            {submissions.map((submission) => {
+              const crewMember = findById(users, submission.crewMemberId);
+              const activity = findById(activities, submission.activityId);
+
+              return (
+                <AccordionItem value={submission.id} key={submission.id}>
+                  <div className="flex items-center w-full">
+                    <AccordionTrigger className="flex-grow">
+                      <div className="flex justify-between w-full pr-4 items-center">
+                        <div className="flex items-center gap-4 text-left">
+                          <div className="p-2 bg-primary/10 rounded-full">
+                            <User className="h-5 w-5 text-primary"/>
+                          </div>
+                          <div>
+                            <p className="font-semibold">{crewMember?.fullName || 'Unknown User'}</p>
+                            <p className="text-sm text-muted-foreground">{activity?.activity || 'Unknown Activity'}</p>
+                          </div>
+                        </div>
+                        <div className="hidden md:flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground">{format(new Date(submission.timesheetDate), "PPP")}</span>
+                        </div>
+                      </div>
+                    </AccordionTrigger>
+                  </div>
+                  <AccordionContent className="p-4 bg-muted/20 rounded-b-md">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                          <InfoItem icon={Calendar} label="Timesheet Date" value={format(new Date(submission.timesheetDate), "PPP")} />
+                          <InfoItem icon={User} label="Crew Member" value={crewMember?.fullName} />
+                          <InfoItem icon={Building} label="Asset" value={submission.asset} />
+                          <InfoItem icon={Layers} label="Sub Asset" value={submission.subAsset} />
+                          <InfoItem icon={Briefcase} label="Activity" value={activity?.activity} />
+                          <InfoItem icon={Clock} label="Productive Hours" value={submission.productiveHours} badge={"Hours"}/>
+                          <InfoItem icon={Hash} label="Quantity" value={submission.quantity} badge={activity?.activityUom} />
+                          <InfoItem icon={FileText} label="WBS Code" value={activity?.wbsCode} />
+                          <div className="md:col-span-2 lg:col-span-3">
+                              <h4 className="font-semibold mb-2 flex items-center gap-2"><ListTodo className="h-4 w-4" /> Unproductive Time</h4>
+                              {submission.unproductiveEntries.length > 0 ? (
+                              <ul className="list-disc list-inside space-y-1 text-sm">
+                                  {submission.unproductiveEntries.map((entry, idx) => {
+                                  const reason = findById(unproductiveReasons, entry.reasonId);
+                                  return <li key={idx}>{reason?.reason || 'Unknown Reason'}: {entry.hours} mins</li>;
+                                  })}
+                              </ul>
+                              ) : (
+                              <p className="text-sm text-muted-foreground">No unproductive time reported.</p>
+                              )}
+                          </div>
+                          {submission.notes && (
+                              <div className="md:col-span-2 lg:col-span-3">
+                                  <h4 className="font-semibold mb-2 flex items-center gap-2"><Edit className="h-4 w-4" /> Notes</h4>
+                                  <p className="text-sm text-muted-foreground bg-white p-3 rounded-md border">{submission.notes}</p>
+                              </div>
+                          )}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-4 text-right">Submitted on {format(new Date(submission.submittedAt), "PPP 'at' h:mm a")}</p>
+                  </AccordionContent>
+                </AccordionItem>
+              );
+            })}
+          </Accordion>
+        </CardContent>
+      </Card>
+    </>
+  );
+}
+
+function InfoItem({ icon: Icon, label, value, badge }: { icon: React.ElementType, label: string, value?: string | number, badge?: string | null }) {
+  if (value === undefined || value === null) return null;
+  return (
+    <div className="flex items-start gap-3">
+       <div className="p-2 bg-background rounded-full mt-1">
+          <Icon className="h-4 w-4 text-muted-foreground" />
+       </div>
+      <div>
+        <p className="text-sm text-muted-foreground">{label}</p>
+        <div className="flex items-center gap-2">
+            <p className="font-semibold">{value}</p>
+            {badge && <Badge variant="secondary">{badge}</Badge>}
+        </div>
+      </div>
+    </div>
+  )
+}

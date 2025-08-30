@@ -100,9 +100,17 @@ export default function TimesheetForm() {
 
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!loggedInUser) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "You must be logged in to submit a timesheet.",
+        });
+        return;
+    }
     try {
         for (const crewMemberId of values.crewMemberIds) {
-            await addTimesheet({ ...values, crewMemberId });
+            await addTimesheet({ ...values, crewMemberId, submittedById: loggedInUser.id });
         }
       toast({
         title: "Timesheet Submitted!",

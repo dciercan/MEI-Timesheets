@@ -14,6 +14,40 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// A helper function to manage cookies
+function setCookie(name: string, value: string, days: number) {
+    let expires = "";
+    if (days) {
+        const date = new Date();
+        date.setTime(date.getTime() + (days*24*60*60*1000));
+        expires = "; expires=" + date.toUTCString();
+    }
+    if (typeof window !== 'undefined') {
+        document.cookie = name + "=" + (value || "")  + expires + "; path=/";
+    }
+}
+
+function getCookie(name: string) {
+    if (typeof window === 'undefined') {
+        return null;
+    }
+    const nameEQ = name + "=";
+    const ca = document.cookie.split(';');
+    for(let i=0;i < ca.length;i++) {
+        let c = ca[i];
+        while (c.charAt(0)==' ') c = c.substring(1,c.length);
+        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+    }
+    return null;
+}
+
+function eraseCookie(name: string) {   
+    if (typeof window !== 'undefined') {
+        document.cookie = name+'=; Max-Age=-99999999; path=/';  
+    }
+}
+
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -21,13 +55,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     try {
-      const storedUser = localStorage.getItem('currentUser');
+      const storedUser = getCookie('currentUser');
       if (storedUser) {
         setUser(JSON.parse(storedUser));
       }
     } catch (error) {
-      console.error("Failed to parse user from localStorage", error);
-      localStorage.removeItem('currentUser');
+      console.error("Failed to parse user from cookie", error);
+      eraseCookie('currentUser');
     } finally {
       setIsLoading(false);
     }
@@ -35,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = (userToLogin: User) => {
     setUser(userToLogin);
-    localStorage.setItem('currentUser', JSON.stringify(userToLogin));
+    setCookie('currentUser', JSON.stringify(userToLogin), 7); // Store for 7 days
     if (userToLogin.appRole === 'Admin') {
         router.push('/admin');
     } else {
@@ -45,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('currentUser');
+    eraseCookie('currentUser');
     router.push('/');
   };
 
@@ -62,41 +96,4 @@ export function useAuth() {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-}
-
-export function AuthWrapper({ children }: { children: React.ReactNode }) {
-    const { user, isLoading } = useAuth();
-    const router = useRouter();
-    const pathname = usePathname();
-
-    useEffect(() => {
-        if (!isLoading) {
-            const isAuthPage = pathname === '/';
-            if (!user && !isAuthPage) {
-                router.replace('/');
-            } else if (user && isAuthPage) {
-                 if (user.appRole === 'Admin') {
-                    router.replace('/admin');
-                 } else {
-                    router.replace('/timesheet');
-                 }
-            }
-        }
-    }, [user, isLoading, router, pathname]);
-    
-    // While loading, you can show a loader or nothing
-    if (isLoading) {
-        return <div className="flex items-center justify-center h-screen">Loading...</div>;
-    }
-
-    const isAuthPage = pathname === '/';
-    if (!user && !isAuthPage) {
-        return <div className="flex items-center justify-center h-screen">Redirecting to login...</div>;
-    }
-
-    if (user && isAuthPage) {
-        return <div className="flex items-center justify-center h-screen">Redirecting to dashboard...</div>;
-    }
-
-    return <>{children}</>;
 }

@@ -5,13 +5,14 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Menu, User, LayoutDashboard, Users, LogOut } from 'lucide-react';
+import { Menu, User, LayoutDashboard, Users, LogOut, FileText } from 'lucide-react';
 import Logo from './Logo';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
 
 const defaultLinks = [
   { href: '/timesheet', label: 'Timesheet Entry', icon: User, roles: ['Crew Supervisor', 'Admin'] },
+  { href: '/timesheet/my-submissions', label: 'My Submissions', icon: FileText, roles: ['Crew Supervisor'] },
 ];
 
 const adminLinks = [
