@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 
@@ -9,71 +9,68 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
     const { user, isLoading } = useAuth();
     const pathname = usePathname();
     const router = useRouter();
-    const [isMounted, setIsMounted] = useState(false);
 
     useEffect(() => {
-        setIsMounted(true);
-    }, []);
-
-    useEffect(() => {
-        if (isLoading || !isMounted) {
+        if (isLoading) {
             return;
         }
 
         const isAuthPage = pathname === '/';
         const isAdminSection = pathname.startsWith('/admin');
 
-        // If user is not logged in and not on the login page, redirect to login.
-        if (!user && !isAuthPage) {
-            router.push('/');
+        // Case 1: User is NOT logged in.
+        if (!user) {
+            // If they are trying to access anything other than the login page, redirect them.
+            if (!isAuthPage) {
+                router.push('/');
+            }
             return;
         }
 
-        if (user) {
-            // If user is logged in and on the login page, redirect to their dashboard.
-            if (isAuthPage) {
-                if (user.appRole === 'Admin' || user.appRole === 'Subcontractor Admin') {
-                    router.push('/admin');
-                } else {
-                    router.push('/timesheet');
-                }
-                return;
-            }
-
-            // If a non-admin user tries to access an admin page, redirect them.
-            if ((user.appRole !== 'Admin' && user.appRole !== 'Subcontractor Admin') && isAdminSection) {
+        // Case 2: User IS logged in.
+        // If they are on the login page, redirect them to their appropriate dashboard.
+        if (isAuthPage) {
+            if (user.appRole === 'Admin' || user.appRole === 'Subcontractor Admin') {
+                router.push('/admin');
+            } else {
                 router.push('/timesheet');
-                return;
             }
+            return;
         }
-    }, [user, isLoading, pathname, isMounted, router]);
 
+        // If a non-admin user tries to access an admin page, redirect them away.
+        if ((user.appRole !== 'Admin' && user.appRole !== 'Subcontractor Admin') && isAdminSection) {
+            router.push('/timesheet');
+            return;
+        }
 
-    if (isLoading || !isMounted) {
-        return null; // Show nothing while determining auth state
+    }, [user, isLoading, pathname, router]);
+
+    // Render logic to prevent flicker during redirects
+    if (isLoading) {
+        return null; // Don't render anything while loading
     }
     
-    // To prevent content flicker during redirects, we determine if the content should be rendered.
     const isAuthPage = pathname === '/';
     const isAdminSection = pathname.startsWith('/admin');
 
     if (!user) {
-        // If not logged in, only render the auth page.
-        // Other pages will trigger a redirect, so we render null to avoid flicker.
+        // If not logged in, only render the login page.
+        // On other pages, a redirect is happening, so we render null.
         return isAuthPage ? <>{children}</> : null;
     }
 
     // If logged in...
-    // Don't render the login page.
     if (isAuthPage) {
+        // A redirect is happening away from the login page, so render null.
         return null;
     }
-
-    // If a non-admin is trying to access admin pages, don't render them.
+    
     if ((user.appRole !== 'Admin' && user.appRole !== 'Subcontractor Admin') && isAdminSection) {
+        // A redirect is happening away from the admin section, so render null.
         return null;
     }
 
-    // Otherwise, the user is authorized for this page.
+    // If we've reached this point, the user is authorized for the current page.
     return <>{children}</>;
 }
