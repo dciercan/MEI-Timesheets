@@ -20,12 +20,14 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { CalendarIcon, PlusCircle, Trash2, Wand2, Loader2, Send } from "lucide-react";
 import type { Activity } from "@/lib/types";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const formSchema = z.object({
   timesheetDate: z.date({
     required_error: "A timesheet date is required.",
   }),
-  crewMemberId: z.string().min(1, "Please select a crew member."),
+  crewMemberIds: z.array(z.string()).min(1, "Please select at least one crew member."),
   zone: z.string().min(1, "Zone is required."),
   section: z.string().min(1, "Section is required."),
   workDescription: z.string().min(10, "Please provide a brief description of the work (min 10 characters)."),
@@ -51,7 +53,7 @@ export default function TimesheetForm() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       timesheetDate: new Date(),
-      crewMemberId: "",
+      crewMemberIds: [],
       zone: "",
       section: "",
       workDescription: "",
@@ -104,12 +106,25 @@ export default function TimesheetForm() {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      await addTimesheet(values);
+        for (const crewMemberId of values.crewMemberIds) {
+            await addTimesheet({ ...values, crewMemberId });
+        }
       toast({
         title: "Timesheet Submitted!",
-        description: `Timesheet for ${users.find(u => u.id === values.crewMemberId)?.fullName} has been saved.`,
+        description: `Timesheet for ${values.crewMemberIds.length} crew member(s) has been saved.`,
       });
-      form.reset();
+      form.reset({
+        timesheetDate: new Date(),
+        crewMemberIds: [],
+        zone: "",
+        section: "",
+        workDescription: "",
+        activityId: "",
+        productiveHours: 8,
+        quantity: 0,
+        unproductiveEntries: [],
+        notes: "",
+      });
       setSuggestedActivities([]);
       setSelectedActivity(null);
     } catch (error) {
@@ -129,6 +144,8 @@ export default function TimesheetForm() {
       return true;
   });
 
+  const crewMembers = users.filter(u => u.appRole === 'Crew Member');
+
   return (
     <div className="container mx-auto max-w-4xl py-8 px-4 md:px-6">
       <Form {...form}>
@@ -136,7 +153,7 @@ export default function TimesheetForm() {
           <Card className="shadow-lg">
             <CardHeader>
               <CardTitle className="font-headline text-3xl">New Timesheet</CardTitle>
-              <CardDescription>Enter details for a crew member's work day.</CardDescription>
+              <CardDescription>Enter details for a crew's work day.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -175,24 +192,49 @@ export default function TimesheetForm() {
                     </FormItem>
                   )}
                 />
-                <FormField
+                 <FormField
                   control={form.control}
-                  name="crewMemberId"
-                  render={({ field }) => (
+                  name="crewMemberIds"
+                  render={() => (
                     <FormItem>
-                      <FormLabel>Crew Member</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a crew member" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {users.filter(u => u.appRole === 'Crew Member').map(user => (
-                            <SelectItem key={user.id} value={user.id}>{user.fullName}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <FormLabel>Crew Members</FormLabel>
+                        <ScrollArea className="h-40 w-full rounded-md border p-4">
+                            <div className="space-y-2">
+                            {crewMembers.map((user) => (
+                                <FormField
+                                key={user.id}
+                                control={form.control}
+                                name="crewMemberIds"
+                                render={({ field }) => {
+                                    return (
+                                    <FormItem
+                                        key={user.id}
+                                        className="flex flex-row items-start space-x-3 space-y-0"
+                                    >
+                                        <FormControl>
+                                        <Checkbox
+                                            checked={field.value?.includes(user.id)}
+                                            onCheckedChange={(checked) => {
+                                            return checked
+                                                ? field.onChange([...field.value, user.id])
+                                                : field.onChange(
+                                                    field.value?.filter(
+                                                    (value) => value !== user.id
+                                                    )
+                                                )
+                                            }}
+                                        />
+                                        </FormControl>
+                                        <FormLabel className="font-normal">
+                                        {user.fullName}
+                                        </FormLabel>
+                                    </FormItem>
+                                    )
+                                }}
+                                />
+                            ))}
+                            </div>
+                        </ScrollArea>
                       <FormMessage />
                     </FormItem>
                   )}

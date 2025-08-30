@@ -6,6 +6,14 @@ export const users: User[] = [
   { id: '3', fullName: 'Mike Johnson', company: 'BuildIt', appRole: 'Crew Member' },
   { id: '4', fullName: 'Emily White', company: 'BuildIt', appRole: 'Crew Supervisor' },
   { id: '5', fullName: 'Chris Green', company: 'AdminCorp', appRole: 'Timesheet Admin' },
+  { id: '6', fullName: 'Sarah Brown', company: 'ConstructCo', appRole: 'Crew Member' },
+  { id: '7', fullName: 'David Wilson', company: 'ConstructCo', appRole: 'Crew Member' },
+  { id: '8', fullName: 'Jessica Garcia', company: 'BuildIt', appRole: 'Crew Member' },
+  { id: '9', fullName: 'Daniel Miller', company: 'BuildIt', appRole: 'Crew Member' },
+  { id: '10', fullName: 'Linda Martinez', company: 'ConstructCo', appRole: 'Crew Member' },
+  { id: '11', fullName: 'Robert Anderson', company: 'ConstructCo', appRole: 'Crew Member' },
+  { id: '12', fullName: 'Patricia Thomas', company: 'BuildIt', appRole: 'Crew Member' },
+  { id: '13', fullName: 'James Jackson', company: 'BuildIt', appRole: 'Crew Member' },
 ];
 
 export const activities: Activity[] = [
