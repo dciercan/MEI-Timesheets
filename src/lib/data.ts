@@ -72,39 +72,4 @@ export const unproductiveReasons: UnproductiveReason[] = [
   { id: 'unprod-05', code: 'TOB', reason: 'Toilet Breaks', uom: 'min' },
 ];
 
-export const timesheetSubmissions: TimesheetSubmission[] = [
-    {
-        id: 'ts-001',
-        timesheetDate: new Date('2024-07-22T00:00:00.000Z'),
-        crewMemberId: '1',
-        submittedById: '7',
-        zone: 'S1',
-        section: 'M011',
-        asset: 'Signs',
-        subAsset: 'Variable Message Sign',
-        activityId: 'act-nc-01',
-        productiveHours: 6,
-        quantity: 1,
-        unproductiveEntries: [
-            { reasonId: 'unprod-01', hours: 1 },
-        ],
-        notes: 'Installed one VMS unit on gantry 5. Heavy rain in the afternoon.',
-        submittedAt: new Date('2024-07-22T17:00:00.000Z'),
-    },
-    {
-        id: 'ts-002',
-        timesheetDate: new Date('2024-07-21T00:00:00.000Z'),
-        crewMemberId: '2',
-        submittedById: '4',
-        zone: 'LPR RAMPS',
-        section: 'XP3',
-        asset: 'Cables',
-        subAsset: 'Fiber Optic Cable',
-        activityId: 'act-c-02',
-        productiveHours: 8,
-        quantity: 12,
-        unproductiveEntries: [],
-        notes: 'Terminated 12 fiber cores in comms room 3.',
-        submittedAt: new Date('2024-07-21T18:00:00.000Z'),
-    }
-];
+export const timesheetSubmissions: TimesheetSubmission[] = [];
