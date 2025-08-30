@@ -18,7 +18,7 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
                     </div>
                 </header>
                 <main className="flex-grow container mx-auto p-4">
-                    <div className="flex items-center justify-center flex-grow">
+                    <div className="flex items-center justify-center flex-grow h-[80vh]">
                          <Skeleton className="h-96 w-full" />
                     </div>
                 </main>
@@ -37,5 +37,7 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
         );
     }
 
+    // When no user is logged in, and it's not loading,
+    // just render the children (e.g., the Welcome page on the root route).
     return <>{children}</>;
 }
