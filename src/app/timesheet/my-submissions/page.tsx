@@ -1,35 +1,48 @@
+'use client';
 
-
+import { useState, useEffect } from 'react';
 import SupervisorDashboard from "@/components/SupervisorDashboard";
 import { getSupervisorSubmissions } from "@/lib/actions";
-import { cookies } from 'next/headers'
-import { redirect } from 'next/navigation';
+import { useAuth } from '@/hooks/use-auth';
+import type { TimesheetSubmission } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
-export const dynamic = 'force-dynamic';
+export default function SupervisorSubmissionsPage() {
+    const { user, isLoading: isAuthLoading } = useAuth();
+    const [submissions, setSubmissions] = useState<TimesheetSubmission[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
-export default async function SupervisorSubmissionsPage() {
-    const cookieStore = cookies();
-    const userCookie = cookieStore.get('currentUser');
-    
-    if (!userCookie) {
-        // This should be handled by AuthWrapper, but as a fallback
-        return <div className="container mx-auto text-center p-8">Please log in to view your submissions.</div>
+    useEffect(() => {
+        if (!isAuthLoading && user) {
+            getSupervisorSubmissions(user.id)
+                .then(data => {
+                    setSubmissions(data);
+                })
+                .finally(() => {
+                    setIsLoading(false);
+                });
+        } else if (!isAuthLoading && !user) {
+            // User is not logged in, AuthWrapper will redirect
+            setIsLoading(false);
+        }
+    }, [user, isAuthLoading]);
+
+    if (isLoading || isAuthLoading) {
+        return (
+            <div className="container mx-auto max-w-6xl py-8 px-4 md:px-6">
+                <div className="space-y-4">
+                    <Skeleton className="h-10 w-1/3" />
+                    <Skeleton className="h-8 w-1/2" />
+                    <div className="border rounded-lg p-4 space-y-4">
+                        <Skeleton className="h-8 w-full" />
+                        <Skeleton className="h-8 w-full" />
+                        <Skeleton className="h-8 w-full" />
+                    </div>
+                </div>
+            </div>
+        );
     }
-
-    let user;
-    try {
-        user = JSON.parse(userCookie.value);
-    } catch (e) {
-        // Invalid cookie, redirect to login
-        redirect('/');
-    }
     
-    if (!user || !user.id) {
-        return <div className="container mx-auto text-center p-8">Could not identify user. Please log in again.</div>
-    }
-    
-    const submissions = await getSupervisorSubmissions(user.id);
-
     return (
         <div className="container mx-auto max-w-6xl py-8 px-4 md:px-6">
             <SupervisorDashboard submissions={submissions} />
