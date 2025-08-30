@@ -12,11 +12,12 @@ export async function addTimesheet(data: Omit<TimesheetSubmission, 'id' | 'submi
     const newSubmission: TimesheetSubmission = {
         ...data,
         id: `ts-${Date.now()}`,
+        timesheetDate: new Date(data.timesheetDate), // Ensure this is a Date object
         submittedAt: new Date(),
     };
     timesheetSubmissions.unshift(newSubmission); // Add to the beginning of the array
     
-    // Revalidate the admin path to show the new submission
+    // Revalidate paths to show the new submission
     revalidatePath('/admin');
     revalidatePath('/timesheet/my-submissions');
     
