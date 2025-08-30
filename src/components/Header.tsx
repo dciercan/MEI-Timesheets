@@ -11,8 +11,8 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
 
 const defaultLinks = [
-  { href: '/timesheet', label: 'Timesheet Entry', icon: User, roles: ['Crew Supervisor', 'Admin', 'Subcontractor Admin'] },
-  { href: '/timesheet/my-submissions', label: 'My Submissions', icon: FileText, roles: ['Crew Supervisor'] },
+  { href: '/timesheet', label: 'Timesheet Entry', icon: User, roles: ['Crew Supervisor', 'Admin', 'Subcontractor Admin', 'MEI Supervisor'] },
+  { href: '/timesheet/my-submissions', label: 'My Submissions', icon: FileText, roles: ['Crew Supervisor', 'MEI Supervisor'] },
 ];
 
 const adminLinks = [
@@ -53,15 +53,18 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-card shadow-sm">
       <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
-        <Link href="/">
-          <Logo />
-        </Link>
-        <div className='flex items-center gap-4'>
-            <nav className="hidden items-center gap-4 md:flex">
-            {renderNavLinks()}
+        <div className="flex items-center gap-6">
+            <Link href="/">
+              <Logo />
+            </Link>
+            <nav className="hidden items-center gap-1 md:flex">
+                {renderNavLinks()}
             </nav>
-            <div className="flex items-center gap-2">
-                <span className="text-sm font-medium hidden sm:inline">{user.fullName}</span>
+        </div>
+        
+        <div className='flex items-center gap-4'>
+            <div className="hidden items-center gap-2 md:flex">
+                <span className="text-sm font-medium">{user.fullName}</span>
                  <Button onClick={logout} variant="outline" size="icon">
                     <LogOut className="h-5 w-5" />
                     <span className="sr-only">Logout</span>
@@ -83,6 +86,13 @@ export default function Header() {
                     </Link>
                     </div>
                     <nav className="flex flex-col gap-4">{renderNavLinks(true)}</nav>
+                    <div className="mt-auto flex items-center gap-2 border-t pt-4">
+                        <span className="font-medium">{user.fullName}</span>
+                        <Button onClick={logout} variant="outline" size="icon" className="ml-auto">
+                            <LogOut className="h-5 w-5" />
+                            <span className="sr-only">Logout</span>
+                        </Button>
+                    </div>
                 </div>
                 </SheetContent>
             </Sheet>
