@@ -2,12 +2,36 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { timesheetSubmissions, users } from './data';
+import { users } from './data';
 import type { TimesheetSubmission, User } from './types';
 import { z } from 'zod';
+import fs from 'fs/promises';
+import path from 'path';
 
-// In a real app, you would not mutate an in-memory array.
-// This is for demonstration purposes only.
+// In a real app, you would use a proper database.
+// For this demo, we'll use a JSON file for persistence.
+const submissionsDbPath = path.join(process.cwd(), 'src', 'lib', 'submissions.json');
+
+async function readSubmissions(): Promise<TimesheetSubmission[]> {
+    try {
+        const data = await fs.readFile(submissionsDbPath, 'utf-8');
+        const submissions = JSON.parse(data);
+        // Dates are stored as strings in JSON, so we need to parse them back.
+        return submissions.map((s: any) => ({
+            ...s,
+            timesheetDate: new Date(s.timesheetDate),
+            submittedAt: new Date(s.submittedAt),
+        }));
+    } catch (error) {
+        // If the file doesn't exist, return an empty array.
+        return [];
+    }
+}
+
+async function writeSubmissions(submissions: TimesheetSubmission[]): Promise<void> {
+    await fs.writeFile(submissionsDbPath, JSON.stringify(submissions, null, 2), 'utf-8');
+}
+
 
 const addTimesheetSchema = z.object({
     submittedById: z.string(),
@@ -38,6 +62,7 @@ export async function addTimesheet(data: z.infer<typeof addTimesheetSchema>) {
 
     const { crewMemberIds, ...submissionData } = validation.data;
     const newSubmissionIds: string[] = [];
+    const allSubmissions = await readSubmissions();
 
     for (const crewMemberId of crewMemberIds) {
         const newSubmission: TimesheetSubmission = {
@@ -56,10 +81,12 @@ export async function addTimesheet(data: z.infer<typeof addTimesheetSchema>) {
             submittedAt: new Date(),
             submittedById: submissionData.submittedById,
         };
-        timesheetSubmissions.unshift(newSubmission);
+        allSubmissions.unshift(newSubmission);
         newSubmissionIds.push(newSubmission.id);
     }
     
+    await writeSubmissions(allSubmissions);
+
     revalidatePath('/admin');
     revalidatePath('/timesheet/my-submissions');
     
@@ -87,16 +114,16 @@ export async function updateTimesheet(formData: FormData) {
     }
 
     const { id, ...data } = validationResult.data;
+    const allSubmissions = await readSubmissions();
+    const submissionIndex = allSubmissions.findIndex(s => s.id === id);
 
-    const submissionIndex = timesheetSubmissions.findIndex(s => s.id === id);
     if (submissionIndex > -1) {
-        // We are only updating a subset of fields from the edit form.
-        // Unproductive entries are not editable in this version.
-        timesheetSubmissions[submissionIndex] = {
-            ...timesheetSubmissions[submissionIndex],
+        allSubmissions[submissionIndex] = {
+            ...allSubmissions[submissionIndex],
             ...data,
             timesheetDate: new Date(data.timesheetDate)
         };
+        await writeSubmissions(allSubmissions);
         revalidatePath('/admin');
         revalidatePath('/timesheet/my-submissions');
         return { success: true };
@@ -105,26 +132,29 @@ export async function updateTimesheet(formData: FormData) {
 }
 
 export async function deleteTimesheet(submissionId: string) {
-    const submissionIndex = timesheetSubmissions.findIndex(s => s.id === submissionId);
-    if (submissionIndex > -1) {
-        timesheetSubmissions.splice(submissionIndex, 1);
-        revalidatePath('/admin');
-        revalidatePath('/timesheet/my-submissions');
-        return { success: true };
+    const allSubmissions = await readSubmissions();
+    const filteredSubmissions = allSubmissions.filter(s => s.id !== submissionId);
+    
+    if (allSubmissions.length === filteredSubmissions.length) {
+         return { success: false, error: "Submission not found." };
     }
-    return { success: false, error: "Submission not found." };
+
+    await writeSubmissions(filteredSubmissions);
+    revalidatePath('/admin');
+    revalidatePath('/timesheet/my-submissions');
+    return { success: true };
 }
 
 
 export async function getTimesheetSubmissions(): Promise<TimesheetSubmission[]> {
-    // In a real app, this would fetch from a database.
-    // Sorting by submittedAt descending to show newest first.
-    return Promise.resolve(timesheetSubmissions.sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime()));
+    const submissions = await readSubmissions();
+    return submissions.sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());
 }
 
 export async function getSupervisorSubmissions(supervisorId: string): Promise<TimesheetSubmission[]> {
-    const submissions = timesheetSubmissions.filter(s => s.submittedById === supervisorId);
-    return Promise.resolve(submissions.sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime()));
+    const allSubmissions = await readSubmissions();
+    const submissions = allSubmissions.filter(s => s.submittedById === supervisorId);
+    return submissions.sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());
 }
 
 

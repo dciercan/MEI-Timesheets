@@ -1,5 +1,5 @@
 
-import type { User, Activity, UnproductiveReason, TimesheetSubmission } from './types';
+import type { User, Activity, UnproductiveReason } from './types';
 
 export const users: User[] = [
   { id: '1', fullName: 'John Doe', company: 'ConstructCo', appRole: 'Crew Member' },
@@ -72,4 +72,6 @@ export const unproductiveReasons: UnproductiveReason[] = [
   { id: 'unprod-05', code: 'TOB', reason: 'Toilet Breaks', uom: 'min' },
 ];
 
-export const timesheetSubmissions: TimesheetSubmission[] = [];
+// The timesheetSubmissions are now stored in submissions.json
+// This array is no longer used.
+// export const timesheetSubmissions: TimesheetSubmission[] = [];
