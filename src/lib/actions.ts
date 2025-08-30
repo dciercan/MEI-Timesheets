@@ -218,7 +218,7 @@ async function enrichSubmissions(submissions: TimesheetSubmission[]): Promise<Ti
 export async function getTimesheetSubmissions(requestingUser?: User | null): Promise<TimesheetSubmissionWithDetails[]> {
     let submissions = await readSubmissions();
 
-    if (requestingUser?.appRole === 'Subcontractor Admin') {
+    if (requestingUser && requestingUser.appRole !== 'Admin') {
         const users = await readUsers();
         const companyUserIds = users
             .filter(u => u.company === requestingUser.company)
@@ -227,7 +227,7 @@ export async function getTimesheetSubmissions(requestingUser?: User | null): Pro
         const companyUserIdsSet = new Set(companyUserIds);
         
         submissions = submissions.filter(s => 
-            companyUserIdsSet.has(s.crewMemberId) && companyUserIdsSet.has(s.submittedById)
+            companyUserIdsSet.has(s.crewMemberId) || companyUserIdsSet.has(s.submittedById)
         );
     }
     
@@ -337,3 +337,5 @@ export async function findUnproductiveReasonById(reasonId: string): Promise<any 
     const reasons = await readUnproductiveReasons();
     return reasons.find(r => r.id === reasonId);
 }
+
+    
