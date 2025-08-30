@@ -12,7 +12,7 @@ import { z } from 'zod';
 const addTimesheetSchema = z.object({
     submittedById: z.string(),
     timesheetDate: z.coerce.date(),
-    crewMemberIds: z.array(z.string()),
+    crewMemberIds: z.array(z.string()).min(1),
     zone: z.string(),
     section: z.string(),
     asset: z.string(),
@@ -36,25 +36,25 @@ export async function addTimesheet(data: z.infer<typeof addTimesheetSchema>) {
         return { success: false, error: "Invalid data submitted." };
     }
 
-    const { crewMemberIds, submittedById, ...restOfData } = validation.data;
+    const { crewMemberIds, ...submissionData } = validation.data;
     const newSubmissionIds: string[] = [];
 
     for (const crewMemberId of crewMemberIds) {
         const newSubmission: TimesheetSubmission = {
             id: `ts-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-            submittedById: submittedById,
             crewMemberId: crewMemberId,
-            timesheetDate: restOfData.timesheetDate,
-            zone: restOfData.zone,
-            section: restOfData.section,
-            asset: restOfData.asset,
-            subAsset: restOfData.subAsset,
-            activityId: restOfData.activityId,
-            productiveHours: restOfData.productiveHours,
-            quantity: restOfData.quantity,
-            unproductiveEntries: restOfData.unproductiveEntries || [],
-            notes: restOfData.notes,
+            timesheetDate: submissionData.timesheetDate,
+            zone: submissionData.zone,
+            section: submissionData.section,
+            asset: submissionData.asset,
+            subAsset: submissionData.subAsset,
+            activityId: submissionData.activityId,
+            productiveHours: submissionData.productiveHours,
+            quantity: submissionData.quantity,
+            unproductiveEntries: submissionData.unproductiveEntries || [],
+            notes: submissionData.notes,
             submittedAt: new Date(),
+            submittedById: submissionData.submittedById,
         };
         timesheetSubmissions.unshift(newSubmission);
         newSubmissionIds.push(newSubmission.id);
