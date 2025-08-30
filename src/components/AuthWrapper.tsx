@@ -9,7 +9,6 @@ import { useEffect, useState } from 'react';
 
 export default function AuthWrapper({ children }: { children: React.ReactNode }) {
     const { user, isLoading: isAuthLoading } = useAuth();
-    const pathname = usePathname();
     const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
     useEffect(() => {
