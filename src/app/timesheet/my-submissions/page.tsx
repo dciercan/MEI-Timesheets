@@ -15,7 +15,8 @@ export default function SupervisorSubmissionsPage() {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        if (!isAuthLoading && user) {
+        if (user) {
+            setIsLoading(true);
             getSupervisorSubmissions(user.id)
                 .then(data => {
                     setSubmissions(data);
@@ -23,13 +24,10 @@ export default function SupervisorSubmissionsPage() {
                 .finally(() => {
                     setIsLoading(false);
                 });
-        } else if (!isAuthLoading && !user) {
-            // User is not logged in, AuthWrapper will redirect. Stop loading.
-            setIsLoading(false);
         }
-    }, [user, isAuthLoading]);
+    }, [user]);
 
-    if (isLoading || isAuthLoading) {
+    if (isAuthLoading || isLoading) {
         return (
             <div className="container mx-auto max-w-6xl py-8 px-4 md:px-6">
                 <div className="space-y-4">
@@ -55,7 +53,7 @@ export default function SupervisorSubmissionsPage() {
             </div>
           </div>
         );
-      }
+    }
     
     return (
         <div className="container mx-auto max-w-6xl py-8 px-4 md:px-6">
