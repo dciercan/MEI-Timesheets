@@ -108,4 +108,3 @@ export default function Welcome({ users }: WelcomeProps) {
       </Card>
     </div>
   );
-}

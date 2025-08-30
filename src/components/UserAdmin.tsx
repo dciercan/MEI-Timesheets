@@ -444,7 +444,7 @@ export default function UserAdmin({ initialUsers, currentUser }: UserAdminProps)
             </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
-        </CardContent>
+    </CardContent>
     </Card>
   );
 }
