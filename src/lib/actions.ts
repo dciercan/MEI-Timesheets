@@ -76,7 +76,7 @@ const addTimesheetSchema = z.object({
     unproductiveEntries: z.array(
       z.object({
         reasonId: z.string().min(1, "Please select a reason."),
-        hours: z.coerce.number().min(0.1, "Hours must be greater than 0."),
+        hours: z.coerce.number().min(1, "Minutes must be greater than 0."),
       })
     ).optional(),
     notes: z.string().optional(),
@@ -124,14 +124,40 @@ const timesheetSchema = z.object({
     activityId: z.string().min(1, "Activity is required."),
     productiveHours: z.coerce.number().min(0.1, "Productive hours must be greater than 0."),
     quantity: z.coerce.number().min(0, "Quantity is required."),
+    unproductiveEntries: z.array(
+        z.object({
+          reasonId: z.string().min(1, "Please select a reason."),
+          hours: z.coerce.number().min(1, "Minutes must be greater than 0."),
+        })
+      ).optional(),
     notes: z.string().optional(),
   });
 
 export async function updateTimesheet(formData: FormData) {
     const rawData = Object.fromEntries(formData.entries());
-    const validationResult = timesheetSchema.safeParse(rawData);
+
+    // Manual parsing for array of objects
+    const unproductiveEntries: any[] = [];
+    for (const key in rawData) {
+        if (key.startsWith('unproductiveEntries')) {
+            const match = key.match(/unproductiveEntries\[(\d+)\]\[(\w+)\]/);
+            if (match) {
+                const index = parseInt(match[1], 10);
+                const property = match[2];
+                if (!unproductiveEntries[index]) {
+                    unproductiveEntries[index] = {};
+                }
+                unproductiveEntries[index][property] = rawData[key];
+            }
+        }
+    }
+    const finalRawData = {...rawData, unproductiveEntries: unproductiveEntries.filter(Boolean)};
+
+
+    const validationResult = timesheetSchema.safeParse(finalRawData);
 
     if (!validationResult.success) {
+        console.error("Update validation error:", validationResult.error.flatten());
         return { success: false, error: validationResult.error.flatten() };
     }
 
@@ -143,7 +169,8 @@ export async function updateTimesheet(formData: FormData) {
         allSubmissions[submissionIndex] = {
             ...allSubmissions[submissionIndex],
             ...data,
-            timesheetDate: new Date(data.timesheetDate)
+            timesheetDate: new Date(data.timesheetDate),
+            unproductiveEntries: data.unproductiveEntries || [],
         };
         await writeSubmissions(allSubmissions);
         revalidatePath('/admin');

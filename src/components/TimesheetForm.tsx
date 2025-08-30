@@ -40,7 +40,7 @@ const formSchema = z.object({
   unproductiveEntries: z.array(
     z.object({
       reasonId: z.string().min(1, "Please select a reason."),
-      hours: z.coerce.number().min(0.1, "Hours must be greater than 0."),
+      hours: z.coerce.number().min(1, "Minutes must be greater than 0."),
     })
   ).optional(),
   notes: z.string().optional(),

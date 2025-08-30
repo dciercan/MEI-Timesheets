@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
@@ -11,14 +11,14 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { updateTimesheet, getUsers } from "@/lib/actions";
 import type { TimesheetSubmission, Activity, User } from "@/lib/types";
-import { activities } from "@/lib/data";
+import { activities, unproductiveReasons } from "@/lib/data";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { CalendarIcon, Loader2 } from "lucide-react";
+import { CalendarIcon, Loader2, PlusCircle, Trash2 } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
 
 const formSchema = z.object({
@@ -30,6 +30,12 @@ const formSchema = z.object({
   activityId: z.string().min(1, "Activity is required."),
   productiveHours: z.coerce.number().min(0.1, "Productive hours must be greater than 0."),
   quantity: z.coerce.number().min(0, "Quantity is required."),
+  unproductiveEntries: z.array(
+    z.object({
+      reasonId: z.string().min(1, "Please select a reason."),
+      hours: z.coerce.number().min(1, "Minutes must be greater than 0."),
+    })
+  ).optional(),
   notes: z.string().optional(),
 });
 
@@ -60,6 +66,11 @@ export default function EditTimesheetDialog({ isOpen, onOpenChange, submission, 
         ...submission,
         timesheetDate: new Date(submission.timesheetDate),
     }
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "unproductiveEntries",
   });
   
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
@@ -96,7 +107,13 @@ export default function EditTimesheetDialog({ isOpen, onOpenChange, submission, 
         if (value !== undefined && value !== null) {
             if (key === 'timesheetDate' && value instanceof Date) {
                 formData.append(key, value.toISOString());
-            } else {
+            } else if (key === 'unproductiveEntries' && Array.isArray(value)) {
+                value.forEach((entry, index) => {
+                    formData.append(`unproductiveEntries[${index}][reasonId]`, entry.reasonId);
+                    formData.append(`unproductiveEntries[${index}][hours]`, entry.hours.toString());
+                });
+            }
+            else {
                 formData.append(key, String(value));
             }
         }
@@ -299,6 +316,66 @@ export default function EditTimesheetDialog({ isOpen, onOpenChange, submission, 
                     </FormItem>
                 )}
                 />
+            </div>
+
+            <div className="space-y-2">
+                <h3 className="text-base font-medium">Unproductive Time (Optional)</h3>
+                <div className="space-y-4">
+                  {fields.map((item, index) => (
+                    <div key={item.id} className="flex items-end gap-4 p-4 border rounded-lg bg-muted/50">
+                        <div className="grid grid-cols-2 gap-4 flex-grow">
+                             <FormField
+                                control={form.control}
+                                name={`unproductiveEntries.${index}.reasonId`}
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Reason</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select a reason" />
+                                        </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                        {unproductiveReasons.map(reason => (
+                                            <SelectItem key={reason.id} value={reason.id}>{reason.reason}</SelectItem>
+                                        ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                                />
+                                <FormField
+                                control={form.control}
+                                name={`unproductiveEntries.${index}.hours`}
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Time (minutes)</FormLabel>
+                                    <FormControl>
+                                        <Input type="number" step="1" placeholder="e.g., 30" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                                />
+                        </div>
+                      <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)}>
+                        <Trash2 className="h-4 w-4" />
+                        <span className="sr-only">Remove</span>
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => append({ reasonId: "", hours: 30 })}
+                  >
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add Unproductive Time
+                  </Button>
+                </div>
             </div>
 
             <FormField
