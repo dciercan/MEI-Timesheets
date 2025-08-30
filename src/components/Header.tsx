@@ -4,13 +4,14 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Menu, User, LayoutDashboard } from 'lucide-react';
+import { Menu, User, LayoutDashboard, Users } from 'lucide-react';
 import Logo from './Logo';
 import { cn } from '@/lib/utils';
 
 const navLinks = [
   { href: '/', label: 'Timesheet Entry', icon: User },
   { href: '/admin', label: 'Admin Dashboard', icon: LayoutDashboard },
+  { href: '/admin/users', label: 'User Admin', icon: Users },
 ];
 
 export default function Header() {
