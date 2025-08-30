@@ -101,6 +101,34 @@ export default function SubmissionsTable({ submissions: initialSubmissions, view
 
   const columns: ColumnDef<TimesheetSubmissionWithDetails>[] = [
     {
+        accessorKey: 'timesheetDate',
+        header: ({ column }) => (
+            <Button
+                variant="ghost"
+                onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+            >
+                Date
+                <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
+        ),
+        cell: ({ row }) => format(new Date(row.getValue('timesheetDate')), 'PPP')
+    },
+    {
+        accessorKey: 'crewMember.company',
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+            >
+              Company
+              <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
+          );
+        },
+        cell: ({ row }) => row.original.crewMember?.company || 'N/A'
+      },
+    {
       accessorKey: 'crewMember.fullName',
       header: ({ column }) => {
         return (
@@ -114,34 +142,6 @@ export default function SubmissionsTable({ submissions: initialSubmissions, view
         );
       },
        cell: ({ row }) => row.original.crewMember?.fullName || 'N/A'
-    },
-     {
-      accessorKey: 'crewMember.company',
-      header: ({ column }) => {
-        return (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          >
-            Company
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-        );
-      },
-      cell: ({ row }) => row.original.crewMember?.company || 'N/A'
-    },
-    {
-      accessorKey: 'timesheetDate',
-      header: ({ column }) => (
-          <Button
-              variant="ghost"
-              onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          >
-              Date
-              <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-      ),
-      cell: ({ row }) => format(new Date(row.getValue('timesheetDate')), 'PPP')
     },
     {
         accessorKey: 'asset',
