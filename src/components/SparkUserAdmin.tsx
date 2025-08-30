@@ -159,7 +159,7 @@ export default function SparkUserAdmin({ initialUsers, currentUser }: UserAdminP
   const onSubmit = async (data: UserFormData) => {
     setIsSaving(true);
     const formData = new FormData();
-    if (data.id) formData.append('id', data.id);
+    if (selectedUser?.id) formData.append('id', selectedUser.id);
     formData.append('fullName', data.fullName);
     formData.append('company', data.company);
     formData.append('appRole', data.appRole);
@@ -167,7 +167,7 @@ export default function SparkUserAdmin({ initialUsers, currentUser }: UserAdminP
     const result = await saveUser(formData);
 
     if (result.success) {
-      toast({ title: `User ${data.id ? 'updated' : 'added'} successfully.` });
+      toast({ title: `User ${selectedUser?.id ? 'updated' : 'added'} successfully.` });
       setIsFormOpen(false);
       await refetchUsers();
     } else {
@@ -444,3 +444,5 @@ export default function SparkUserAdmin({ initialUsers, currentUser }: UserAdminP
     </Card>
   );
 }
+
+    
