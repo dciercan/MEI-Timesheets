@@ -3,7 +3,6 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import type { User } from '@/lib/types';
-import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
   user: User | null;
@@ -67,6 +66,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (userToLogin: User) => {
     setUser(userToLogin);
     setCookie('currentUser', JSON.stringify(userToLogin), 7);
+    // Let the middleware handle the redirect after state update
+    window.location.assign('/');
   }, []);
 
   const logout = useCallback(() => {
