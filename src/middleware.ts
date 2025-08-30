@@ -16,13 +16,12 @@ export function middleware(request: NextRequest) {
   }
 
   const { pathname } = request.nextUrl;
-  const isAuthPage = pathname === '/';
 
   if (currentUser) {
     const isUserAdmin = currentUser.appRole === 'Admin' || currentUser.appRole === 'Subcontractor Admin';
     
     // If a logged-in user is on the auth page, redirect them to their dashboard.
-    if (isAuthPage) {
+    if (pathname === '/') {
       const targetUrl = isUserAdmin ? '/admin' : '/timesheet';
       return NextResponse.redirect(new URL(targetUrl, request.url));
     }
@@ -39,7 +38,7 @@ export function middleware(request: NextRequest) {
 
   } else {
     // If user is not logged in and trying to access a protected page, redirect to login.
-    if (!isAuthPage) {
+    if (pathname !== '/') {
       return NextResponse.redirect(new URL('/', request.url));
     }
   }
