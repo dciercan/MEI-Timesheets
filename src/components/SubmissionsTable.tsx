@@ -47,6 +47,7 @@ import { deleteTimesheet } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import EditTimesheetDialog from './EditTimesheetDialog';
+import { useAuth } from '@/hooks/use-auth';
 
 interface SubmissionsTableProps {
     submissions: TimesheetSubmissionWithDetails[];
@@ -58,6 +59,7 @@ export default function SubmissionsTable({ submissions: initialSubmissions, view
   const [sorting, setSorting] = React.useState<SortingState>([ { id: 'timesheetDate', desc: true }]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+  const { user: currentUser } = useAuth();
 
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = React.useState(false);
@@ -243,15 +245,25 @@ export default function SubmissionsTable({ submissions: initialSubmissions, view
   });
 
   React.useEffect(() => {
-    if (view === 'supervisor') {
-      table.setColumnVisibility({
-        notes: false,
-        submittedBy_fullName: false,
-        submittedAt: false,
-        'crewMember_company': false,
-      });
+    let visibility: VisibilityState = {};
+     if (view === 'supervisor') {
+        visibility = {
+            ...visibility,
+            notes: false,
+            submittedBy_fullName: false,
+            submittedAt: false,
+            'crewMember_company': false,
+        }
     }
-  }, [table, view]);
+    if (currentUser?.appRole === 'Read Only') {
+        visibility = {
+            ...visibility,
+            actions: false,
+        }
+    }
+    table.setColumnVisibility(visibility);
+
+  }, [table, view, currentUser]);
 
 
   return (
