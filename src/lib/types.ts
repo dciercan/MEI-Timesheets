@@ -51,4 +51,5 @@ export type TimesheetSubmission = {
 export type TimesheetSubmissionWithDetails = TimesheetSubmission & {
   crewMember: User | null;
   activity: Activity | null;
+  submittedBy: User | null;
 };

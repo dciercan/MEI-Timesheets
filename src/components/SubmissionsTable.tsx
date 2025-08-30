@@ -126,6 +126,14 @@ export default function SubmissionsTable({ submissions: initialSubmissions }: Su
       cell: ({ row }) => format(new Date(row.getValue('timesheetDate')), 'PPP')
     },
     {
+        accessorKey: 'asset',
+        header: 'Asset',
+    },
+    {
+        accessorKey: 'subAsset',
+        header: 'Sub-Asset',
+    },
+    {
        accessorKey: 'activity.activity',
        header: 'Activity',
        cell: ({ row }) => row.original.activity?.activity || 'N/A'
@@ -138,6 +146,36 @@ export default function SubmissionsTable({ submissions: initialSubmissions }: Su
         accessorKey: 'quantity',
         header: 'Quantity',
         cell: ({ row }) => `${row.original.quantity} ${row.original.activity?.activityUom || ''}`.trim()
+    },
+    {
+        accessorKey: 'zone',
+        header: 'Zone',
+    },
+    {
+        accessorKey: 'section',
+        header: 'Section',
+    },
+    {
+        accessorKey: 'notes',
+        header: 'Notes',
+    },
+    {
+        accessorKey: 'submittedBy.fullName',
+        header: 'Submitted By',
+        cell: ({ row }) => row.original.submittedBy?.fullName || 'N/A'
+    },
+    {
+        accessorKey: 'submittedAt',
+        header: ({ column }) => (
+            <Button
+                variant="ghost"
+                onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+            >
+                Submitted At
+                <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
+        ),
+        cell: ({ row }) => format(new Date(row.getValue('submittedAt')), 'Pp')
     },
     {
       id: 'actions',
@@ -173,6 +211,11 @@ export default function SubmissionsTable({ submissions: initialSubmissions }: Su
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
+    initialState: {
+        pagination: {
+            pageSize: 20,
+        },
+    },
     state: {
       sorting,
       columnFilters,
@@ -289,4 +332,3 @@ export default function SubmissionsTable({ submissions: initialSubmissions }: Su
     </>
   );
 }
-

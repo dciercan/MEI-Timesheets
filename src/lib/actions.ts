@@ -11,8 +11,6 @@ import path from 'path';
 // For this demo, we'll use a JSON file for persistence.
 const submissionsDbPath = path.join(process.cwd(), 'src', 'lib', 'submissions.json');
 const usersDbPath = path.join(process.cwd(), 'src', 'lib', 'users.json');
-const activitiesDbPath = path.join(process.cwd(), 'src', 'lib', 'activities.json');
-const unproductiveReasonsDbPath = path.join(process.cwd(), 'src', 'lib', 'unproductiveReasons.json');
 
 // Submissions Data Functions
 async function readSubmissions(): Promise<TimesheetSubmission[]> {
@@ -53,12 +51,12 @@ async function writeUsers(users: User[]): Promise<void> {
 
 // Read-only data functions
 async function readActivities(): Promise<Activity[]> {
-    const data = await fs.readFile(activitiesDbPath, 'utf-8');
+    const data = await fs.readFile(path.join(process.cwd(), 'src', 'lib', 'activities.json'), 'utf-8');
     return JSON.parse(data);
 }
 
 async function readUnproductiveReasons(): Promise<UnproductiveReason[]> {
-    const data = await fs.readFile(unproductiveReasonsDbPath, 'utf-8');
+    const data = await fs.readFile(path.join(process.cwd(), 'src', 'lib', 'unproductiveReasons.json'), 'utf-8');
     return JSON.parse(data);
 }
 
@@ -180,6 +178,7 @@ async function enrichSubmissions(submissions: TimesheetSubmission[]): Promise<Ti
         ...submission,
         crewMember: userMap.get(submission.crewMemberId) ?? null,
         activity: activityMap.get(submission.activityId) ?? null,
+        submittedBy: userMap.get(submission.submittedById) ?? null,
     }));
 }
 
