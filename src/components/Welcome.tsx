@@ -38,9 +38,13 @@ export default function Welcome({ users }: WelcomeProps) {
 
   useEffect(() => {
     if (user) {
-        const isAdmin = user.appRole === 'Admin' || user.appRole === 'Subcontractor Admin';
-        const targetUrl = isAdmin ? '/admin' : '/timesheet';
-        router.push(targetUrl);
+        if (user.appRole === 'Read Only') {
+            router.push('/reports');
+        } else {
+            const isAdmin = user.appRole === 'Admin' || user.appRole === 'Subcontractor Admin';
+            const targetUrl = isAdmin ? '/admin' : '/timesheet';
+            router.push(targetUrl);
+        }
     }
   }, [user, router]);
 
