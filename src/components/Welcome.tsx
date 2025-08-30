@@ -46,16 +46,15 @@ export default function Welcome({ users }: WelcomeProps) {
       setIsLoggingIn(true);
       await login(userToLogin);
       // Use the router for a soft navigation.
-      // The middleware will intercept this and redirect to the correct dashboard.
+      // This allows the middleware to handle the redirect correctly.
       router.push('/');
+      router.refresh(); // Ensures the server-side state is re-evaluated.
     } else {
         setError('Could not find user. Please try again.');
         setIsLoggingIn(false);
     }
   };
 
-  // While the auth status is loading from the cookie, or if the user is already logged in,
-  // the middleware should be handling redirection, so we can show a spinner.
   if (isLoading || user) {
      return (
         <div className="flex items-center justify-center min-h-screen bg-background">

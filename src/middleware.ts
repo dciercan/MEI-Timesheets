@@ -11,31 +11,32 @@ export function middleware(request: NextRequest) {
     try {
       currentUser = JSON.parse(currentUserCookie.value);
     } catch (e) {
+      // Invalid cookie, treat as logged out
       currentUser = null;
     }
   }
 
   const { pathname } = request.nextUrl;
+  const isLoginPage = pathname === '/';
 
-  // If a user is logged in
   if (currentUser) {
     const isUserAdmin = currentUser.appRole === 'Admin' || currentUser.appRole === 'Subcontractor Admin';
-    
-    // If they are on the login page, redirect them to their correct dashboard
-    if (pathname === '/') {
+    const isAdminRoute = pathname.startsWith('/admin');
+
+    // If a logged-in user is on the login page, redirect them to their dashboard
+    if (isLoginPage) {
       const targetUrl = isUserAdmin ? '/admin' : '/timesheet';
       return NextResponse.redirect(new URL(targetUrl, request.url));
     }
     
-    // Protect admin routes from non-admins.
-    if (pathname.startsWith('/admin') && !isUserAdmin) {
+    // If a non-admin tries to access an admin route, redirect them
+    if (isAdminRoute && !isUserAdmin) {
        return NextResponse.redirect(new URL('/timesheet', request.url));
     }
     
   } else {
-    // If user is not logged in and tries to access any protected page, redirect to login.
-    // The root path '/' is the only allowed unauthenticated route.
-    if (pathname !== '/') {
+    // If user is not logged in and not on the login page, redirect them to login.
+    if (!isLoginPage) {
       return NextResponse.redirect(new URL('/', request.url));
     }
   }
