@@ -38,15 +38,24 @@ export async function addTimesheet(data: AddTimesheetData) {
         return { success: false, error: "Invalid data submitted." };
     }
 
-    const { crewMemberIds, submittedById, ...restOfData } = validation.data;
+    const { crewMemberIds, ...submissionData } = validation.data;
 
     for (const crewMemberId of crewMemberIds) {
         const newSubmission: TimesheetSubmission = {
-            ...restOfData,
             id: `ts-${Date.now()}-${Math.random()}`,
-            crewMemberId,
-            submittedById,
+            timesheetDate: submissionData.timesheetDate,
+            crewMemberId: crewMemberId,
+            zone: submissionData.zone,
+            section: submissionData.section,
+            asset: submissionData.asset,
+            subAsset: submissionData.subAsset,
+            activityId: submissionData.activityId,
+            productiveHours: submissionData.productiveHours,
+            quantity: submissionData.quantity,
+            unproductiveEntries: submissionData.unproductiveEntries || [],
+            notes: submissionData.notes,
             submittedAt: new Date(),
+            submittedById: submissionData.submittedById,
         };
         timesheetSubmissions.unshift(newSubmission);
     }
