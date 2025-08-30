@@ -27,10 +27,13 @@ export default function Welcome({ users }: WelcomeProps) {
     if (!selectedCompany) return [];
     
     // Admins can log in as anyone, but normal users are restricted.
+    // The main admin company is 'Spark'.
     if (selectedCompany === 'Spark') {
         return users.filter(u => u.company === selectedCompany && u.appRole === 'Admin');
     }
 
+    // Subcontractor Admins and Crew Supervisors are the only roles that can log in from the welcome screen
+    // for non-admin companies.
     return users.filter(u => u.company === selectedCompany && (u.appRole === 'Crew Supervisor' || u.appRole === 'Subcontractor Admin'));
 
   }, [selectedCompany, users]);
@@ -108,3 +111,4 @@ export default function Welcome({ users }: WelcomeProps) {
       </Card>
     </div>
   );
+}
