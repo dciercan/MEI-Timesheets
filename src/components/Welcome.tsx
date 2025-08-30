@@ -36,7 +36,7 @@ export default function Welcome({ users }: WelcomeProps) {
 
   }, [selectedCompany, users]);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!selectedUserId) {
         setError('Please select your name to continue.');
         return;
@@ -44,19 +44,17 @@ export default function Welcome({ users }: WelcomeProps) {
     const userToLogin = users.find(u => u.id === selectedUserId);
     if (userToLogin) {
       setIsLoggingIn(true);
-      login(userToLogin);
+      await login(userToLogin);
       // Trigger a navigation to the root. The middleware will catch this
-      // and redirect to the appropriate dashboard. This is more reliable
-      // than client-side routing logic.
+      // and redirect to the appropriate dashboard because the cookie is now set.
       router.push('/');
     } else {
         setError('Could not find user. Please try again.');
-        setIsLoggingIn(false);
     }
   };
 
-  // While the auth status is loading, or if the user is already logged in,
-  // the middleware should be handling redirection, so we can show a spinner or nothing.
+  // While the auth status is loading from the cookie, or if the user is already logged in,
+  // the middleware should be handling redirection, so we can show a spinner.
   if (isLoading || user) {
      return (
         <div className="flex items-center justify-center min-h-screen bg-background">

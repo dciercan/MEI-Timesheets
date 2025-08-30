@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
-import Header from '@/components/Header';
 import { cn } from '@/lib/utils';
 import { AuthProvider } from '@/hooks/use-auth';
 import AuthWrapper from '@/components/AuthWrapper';
@@ -27,14 +26,9 @@ export default function RootLayout({
       <body className={cn("font-body antialiased")}>
         <AuthProvider>
             <AuthWrapper>
-                <div className="flex flex-col min-h-screen">
-                    <Header />
-                    <main className="flex-grow">
-                        {children}
-                    </main>
-                    <Toaster />
-                </div>
+                {children}
             </AuthWrapper>
+            <Toaster />
         </AuthProvider>
       </body>
     </html>

@@ -1,12 +1,13 @@
 
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import type { User } from '@/lib/types';
+import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
   user: User | null;
-  login: (user: User) => void;
+  login: (user: User) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -25,7 +26,7 @@ function setCookie(name: string, value: string, days: number) {
     }
 }
 
-function getCookie(name: string) {
+function getCookie(name: string): string | null {
     if (typeof document === 'undefined') {
         return null;
     }
@@ -45,7 +46,6 @@ function eraseCookie(name: string) {
     }
 }
 
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -64,17 +64,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const login = (userToLogin: User) => {
+  const login = useCallback(async (userToLogin: User) => {
     setUser(userToLogin);
     setCookie('currentUser', JSON.stringify(userToLogin), 7);
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     eraseCookie('currentUser');
     setUser(null);
     // Force a reload to ensure middleware runs and redirects to login page.
     window.location.assign('/');
-  };
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, login, logout, isLoading }}>
