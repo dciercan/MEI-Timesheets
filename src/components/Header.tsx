@@ -9,6 +9,13 @@ import { Menu, User, LayoutDashboard, Users, LogOut, FileText, BarChart } from '
 import Logo from './Logo';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+
 
 const defaultLinks = [
   { href: '/timesheet', label: 'Timesheet Entry', icon: User, roles: ['Crew Supervisor', 'Admin', 'Subcontractor Admin', 'MEI Supervisor'] },
@@ -65,10 +72,19 @@ export default function Header() {
         <div className='flex items-center gap-4'>
             <div className="hidden items-center gap-2 md:flex">
                 <span className="text-sm font-medium">{user.fullName}</span>
-                 <Button onClick={logout} variant="outline" size="icon">
-                    <LogOut className="h-5 w-5" />
-                    <span className="sr-only">Logout</span>
-                </Button>
+                 <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button onClick={logout} variant="outline" size="icon">
+                          <LogOut className="h-5 w-5" />
+                          <span className="sr-only">Logout</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Logout</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
             </div>
             <div className="md:hidden">
             <Sheet>
@@ -88,10 +104,19 @@ export default function Header() {
                     <nav className="flex flex-col gap-4">{renderNavLinks(true)}</nav>
                     <div className="mt-auto flex items-center gap-2 border-t pt-4">
                         <span className="font-medium">{user.fullName}</span>
-                        <Button onClick={logout} variant="outline" size="icon" className="ml-auto">
-                            <LogOut className="h-5 w-5" />
-                            <span className="sr-only">Logout</span>
-                        </Button>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button onClick={logout} variant="outline" size="icon" className="ml-auto">
+                                    <LogOut className="h-5 w-5" />
+                                    <span className="sr-only">Logout</span>
+                                </Button>
+                            </TooltipTrigger>
+                             <TooltipContent>
+                              <p>Logout</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                     </div>
                 </div>
                 </SheetContent>
