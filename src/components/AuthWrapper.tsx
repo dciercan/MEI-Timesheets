@@ -18,7 +18,9 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
                     </div>
                 </header>
                 <main className="flex-grow container mx-auto p-4">
-                    <Skeleton className="h-96 w-full" />
+                    <div className="flex items-center justify-center flex-grow">
+                         <Skeleton className="h-96 w-full" />
+                    </div>
                 </main>
             </div>
         );

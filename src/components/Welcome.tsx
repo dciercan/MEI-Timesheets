@@ -50,6 +50,7 @@ export default function Welcome({ users }: WelcomeProps) {
       router.push('/');
     } else {
         setError('Could not find user. Please try again.');
+        setIsLoggingIn(false);
     }
   };
 
