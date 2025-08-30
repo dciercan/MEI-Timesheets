@@ -17,7 +17,6 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
     }, []);
 
     useEffect(() => {
-        // Don't run any redirect logic until the component has mounted on the client
         if (!isMounted || isLoading) {
             return;
         }
@@ -35,7 +34,7 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
         }
     }, [user, isLoading, pathname, isMounted]);
     
-    if (isLoading || !isMounted) {
+    if (!isMounted || isLoading) {
         return (
              <div className="flex flex-col items-center justify-center h-screen bg-background">
                 <div className='mb-8'>
@@ -51,7 +50,6 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
     }
     
     const isAuthPage = pathname === '/';
-    // While the redirect is in flight, show a loading indicator.
     if ((user && isAuthPage) || (!user && !isAuthPage)) {
          return (
              <div className="flex flex-col items-center justify-center h-screen bg-background">
@@ -63,6 +61,5 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
         );
     }
     
-    // If all checks pass and no redirect is needed, render the children components.
     return <>{children}</>;
 }
