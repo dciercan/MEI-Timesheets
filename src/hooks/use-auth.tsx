@@ -70,12 +70,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(userToLogin);
     setCookie('currentUser', JSON.stringify(userToLogin), 7);
     
-    // Redirect using a full page load to ensure middleware is triggered.
     const targetUrl = (userToLogin.appRole === 'Admin' || userToLogin.appRole === 'Subcontractor Admin')
         ? '/admin'
         : '/timesheet';
     
-    window.location.assign(targetUrl);
+    router.push(targetUrl);
   };
 
   const logout = () => {
