@@ -25,8 +25,6 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
         );
     }
     
-    // If a user is logged in, show the main app layout with the header.
-    // The middleware will handle redirecting them to the correct dashboard.
     if (user) {
         return (
              <div className="flex flex-col min-h-screen">
@@ -38,7 +36,5 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
         );
     }
 
-    // When no user is logged in (and not loading), just render the children.
-    // This allows public pages like the Welcome/Login screen to display.
     return <>{children}</>;
 }
