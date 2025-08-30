@@ -38,24 +38,24 @@ export async function addTimesheet(data: AddTimesheetData) {
         return { success: false, error: "Invalid data submitted." };
     }
 
-    const { crewMemberIds, ...submissionData } = validation.data;
+    const validatedData = validation.data;
 
-    for (const crewMemberId of crewMemberIds) {
+    for (const crewMemberId of validatedData.crewMemberIds) {
         const newSubmission: TimesheetSubmission = {
             id: `ts-${Date.now()}-${Math.random()}`,
-            timesheetDate: submissionData.timesheetDate,
+            timesheetDate: validatedData.timesheetDate,
             crewMemberId: crewMemberId,
-            zone: submissionData.zone,
-            section: submissionData.section,
-            asset: submissionData.asset,
-            subAsset: submissionData.subAsset,
-            activityId: submissionData.activityId,
-            productiveHours: submissionData.productiveHours,
-            quantity: submissionData.quantity,
-            unproductiveEntries: submissionData.unproductiveEntries || [],
-            notes: submissionData.notes,
+            zone: validatedData.zone,
+            section: validatedData.section,
+            asset: validatedData.asset,
+            subAsset: validatedData.subAsset,
+            activityId: validatedData.activityId,
+            productiveHours: validatedData.productiveHours,
+            quantity: validatedData.quantity,
+            unproductiveEntries: validatedData.unproductiveEntries || [],
+            notes: validatedData.notes,
             submittedAt: new Date(),
-            submittedById: submissionData.submittedById,
+            submittedById: validatedData.submittedById,
         };
         timesheetSubmissions.unshift(newSubmission);
     }
@@ -183,4 +183,3 @@ export async function deleteUser(userId: string) {
     }
     return { success: false, error: "User not found." };
 }
-
