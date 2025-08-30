@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Menu, User, LayoutDashboard, Users, LogOut, FileText, Eye } from 'lucide-react';
+import { Menu, User, LayoutDashboard, Users, LogOut, FileText, BarChart } from 'lucide-react';
 import Logo from './Logo';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
@@ -16,15 +16,16 @@ const defaultLinks = [
 ];
 
 const adminLinks = [
-  { href: '/admin', label: 'Admin Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Subcontractor Admin', 'Read Only'] },
+  { href: '/admin', label: 'Admin Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Subcontractor Admin'] },
   { href: '/admin/users', label: 'User Admin', icon: Users, roles: ['Admin', 'Subcontractor Admin'] },
+  { href: '/reports', label: 'Reports', icon: BarChart, roles: ['Admin', 'Subcontractor Admin', 'Read Only'] },
 ]
 
 export default function Header() {
   const pathname = usePathname();
-  const { user, logout, isLoading } = useAuth();
+  const { user, logout } = useAuth();
   
-  if (isLoading || !user) {
+  if (!user) {
     return (
         <header className="sticky top-0 z-50 w-full border-b bg-card shadow-sm">
              <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
@@ -40,7 +41,7 @@ export default function Header() {
     availableLinks.map((link) => (
       <Link key={link.href} href={link.href} passHref>
         <Button
-          variant={pathname === link.href ? 'secondary' : 'ghost'}
+          variant={pathname.startsWith(link.href) ? 'secondary' : 'ghost'}
           className={cn('w-full justify-start', isMobile && 'text-lg py-6')}
         >
           <link.icon className="mr-2 h-5 w-5" />
