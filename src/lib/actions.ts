@@ -221,7 +221,10 @@ export async function getTimesheetSubmissions(requestingUser?: User | null): Pro
             .map(u => u.id);
         
         const companyUserIdsSet = new Set(companyUserIds);
-        submissions = submissions.filter(s => companyUserIdsSet.has(s.crewMemberId));
+        
+        submissions = submissions.filter(s => 
+            companyUserIdsSet.has(s.crewMemberId) && companyUserIdsSet.has(s.submittedById)
+        );
     }
     
     const sorted = submissions.sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());
@@ -253,11 +256,9 @@ export async function getCurrentUser(): Promise<User | null> {
 // User Admin Actions
 export async function getUsers(requestingUser?: User | null): Promise<User[]> {
     let users = await readUsers();
-
-    if (requestingUser?.appRole === 'Subcontractor Admin') {
+    if (requestingUser && requestingUser.appRole === 'Subcontractor Admin') {
         users = users.filter(u => u.company === requestingUser.company);
     }
-
     return users.sort((a, b) => a.fullName.localeCompare(b.fullName));
 }
 
