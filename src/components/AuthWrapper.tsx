@@ -30,8 +30,8 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
         }
     }, [user, isLoading, router, pathname]);
     
-    // Show a full-page loading skeleton while the auth state is being determined.
-    if (isLoading) {
+    // Show a full-page loading skeleton only if we are still loading AND not on the initial server render.
+    if (isLoading && pathname !== '/') {
         return (
             <div className="flex flex-col items-center justify-center h-screen bg-background">
                 <div className='mb-8'>
@@ -47,17 +47,16 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
     }
 
     const isAuthPage = pathname === '/';
-
-    // If on the login page, let it render.
+    // On the server, or after loading, if we're on the auth page, render it.
     if (isAuthPage) {
         return <>{children}</>;
     }
     
-    // If not on login page and not authenticated, show nothing (will be redirected).
-    if (!user) {
-        return null;
+    // If we have a user, we can render the children.
+    if (user) {
+        return <>{children}</>;
     }
 
-    // If everything is fine, show the main content
-    return <>{children}</>;
+    // Otherwise, we are likely redirecting, so render nothing to avoid flicker.
+    return null;
 }
