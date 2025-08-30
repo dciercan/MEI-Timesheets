@@ -21,6 +21,53 @@ export async function addTimesheet(data: Omit<TimesheetSubmission, 'id' | 'submi
     return { success: true, submission: newSubmission };
 }
 
+const timesheetSchema = z.object({
+    id: z.string(),
+    timesheetDate: z.coerce.date(),
+    crewMemberId: z.string().min(1, "Crew member is required."),
+    asset: z.string().min(1, "Asset is required."),
+    subAsset: z.string().min(1, "Sub-asset is required."),
+    activityId: z.string().min(1, "Activity is required."),
+    productiveHours: z.coerce.number().min(0.1, "Productive hours must be greater than 0."),
+    quantity: z.coerce.number().min(0, "Quantity is required."),
+    notes: z.string().optional(),
+  });
+
+export async function updateTimesheet(formData: FormData) {
+    const rawData = Object.fromEntries(formData.entries());
+    const validationResult = timesheetSchema.safeParse(rawData);
+
+    if (!validationResult.success) {
+        return { success: false, error: validationResult.error.flatten() };
+    }
+
+    const { id, ...data } = validationResult.data;
+
+    const submissionIndex = timesheetSubmissions.findIndex(s => s.id === id);
+    if (submissionIndex > -1) {
+        // We are only updating a subset of fields from the edit form.
+        // Unproductive entries are not editable in this version.
+        timesheetSubmissions[submissionIndex] = {
+            ...timesheetSubmissions[submissionIndex],
+            ...data,
+            timesheetDate: new Date(data.timesheetDate)
+        };
+        revalidatePath('/admin');
+        return { success: true };
+    }
+    return { success: false, error: "Submission not found." };
+}
+
+export async function deleteTimesheet(submissionId: string) {
+    const submissionIndex = timesheetSubmissions.findIndex(s => s.id === submissionId);
+    if (submissionIndex > -1) {
+        timesheetSubmissions.splice(submissionIndex, 1);
+        revalidatePath('/admin');
+        return { success: true };
+    }
+    return { success: false, error: "Submission not found." };
+}
+
 
 export async function getTimesheetSubmissions(): Promise<TimesheetSubmission[]> {
     // In a real app, this would fetch from a database.
@@ -68,6 +115,7 @@ export async function saveUser(formData: FormData) {
     }
     
     revalidatePath('/admin/users');
+    revalidatePath('/');
     return { success: true };
 }
 
@@ -77,6 +125,7 @@ export async function deleteUser(userId: string) {
     if (userIndex > -1) {
         users.splice(userIndex, 1);
         revalidatePath('/admin/users');
+        revalidatePath('/');
         return { success: true };
     }
     return { success: false, error: "User not found." };
