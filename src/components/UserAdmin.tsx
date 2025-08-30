@@ -89,6 +89,7 @@ interface UserAdminProps {
 
 export default function UserAdmin({ initialUsers, currentUser }: UserAdminProps) {
   const [users, setUsers] = React.useState(initialUsers);
+  const [allCompanies, setAllCompanies] = React.useState<string[]>([]);
   const [isSaving, setIsSaving] = React.useState(false);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
@@ -98,8 +99,6 @@ export default function UserAdmin({ initialUsers, currentUser }: UserAdminProps)
   const { toast } = useToast();
 
   const isSubcontractorAdmin = currentUser?.appRole === 'Subcontractor Admin';
-  
-  const allCompanies = React.useMemo(() => [...new Set(initialUsers.map(u => u.company))], [initialUsers]);
 
   const form = useForm<UserFormData>({
     resolver: zodResolver(userFormSchema),
@@ -109,11 +108,25 @@ export default function UserAdmin({ initialUsers, currentUser }: UserAdminProps)
       appRole: 'Crew Member',
     },
   });
-
-  const refetchUsers = React.useCallback(async () => {
-    const updatedUsers = await getUsers(currentUser);
+  
+  const refetchUsersAndCompanies = React.useCallback(async () => {
+    // Regular admins get all users, sub-admins get users for their company
+    const updatedUsers = await getUsers(currentUser.appRole === 'Admin' ? undefined : currentUser);
     setUsers(updatedUsers);
+    
+    // Only main admins need the full company list for filtering
+    if (currentUser.appRole === 'Admin') {
+      const allSystemUsers = await getUsers();
+      setAllCompanies([...new Set(allSystemUsers.map(u => u.company))]);
+    }
   }, [currentUser]);
+
+  React.useEffect(() => {
+    if (currentUser.appRole === 'Admin') {
+       const allSystemUsers = initialUsers;
+       setAllCompanies([...new Set(allSystemUsers.map(u => u.company))]);
+    }
+  },[initialUsers, currentUser.appRole]);
 
 
   const handleAddNew = () => {
@@ -142,7 +155,7 @@ export default function UserAdmin({ initialUsers, currentUser }: UserAdminProps)
       const result = await deleteUser(selectedUser.id);
       if (result.success) {
         toast({ title: 'User deleted successfully.' });
-        refetchUsers();
+        refetchUsersAndCompanies();
       } else {
         toast({ variant: 'destructive', title: 'Error deleting user.' });
       }
@@ -164,7 +177,7 @@ export default function UserAdmin({ initialUsers, currentUser }: UserAdminProps)
     if (result.success) {
       toast({ title: `User ${data.id ? 'updated' : 'added'} successfully.` });
       setIsFormOpen(false);
-      refetchUsers();
+      refetchUsersAndCompanies();
     } else {
       toast({ variant: 'destructive', title: 'Error saving user.' });
     }
@@ -263,11 +276,7 @@ export default function UserAdmin({ initialUsers, currentUser }: UserAdminProps)
                 <Select 
                     value={companyFilterValue ?? ''}
                     onValueChange={(value) => {
-                        if (value === 'all-companies') {
-                            table.getColumn('company')?.setFilterValue('');
-                        } else {
-                            table.getColumn('company')?.setFilterValue(value);
-                        }
+                        table.getColumn('company')?.setFilterValue(value === 'all-companies' ? '' : value);
                     }}
                 >
                     <SelectTrigger className="w-[180px]">

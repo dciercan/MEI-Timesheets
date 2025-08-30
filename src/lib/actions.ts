@@ -223,7 +223,7 @@ export async function getTimesheetSubmissions(requestingUser?: User | null): Pro
         const companyUserIdsSet = new Set(companyUserIds);
         
         submissions = submissions.filter(s => 
-            companyUserIdsSet.has(s.crewMemberId) && companyUserIdsSet.has(s.submittedById)
+            companyUserIdsSet.has(s.crewMemberId) || companyUserIdsSet.has(s.submittedById)
         );
     }
     
@@ -256,9 +256,11 @@ export async function getCurrentUser(): Promise<User | null> {
 // User Admin Actions
 export async function getUsers(requestingUser?: User | null): Promise<User[]> {
     let users = await readUsers();
+    
     if (requestingUser && requestingUser.appRole === 'Subcontractor Admin') {
         users = users.filter(u => u.company === requestingUser.company);
     }
+    
     return users.sort((a, b) => a.fullName.localeCompare(b.fullName));
 }
 
