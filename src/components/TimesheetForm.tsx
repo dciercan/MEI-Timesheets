@@ -120,7 +120,13 @@ export default function TimesheetForm() {
     }
   };
 
-  const crewMembers = users.filter(u => u.appRole === 'Crew Member');
+  const crewMembers = users
+  .filter(u => u.appRole === 'Crew Member' || u.appRole === 'Crew Supervisor')
+  .sort((a, b) => {
+    if (a.appRole === 'Crew Supervisor' && b.appRole !== 'Crew Supervisor') return -1;
+    if (a.appRole !== 'Crew Supervisor' && b.appRole === 'Crew Supervisor') return 1;
+    return a.fullName.localeCompare(b.fullName);
+  });
 
   return (
     <div className="container mx-auto max-w-4xl py-8 px-4 md:px-6">
@@ -202,7 +208,7 @@ export default function TimesheetForm() {
                                         />
                                         </FormControl>
                                         <FormLabel className="font-normal">
-                                        {user.fullName}
+                                        {user.fullName} ({user.appRole})
                                         </FormLabel>
                                     </FormItem>
                                     )

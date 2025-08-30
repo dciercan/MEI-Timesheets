@@ -5,7 +5,7 @@ export const users: User[] = [
   { id: '2', fullName: 'Jane Smith', company: 'ConstructCo', appRole: 'Crew Member' },
   { id: '3', fullName: 'Mike Johnson', company: 'BuildIt', appRole: 'Crew Member' },
   { id: '4', fullName: 'Emily White', company: 'BuildIt', appRole: 'Crew Supervisor' },
-  { id: '5', fullName: 'Chris Green', company: 'AdminCorp', appRole: 'Timesheet Admin' },
+  { id: '5', fullName: 'Chris Green', company: 'Spark', appRole: 'Timesheet Admin' },
   { id: '6', fullName: 'Sarah Brown', company: 'ConstructCo', appRole: 'Crew Member' },
   { id: '7', fullName: 'David Wilson', company: 'ConstructCo', appRole: 'Crew Member' },
   { id: '8', fullName: 'Jessica Garcia', company: 'BuildIt', appRole: 'Crew Member' },
