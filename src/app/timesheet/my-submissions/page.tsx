@@ -7,6 +7,8 @@ import { useAuth } from '@/hooks/use-auth';
 import type { TimesheetSubmission } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
+export const dynamic = 'force-dynamic';
+
 export default function SupervisorSubmissionsPage() {
     const { user, isLoading: isAuthLoading } = useAuth();
     const [submissions, setSubmissions] = useState<TimesheetSubmission[]>([]);
