@@ -29,7 +29,7 @@ export default function Welcome({ users }: WelcomeProps) {
     if (!selectedCompany) return [];
     
     if (selectedCompany === 'Spark') {
-        return users.filter(u => u.company === selectedCompany && u.appRole === 'Admin');
+        return users.filter(u => u.company === selectedCompany && (u.appRole === 'Admin' || u.appRole === 'MEI Supervisor'));
     }
 
     return users.filter(u => u.company === selectedCompany && (u.appRole === 'Crew Supervisor' || u.appRole === 'Subcontractor Admin'));
@@ -52,7 +52,7 @@ export default function Welcome({ users }: WelcomeProps) {
     }
     const userToLogin = users.find(u => u.id === selectedUserId);
     if (userToLogin) {
-      setIsLoggingIn(true);
+      setIsLoggingI(true);
       login(userToLogin);
       // The useEffect will handle the redirect
     } else {

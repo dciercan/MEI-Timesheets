@@ -268,7 +268,7 @@ const userSchema = z.object({
     id: z.string().optional(),
     fullName: z.string().min(1, "Full name is required."),
     company: z.string().min(1, "Company is required."),
-    appRole: z.enum(['Crew Member', 'Crew Supervisor', 'Admin', 'Subcontractor Admin']),
+    appRole: z.enum(['Crew Member', 'Crew Supervisor', 'Admin', 'Subcontractor Admin', 'MEI Supervisor']),
 });
 
 export async function saveUser(formData: FormData) {
@@ -333,5 +333,3 @@ export async function findUnproductiveReasonById(reasonId: string): Promise<any 
     const reasons = await readUnproductiveReasons();
     return reasons.find(r => r.id === reasonId);
 }
-
-    
