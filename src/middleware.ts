@@ -27,18 +27,14 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL(targetUrl, request.url));
     }
     
-    // Protect admin routes from non-admins
+    // Protect admin routes from non-admins.
     if (pathname.startsWith('/admin') && !isUserAdmin) {
        return NextResponse.redirect(new URL('/timesheet', request.url));
     }
-
-    // Protect supervisor-only pages from admins (who have their own dashboard)
-    if (pathname === '/timesheet/my-submissions' && isUserAdmin) {
-         return NextResponse.redirect(new URL('/admin', request.url));
-    }
-
+    
   } else {
     // If user is not logged in and tries to access any protected page, redirect to login.
+    // The root path '/' is the only allowed unauthenticated route.
     if (pathname !== '/') {
       return NextResponse.redirect(new URL('/', request.url));
     }
