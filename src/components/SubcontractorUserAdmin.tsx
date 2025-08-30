@@ -67,7 +67,7 @@ import {
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { MoreHorizontal, PlusCircle, ArrowUpDown, Trash2, Edit, X, Loader2 } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, ArrowUpDown, Trash2, Edit, Loader2 } from 'lucide-react';
 import type { User } from '@/lib/types';
 import { saveUser, deleteUser, getUsers } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
@@ -87,9 +87,8 @@ interface UserAdminProps {
     currentUser: User;
 }
 
-export default function UserAdmin({ initialUsers, currentUser }: UserAdminProps) {
+export default function SubcontractorUserAdmin({ initialUsers, currentUser }: UserAdminProps) {
   const [users, setUsers] = React.useState(initialUsers);
-  const [allCompanies, setAllCompanies] = React.useState<string[]>([]);
   const [isSaving, setIsSaving] = React.useState(false);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
@@ -98,42 +97,16 @@ export default function UserAdmin({ initialUsers, currentUser }: UserAdminProps)
   const [selectedUser, setSelectedUser] = React.useState<User | null>(null);
   const { toast } = useToast();
 
-  const isSubcontractorAdmin = currentUser?.appRole === 'Subcontractor Admin';
-
-  const form = useForm<UserFormData>({
-    resolver: zodResolver(userFormSchema),
-    defaultValues: {
-      fullName: '',
-      company: '',
-      appRole: 'Crew Member',
-    },
-  });
-  
-  const refetchUsersAndCompanies = React.useCallback(async () => {
+  const refetchUsers = React.useCallback(async () => {
     const updatedUsers = await getUsers(currentUser);
     setUsers(updatedUsers);
-    
-    // Only main admins need the full company list for filtering
-    if (currentUser.appRole === 'Admin') {
-      const allSystemUsers = await getUsers();
-      const companies = [...new Set(allSystemUsers.map(u => u.company))].sort();
-      setAllCompanies(companies);
-    }
   }, [currentUser]);
-
-  React.useEffect(() => {
-    if (currentUser.appRole === 'Admin') {
-       const companies = [...new Set(initialUsers.map(u => u.company))].sort();
-       setAllCompanies(companies);
-    }
-  },[initialUsers, currentUser.appRole]);
-
 
   const handleAddNew = () => {
     setSelectedUser(null);
     form.reset({ 
         fullName: '', 
-        company: isSubcontractorAdmin ? currentUser.company : '', 
+        company: currentUser.company, 
         appRole: 'Crew Member' 
     });
     setIsFormOpen(true);
@@ -155,7 +128,7 @@ export default function UserAdmin({ initialUsers, currentUser }: UserAdminProps)
       const result = await deleteUser(selectedUser.id);
       if (result.success) {
         toast({ title: 'User deleted successfully.' });
-        await refetchUsersAndCompanies();
+        await refetchUsers();
       } else {
         toast({ variant: 'destructive', title: 'Error deleting user.' });
       }
@@ -163,6 +136,15 @@ export default function UserAdmin({ initialUsers, currentUser }: UserAdminProps)
       setSelectedUser(null);
     }
   };
+
+  const form = useForm<UserFormData>({
+    resolver: zodResolver(userFormSchema),
+    defaultValues: {
+      fullName: '',
+      company: currentUser.company,
+      appRole: 'Crew Member',
+    },
+  });
 
   const onSubmit = async (data: UserFormData) => {
     setIsSaving(true);
@@ -177,7 +159,7 @@ export default function UserAdmin({ initialUsers, currentUser }: UserAdminProps)
     if (result.success) {
       toast({ title: `User ${data.id ? 'updated' : 'added'} successfully.` });
       setIsFormOpen(false);
-      await refetchUsersAndCompanies();
+      await refetchUsers();
     } else {
       toast({ variant: 'destructive', title: 'Error saving user.' });
     }
@@ -212,7 +194,7 @@ export default function UserAdmin({ initialUsers, currentUser }: UserAdminProps)
       cell: ({ row }) => {
         const user = row.original;
         // Sub-admins cannot edit themselves
-        if (isSubcontractorAdmin && user.id === currentUser.id) return null;
+        if (user.id === currentUser.id) return null;
         
         return (
           <div className='text-right'>
@@ -250,14 +232,12 @@ export default function UserAdmin({ initialUsers, currentUser }: UserAdminProps)
     },
   });
 
-  const companyFilterValue = table.getColumn('company')?.getFilterValue() as string;
-
   return (
     <Card className="shadow-lg">
     <CardHeader className="flex flex-row items-center justify-between">
       <div>
         <CardTitle className="font-headline text-3xl">User Administration</CardTitle>
-        <CardDescription>Manage all users in the system.</CardDescription>
+        <CardDescription>Manage users for {currentUser.company}.</CardDescription>
       </div>
       <Button onClick={handleAddNew}>
         <PlusCircle className="mr-2 h-4 w-4" />
@@ -274,32 +254,6 @@ export default function UserAdmin({ initialUsers, currentUser }: UserAdminProps)
             }
             className="max-w-sm"
             />
-           {!isSubcontractorAdmin && (
-            <>
-                <Select 
-                    value={companyFilterValue ?? ''}
-                    onValueChange={(value) => {
-                        table.getColumn('company')?.setFilterValue(value === 'all-companies' ? '' : value);
-                    }}
-                >
-                    <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Filter by company..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all-companies">All Companies</SelectItem>
-                        {allCompanies.map(company => (
-                            <SelectItem key={company} value={company}>{company}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-                {companyFilterValue && (
-                    <Button variant="ghost" onClick={() => table.getColumn('company')?.setFilterValue('')}>
-                        Clear
-                        <X className="ml-2 h-4 w-4" />
-                    </Button>
-                )}
-            </>
-           )}
         </div>
         <div className="rounded-md border">
             <Table>
@@ -395,7 +349,7 @@ export default function UserAdmin({ initialUsers, currentUser }: UserAdminProps)
                     <FormItem>
                         <FormLabel>Company</FormLabel>
                         <FormControl>
-                        <Input placeholder="ConstructCo" {...field} disabled={isSubcontractorAdmin} />
+                        <Input {...field} disabled={true} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
@@ -416,11 +370,6 @@ export default function UserAdmin({ initialUsers, currentUser }: UserAdminProps)
                         <SelectContent>
                             <SelectItem value="Crew Member">Crew Member</SelectItem>
                             <SelectItem value="Crew Supervisor">Crew Supervisor</SelectItem>
-                            <SelectItem value="Subcontractor Admin">Subcontractor Admin</SelectItem>
-                            {/* Only main admins can create other admins */}
-                            {currentUser?.appRole === 'Admin' && (
-                                <SelectItem value="Admin">Admin</SelectItem>
-                            )}
                         </SelectContent>
                         </Select>
                         <FormMessage />
