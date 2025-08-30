@@ -99,7 +99,6 @@ export default function SparkUserAdmin({ initialUsers, currentUser }: UserAdminP
   const { toast } = useToast();
 
   const refetchUsers = React.useCallback(async () => {
-    // Spark admin gets all users
     const updatedUsers = await getUsers(currentUser);
     setUsers(updatedUsers);
     const companies = [...new Set(updatedUsers.map(u => u.company))].sort();
