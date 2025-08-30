@@ -1,20 +1,15 @@
 
 import { getCurrentUser, getUsers } from "@/lib/actions";
 import type { User } from '@/lib/types';
-import { redirect } from 'next/navigation';
 import SubcontractorUserAdmin from "@/components/SubcontractorUserAdmin";
 import SparkUserAdmin from "@/components/SparkUserAdmin";
 
 export const dynamic = 'force-dynamic';
 
 export default async function UserAdminPage() {
-    const currentUser = await getCurrentUser();
-    
-    if (!currentUser) {
-        // This should be handled by AuthWrapper, but as a safeguard
-        redirect('/');
-    }
-
+    // Middleware handles auth checks, so we can assume we have a user here.
+    // The '!' tells TypeScript we are certain currentUser will not be null.
+    const currentUser = (await getCurrentUser())!;
     const users = await getUsers(currentUser);
 
     const isSparkAdmin = currentUser.appRole === 'Admin';
