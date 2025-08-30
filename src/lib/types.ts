@@ -48,4 +48,7 @@ export type TimesheetSubmission = {
   submittedById: string;
 };
 
-    
+export type TimesheetSubmissionWithDetails = TimesheetSubmission & {
+  crewMember: User | null;
+  activity: Activity | null;
+};

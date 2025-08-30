@@ -2,7 +2,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import type { TimesheetSubmission, User, Activity, UnproductiveReason } from './types';
+import type { TimesheetSubmission, User, Activity, UnproductiveReason, TimesheetSubmissionWithDetails } from './types';
 import { z } from 'zod';
 import fs from 'fs/promises';
 import path from 'path';
@@ -66,20 +66,22 @@ async function readUnproductiveReasons(): Promise<UnproductiveReason[]> {
 const addTimesheetSchema = z.object({
     submittedById: z.string(),
     timesheetDate: z.coerce.date(),
-    crewMemberIds: z.array(z.string()).min(1),
-    zone: z.string(),
-    section: z.string(),
-    asset: z.string(),
-    subAsset: z.string(),
-    activityId: z.string(),
-    productiveHours: z.coerce.number(),
-    quantity: z.coerce.number(),
-    unproductiveEntries: z.array(z.object({
-        reasonId: z.string(),
-        hours: z.coerce.number(),
-    })).optional(),
+    crewMemberIds: z.array(z.string()).min(1, "Please select at least one crew member."),
+    zone: z.string().min(1, "Zone is required."),
+    section: z.string().min(1, "Section is required."),
+    asset: z.string().min(1, "Please select an asset."),
+    subAsset: z.string().min(1, "Please select a sub-asset."),
+    activityId: z.string().min(1, "Please select an activity."),
+    productiveHours: z.coerce.number().min(0.1, "Productive hours must be greater than 0."),
+    quantity: z.coerce.number().min(0, "Quantity is required."),
+    unproductiveEntries: z.array(
+      z.object({
+        reasonId: z.string().min(1, "Please select a reason."),
+        hours: z.coerce.number().min(0.1, "Hours must be greater than 0."),
+      })
+    ).optional(),
     notes: z.string().optional(),
-});
+  });
 
 
 export async function addTimesheet(data: z.infer<typeof addTimesheetSchema>) {
@@ -91,25 +93,16 @@ export async function addTimesheet(data: z.infer<typeof addTimesheetSchema>) {
     }
 
     const { crewMemberIds, ...submissionData } = validation.data;
-    const newSubmissionIds: string[] = [];
     const allSubmissions = await readSubmissions();
+    const newSubmissionIds: string[] = [];
 
     for (const crewMemberId of crewMemberIds) {
         const newSubmission: TimesheetSubmission = {
             id: `ts-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
             crewMemberId: crewMemberId,
-            timesheetDate: submissionData.timesheetDate,
-            zone: submissionData.zone,
-            section: submissionData.section,
-            asset: submissionData.asset,
-            subAsset: submissionData.subAsset,
-            activityId: submissionData.activityId,
-            productiveHours: submissionData.productiveHours,
-            quantity: submissionData.quantity,
+            ...submissionData,
             unproductiveEntries: submissionData.unproductiveEntries || [],
-            notes: submissionData.notes,
             submittedAt: new Date(),
-            submittedById: submissionData.submittedById,
         };
         allSubmissions.unshift(newSubmission);
         newSubmissionIds.push(newSubmission.id);
@@ -176,15 +169,32 @@ export async function deleteTimesheet(submissionId: string) {
 }
 
 
-export async function getTimesheetSubmissions(): Promise<TimesheetSubmission[]> {
-    const submissions = await readSubmissions();
-    return submissions.sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());
+async function enrichSubmissions(submissions: TimesheetSubmission[]): Promise<TimesheetSubmissionWithDetails[]> {
+    const users = await readUsers();
+    const activities = await readActivities();
+
+    const userMap = new Map(users.map(u => [u.id, u]));
+    const activityMap = new Map(activities.map(a => [a.id, a]));
+
+    return submissions.map(submission => ({
+        ...submission,
+        crewMember: userMap.get(submission.crewMemberId) ?? null,
+        activity: activityMap.get(submission.activityId) ?? null,
+    }));
 }
 
-export async function getSupervisorSubmissions(supervisorId: string): Promise<TimesheetSubmission[]> {
+
+export async function getTimesheetSubmissions(): Promise<TimesheetSubmissionWithDetails[]> {
+    const submissions = await readSubmissions();
+    const sorted = submissions.sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());
+    return enrichSubmissions(sorted);
+}
+
+export async function getSupervisorSubmissions(supervisorId: string): Promise<TimesheetSubmissionWithDetails[]> {
     const allSubmissions = await readSubmissions();
     const submissions = allSubmissions.filter(s => s.submittedById === supervisorId);
-    return submissions.sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());
+    const sorted = submissions.sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());
+    return enrichSubmissions(sorted);
 }
 
 
