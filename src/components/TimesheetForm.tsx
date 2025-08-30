@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -5,20 +6,19 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { cn } from "@/lib/utils";
-import { suggestActivity } from "@/ai/flows/activity-suggestion";
 import { addTimesheet } from "@/lib/actions";
 import { users, activities, unproductiveReasons } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { CalendarIcon, PlusCircle, Trash2, Wand2, Loader2, Send } from "lucide-react";
+import { CalendarIcon, PlusCircle, Trash2, Loader2, Send } from "lucide-react";
 import type { Activity } from "@/lib/types";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -30,7 +30,6 @@ const formSchema = z.object({
   crewMemberIds: z.array(z.string()).min(1, "Please select at least one crew member."),
   zone: z.string().min(1, "Zone is required."),
   section: z.string().min(1, "Section is required."),
-  workDescription: z.string().min(10, "Please provide a brief description of the work (min 10 characters)."),
   activityId: z.string().min(1, "Please select an activity."),
   productiveHours: z.coerce.number().min(0.1, "Productive hours must be greater than 0."),
   quantity: z.coerce.number().min(0, "Quantity is required."),
@@ -45,8 +44,6 @@ const formSchema = z.object({
 
 export default function TimesheetForm() {
   const { toast } = useToast();
-  const [isAiLoading, setIsAiLoading] = useState(false);
-  const [suggestedActivities, setSuggestedActivities] = useState<string[]>([]);
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -56,7 +53,6 @@ export default function TimesheetForm() {
       crewMemberIds: [],
       zone: "",
       section: "",
-      workDescription: "",
       activityId: "",
       productiveHours: 8,
       quantity: 0,
@@ -69,40 +65,6 @@ export default function TimesheetForm() {
     control: form.control,
     name: "unproductiveEntries",
   });
-
-  const handleSuggestActivity = async () => {
-    const { zone, section, workDescription } = form.getValues();
-    if (!zone || !section || !workDescription) {
-      toast({
-        variant: "destructive",
-        title: "Missing Information",
-        description: "Please fill in Zone, Section, and Work Description to get suggestions.",
-      });
-      return;
-    }
-
-    setIsAiLoading(true);
-    setSuggestedActivities([]);
-    form.setValue("activityId", "");
-    setSelectedActivity(null);
-    try {
-      const result = await suggestActivity({ zone, section, description: workDescription || '' });
-      const suggestions = result.suggestedActivities;
-      setSuggestedActivities(suggestions);
-      if (suggestions.length === 0) {
-        toast({ title: "No suggestions found", description: "Try refining your work description." });
-      }
-    } catch (error) {
-      console.error("AI suggestion failed:", error);
-      toast({
-        variant: "destructive",
-        title: "AI Suggestion Failed",
-        description: "Could not get activity suggestions. Please select one manually.",
-      });
-    } finally {
-      setIsAiLoading(false);
-    }
-  };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
@@ -118,14 +80,12 @@ export default function TimesheetForm() {
         crewMemberIds: [],
         zone: "",
         section: "",
-        workDescription: "",
         activityId: "",
         productiveHours: 8,
         quantity: 0,
         unproductiveEntries: [],
         notes: "",
       });
-      setSuggestedActivities([]);
       setSelectedActivity(null);
     } catch (error) {
       console.error("Submission failed:", error);
@@ -136,13 +96,6 @@ export default function TimesheetForm() {
       });
     }
   };
-
-  const filteredActivities = activities.filter(act => {
-      if (suggestedActivities.length > 0) {
-          return suggestedActivities.includes(act.activity);
-      }
-      return true;
-  });
 
   const crewMembers = users.filter(u => u.appRole === 'Crew Member');
 
@@ -275,24 +228,6 @@ export default function TimesheetForm() {
 
               <div className="space-y-2">
                 <h3 className="text-lg font-medium font-headline">Activity</h3>
-                 <FormField
-                  control={form.control}
-                  name="workDescription"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Work Description</FormLabel>
-                      <FormControl>
-                        <Textarea placeholder="Describe the work performed to get AI-powered activity suggestions, e.g., 'fixed potholes on the main road'" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="button" onClick={handleSuggestActivity} disabled={isAiLoading}>
-                  {isAiLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
-                  Suggest Activity
-                </Button>
-                
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end pt-4">
                   <div className="md:col-span-1">
                       <FormField
@@ -307,14 +242,13 @@ export default function TimesheetForm() {
                               }} value={field.value}>
                                 <FormControl>
                                   <SelectTrigger>
-                                    <SelectValue placeholder={suggestedActivities.length > 0 ? "Select a suggested activity" : "Select an activity"} />
+                                    <SelectValue placeholder="Select an activity" />
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                    {filteredActivities.map(act => (
+                                    {activities.map(act => (
                                         <SelectItem key={act.id} value={act.id}>{act.activity}</SelectItem>
                                     ))}
-                                    {filteredActivities.length === 0 && suggestedActivities.length > 0 && <div className="p-4 text-sm text-muted-foreground">No matching activities found for suggestions.</div>}
                                 </SelectContent>
                               </Select>
                               <FormMessage />

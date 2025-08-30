@@ -6,7 +6,7 @@ import type { TimesheetSubmission } from './types';
 
 // In a real app, you would not mutate an in-memory array.
 // This is for demonstration purposes only.
-export async function addTimesheet(data: Omit<TimesheetSubmission, 'id' | 'submittedAt'>) {
+export async function addTimesheet(data: Omit<TimesheetSubmission, 'id' | 'submittedAt' | 'workDescription'>) {
     const newSubmission: TimesheetSubmission = {
         ...data,
         id: `ts-${Date.now()}`,
