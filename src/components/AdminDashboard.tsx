@@ -23,14 +23,6 @@ export default function AdminDashboard({ submissions }: AdminDashboardProps) {
   }
 
   return (
-    <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle className="font-headline text-3xl">All Timesheet Submissions</CardTitle>
-          <CardDescription>Review all entries submitted by crew supervisors.</CardDescription>
-        </CardHeader>
-        <CardContent>
-            <SubmissionsTable submissions={submissions} view="admin" />
-        </CardContent>
-      </Card>
+    <SubmissionsTable submissions={submissions} view="admin" />
   );
 }

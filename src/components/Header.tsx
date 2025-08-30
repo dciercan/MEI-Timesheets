@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Menu, User, LayoutDashboard, Users, LogOut, FileText, BarChart } from 'lucide-react';
+import { Menu, User, LayoutDashboard, Users, LogOut, FileText, BarChart, Building } from 'lucide-react';
 import Logo from './Logo';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
@@ -23,9 +23,10 @@ const defaultLinks = [
 ];
 
 const adminLinks = [
-  { href: '/admin', label: 'Admin Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Subcontractor Admin'] },
+  { href: '/admin', label: 'Admin Dashboard', icon: LayoutDashboard, roles: ['Admin'] },
   { href: '/admin/users', label: 'User Admin', icon: Users, roles: ['Admin', 'Subcontractor Admin'] },
-  { href: '/reports', label: 'Reports', icon: BarChart, roles: ['Admin', 'Subcontractor Admin', 'Read Only', 'Crew Supervisor', 'MEI Supervisor'] },
+  { href: '/reports/my-company-submissions', label: 'Company Submissions', icon: Building, roles: ['Subcontractor Admin'] },
+  { href: '/reports', label: 'Reports', icon: BarChart, roles: ['Admin', 'Read Only', 'Crew Supervisor', 'MEI Supervisor'] },
 ]
 
 export default function Header() {
