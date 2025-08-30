@@ -89,7 +89,7 @@ interface UserAdminProps {
 
 export default function SparkUserAdmin({ initialUsers, currentUser }: UserAdminProps) {
   const [users, setUsers] = React.useState(initialUsers);
-  const [allCompanies, setAllCompanies] = React.useState<string[]>([]);
+  const [allCompanies, setAllCompanies] = React.useState<string[]>([...new Set(initialUsers.map(u => u.company))].sort());
   const [isSaving, setIsSaving] = React.useState(false);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
@@ -104,11 +104,6 @@ export default function SparkUserAdmin({ initialUsers, currentUser }: UserAdminP
     const companies = [...new Set(updatedUsers.map(u => u.company))].sort();
     setAllCompanies(companies);
   }, [currentUser]);
-
-  React.useEffect(() => {
-    const companies = [...new Set(initialUsers.map(u => u.company))].sort();
-    setAllCompanies(companies);
-  },[initialUsers]);
 
 
   const handleAddNew = () => {
@@ -443,5 +438,7 @@ export default function SparkUserAdmin({ initialUsers, currentUser }: UserAdminP
     </Card>
   );
 }
+
+    
 
     
