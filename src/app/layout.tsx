@@ -5,7 +5,7 @@ import Header from '@/components/Header';
 import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = {
-  title: 'TempoTrack',
+  title: 'MEI Timesheet',
   description: 'A modern timesheet system for crew supervisors and admins.',
 };
 
