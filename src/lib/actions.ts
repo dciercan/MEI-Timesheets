@@ -97,8 +97,8 @@ export async function addTimesheet(data: z.infer<typeof addTimesheetSchema>) {
     for (const crewMemberId of crewMemberIds) {
         const newSubmission: TimesheetSubmission = {
             id: `ts-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-            crewMemberId: crewMemberId,
             ...submissionData,
+            crewMemberId,
             unproductiveEntries: submissionData.unproductiveEntries || [],
             submittedAt: new Date(),
         };
@@ -183,8 +183,19 @@ async function enrichSubmissions(submissions: TimesheetSubmission[]): Promise<Ti
 }
 
 
-export async function getTimesheetSubmissions(): Promise<TimesheetSubmissionWithDetails[]> {
-    const submissions = await readSubmissions();
+export async function getTimesheetSubmissions(requestingUser?: User): Promise<TimesheetSubmissionWithDetails[]> {
+    let submissions = await readSubmissions();
+
+    if (requestingUser?.appRole === 'Subcontractor Admin') {
+        const users = await readUsers();
+        const companyUserIds = users
+            .filter(u => u.company === requestingUser.company)
+            .map(u => u.id);
+        
+        const companyUserIdsSet = new Set(companyUserIds);
+        submissions = submissions.filter(s => companyUserIdsSet.has(s.crewMemberId));
+    }
+    
     const sorted = submissions.sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());
     return enrichSubmissions(sorted);
 }
@@ -207,7 +218,7 @@ const userSchema = z.object({
     id: z.string().optional(),
     fullName: z.string().min(1, "Full name is required."),
     company: z.string().min(1, "Company is required."),
-    appRole: z.enum(['Crew Member', 'Crew Supervisor', 'Admin']),
+    appRole: z.enum(['Crew Member', 'Crew Supervisor', 'Admin', 'Subcontractor Admin']),
 });
 
 export async function saveUser(formData: FormData) {

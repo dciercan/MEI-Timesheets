@@ -26,14 +26,13 @@ export default function Welcome({ users }: WelcomeProps) {
   const filteredUsers = useMemo(() => {
     if (!selectedCompany) return [];
     
-    let roleToFilter: string[];
+    // Admins can log in as anyone, but normal users are restricted.
     if (selectedCompany === 'Spark') {
-        roleToFilter = ['Admin'];
-    } else {
-        roleToFilter = ['Crew Supervisor'];
+        return users.filter(u => u.company === selectedCompany && u.appRole === 'Admin');
     }
 
-    return users.filter(u => u.company === selectedCompany && roleToFilter.includes(u.appRole));
+    return users.filter(u => u.company === selectedCompany && (u.appRole === 'Crew Supervisor' || u.appRole === 'Subcontractor Admin'));
+
   }, [selectedCompany, users]);
 
   const handleLogin = () => {
@@ -93,7 +92,7 @@ export default function Welcome({ users }: WelcomeProps) {
                         <SelectItem key={user.id} value={user.id}>{user.fullName}</SelectItem>
                     ))
                 ) : (
-                    <div className="px-2 py-1.5 text-sm text-muted-foreground">No supervisors available for this company.</div>
+                    <div className="px-2 py-1.5 text-sm text-muted-foreground">No supervisors or admins available for this company.</div>
                 )}
               </SelectContent>
             </Select>

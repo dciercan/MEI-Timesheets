@@ -70,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(userToLogin);
     setCookie('currentUser', JSON.stringify(userToLogin), 7); 
     
-    if (userToLogin.appRole === 'Admin') {
+    if (userToLogin.appRole === 'Admin' || userToLogin.appRole === 'Subcontractor Admin') {
         router.push('/admin');
     } else {
         router.push('/timesheet');

@@ -11,12 +11,12 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
 
 const defaultLinks = [
-  { href: '/timesheet', label: 'Timesheet Entry', icon: User, roles: ['Crew Supervisor', 'Admin'] },
+  { href: '/timesheet', label: 'Timesheet Entry', icon: User, roles: ['Crew Supervisor', 'Admin', 'Subcontractor Admin'] },
   { href: '/timesheet/my-submissions', label: 'My Submissions', icon: FileText, roles: ['Crew Supervisor'] },
 ];
 
 const adminLinks = [
-  { href: '/admin', label: 'Admin Dashboard', icon: LayoutDashboard, roles: ['Admin'] },
+  { href: '/admin', label: 'Admin Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Subcontractor Admin'] },
   { href: '/admin/users', label: 'User Admin', icon: Users, roles: ['Admin'] },
 ]
 
