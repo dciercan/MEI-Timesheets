@@ -4,9 +4,11 @@
 import { useAuth } from '@/hooks/use-auth';
 import { Skeleton } from './ui/skeleton';
 import Header from './Header';
+import { usePathname } from 'next/navigation';
 
 export default function AuthWrapper({ children }: { children: React.ReactNode }) {
     const { user, isLoading } = useAuth();
+    const pathname = usePathname();
 
     if (isLoading) {
          return (
@@ -25,6 +27,7 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
         );
     }
     
+    // If the user is logged in, show the header and the page content.
     if (user) {
         return (
              <div className="flex flex-col min-h-screen">
@@ -35,6 +38,8 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
             </div>
         );
     }
-
+    
+    // If we are not loading and there is no user, it's a public page (login).
+    // The middleware ensures only the root path is accessible without a user.
     return <>{children}</>;
 }
