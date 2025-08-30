@@ -36,32 +36,34 @@ export async function addTimesheet(data: z.infer<typeof addTimesheetSchema>) {
         return { success: false, error: "Invalid data submitted." };
     }
 
-    const { crewMemberIds, ...submissionData } = validation.data;
+    const { crewMemberIds, submittedById, ...restOfData } = validation.data;
+    const newSubmissionIds: string[] = [];
 
     for (const crewMemberId of crewMemberIds) {
         const newSubmission: TimesheetSubmission = {
-            id: `ts-${Date.now()}-${Math.random()}`,
-            submittedById: submissionData.submittedById,
+            id: `ts-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+            submittedById: submittedById,
             crewMemberId: crewMemberId,
-            timesheetDate: submissionData.timesheetDate,
-            zone: submissionData.zone,
-            section: submissionData.section,
-            asset: submissionData.asset,
-            subAsset: submissionData.subAsset,
-            activityId: submissionData.activityId,
-            productiveHours: submissionData.productiveHours,
-            quantity: submissionData.quantity,
-            unproductiveEntries: submissionData.unproductiveEntries || [],
-            notes: submissionData.notes,
+            timesheetDate: restOfData.timesheetDate,
+            zone: restOfData.zone,
+            section: restOfData.section,
+            asset: restOfData.asset,
+            subAsset: restOfData.subAsset,
+            activityId: restOfData.activityId,
+            productiveHours: restOfData.productiveHours,
+            quantity: restOfData.quantity,
+            unproductiveEntries: restOfData.unproductiveEntries || [],
+            notes: restOfData.notes,
             submittedAt: new Date(),
         };
         timesheetSubmissions.unshift(newSubmission);
+        newSubmissionIds.push(newSubmission.id);
     }
     
     revalidatePath('/admin');
     revalidatePath('/timesheet/my-submissions');
     
-    return { success: true };
+    return { success: true, submissionIds: newSubmissionIds };
 }
 
 const timesheetSchema = z.object({

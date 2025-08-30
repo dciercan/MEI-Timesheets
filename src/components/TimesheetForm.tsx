@@ -111,10 +111,10 @@ export default function TimesheetForm() {
     try {
         const result = await addTimesheet({ ...values, submittedById: loggedInUser.id });
 
-        if (result.success) {
+        if (result.success && result.submissionIds) {
              toast({
                 title: "Timesheet Submitted!",
-                description: `Timesheet for ${values.crewMemberIds.length} crew member(s) has been saved.`,
+                description: `Created submissions: ${result.submissionIds.join(', ')}`,
             });
             form.reset({
                 timesheetDate: new Date(),
@@ -134,7 +134,7 @@ export default function TimesheetForm() {
              toast({
                 variant: "destructive",
                 title: "Submission Failed",
-                description: "There was an error submitting the timesheet.",
+                description: result.error || "There was an error submitting the timesheet.",
              });
         }
     } catch (error) {
