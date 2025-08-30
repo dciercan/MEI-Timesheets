@@ -9,9 +9,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { updateTimesheet } from "@/lib/actions";
-import type { TimesheetSubmission, Activity } from "@/lib/types";
-import { activities, users } from "@/lib/data";
+import { updateTimesheet, getUsers } from "@/lib/actions";
+import type { TimesheetSubmission, Activity, User } from "@/lib/types";
+import { activities } from "@/lib/data";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -44,6 +44,16 @@ interface EditTimesheetDialogProps {
 
 export default function EditTimesheetDialog({ isOpen, onOpenChange, submission, onSubmissionUpdated }: EditTimesheetDialogProps) {
   const { toast } = useToast();
+  const [users, setUsers] = useState<User[]>([]);
+
+  useEffect(() => {
+    async function loadUsers() {
+      const fetchedUsers = await getUsers();
+      setUsers(fetchedUsers);
+    }
+    loadUsers();
+  }, []);
+
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
     defaultValues: {

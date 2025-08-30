@@ -1,0 +1,33 @@
+
+[
+  {
+    "id": "unprod-01",
+    "code": "SAF",
+    "reason": "Safety Meeting",
+    "uom": "min"
+  },
+  {
+    "id": "unprod-02",
+    "code": "PRE",
+    "reason": "Prestarts",
+    "uom": "min"
+  },
+  {
+    "id": "unprod-03",
+    "code": "CRB",
+    "reason": "Crib",
+    "uom": "min"
+  },
+  {
+    "id": "unprod-04",
+    "code": "LOG",
+    "reason": "Logistics - Transit Travel",
+    "uom": "min"
+  },
+  {
+    "id": "unprod-05",
+    "code": "TOB",
+    "reason": "Toilet Breaks",
+    "uom": "min"
+  }
+]

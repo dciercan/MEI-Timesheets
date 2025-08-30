@@ -1,0 +1,34 @@
+[
+  {
+    "id": "ts-1756544692333-1rsmx9h",
+    "crewMemberId": "13",
+    "timesheetDate": "2025-08-30T09:03:39.145Z",
+    "zone": "S3",
+    "section": "Central Corridor",
+    "asset": "Cables",
+    "subAsset": "Power Cable LV",
+    "activityId": "act-c-05",
+    "productiveHours": 8,
+    "quantity": 2,
+    "unproductiveEntries": [],
+    "notes": "",
+    "submittedAt": "2025-08-30T09:04:52.333Z",
+    "submittedById": "13"
+  },
+  {
+    "id": "ts-1756544692333-e513e3q",
+    "crewMemberId": "4",
+    "timesheetDate": "2025-08-30T09:03:39.145Z",
+    "zone": "S3",
+    "section": "Central Corridor",
+    "asset": "Cables",
+    "subAsset": "Power Cable LV",
+    "activityId": "act-c-05",
+    "productiveHours": 8,
+    "quantity": 2,
+    "unproductiveEntries": [],
+    "notes": "",
+    "submittedAt": "2025-08-30T09:04:52.333Z",
+    "submittedById": "13"
+  }
+]

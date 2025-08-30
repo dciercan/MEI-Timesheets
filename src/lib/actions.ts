@@ -2,34 +2,52 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { users } from './data';
 import type { TimesheetSubmission, User } from './types';
 import { z } from 'zod';
 import fs from 'fs/promises';
 import path from 'path';
+import { activities, unproductiveReasons } from './data';
 
 // In a real app, you would use a proper database.
 // For this demo, we'll use a JSON file for persistence.
 const submissionsDbPath = path.join(process.cwd(), 'src', 'lib', 'submissions.json');
+const usersDbPath = path.join(process.cwd(), 'src', 'lib', 'users.json');
 
+// Submissions Data Functions
 async function readSubmissions(): Promise<TimesheetSubmission[]> {
     try {
+        await fs.access(submissionsDbPath);
         const data = await fs.readFile(submissionsDbPath, 'utf-8');
+        if (data.trim() === '') return [];
         const submissions = JSON.parse(data);
-        // Dates are stored as strings in JSON, so we need to parse them back.
         return submissions.map((s: any) => ({
             ...s,
             timesheetDate: new Date(s.timesheetDate),
             submittedAt: new Date(s.submittedAt),
         }));
     } catch (error) {
-        // If the file doesn't exist, return an empty array.
         return [];
     }
 }
 
 async function writeSubmissions(submissions: TimesheetSubmission[]): Promise<void> {
     await fs.writeFile(submissionsDbPath, JSON.stringify(submissions, null, 2), 'utf-8');
+}
+
+// Users Data Functions
+async function readUsers(): Promise<User[]> {
+     try {
+        await fs.access(usersDbPath);
+        const data = await fs.readFile(usersDbPath, 'utf-8');
+        if (data.trim() === '') return [];
+        return JSON.parse(data);
+    } catch (error) {
+        return [];
+    }
+}
+
+async function writeUsers(users: User[]): Promise<void> {
+     await fs.writeFile(usersDbPath, JSON.stringify(users, null, 2), 'utf-8');
 }
 
 
@@ -60,7 +78,7 @@ export async function addTimesheet(data: z.infer<typeof addTimesheetSchema>) {
         return { success: false, error: "Invalid data submitted." };
     }
 
-    const { crewMemberIds, ...submissionData } = validation.data;
+    const { crewMemberIds, submittedById, ...submissionData } = validation.data;
     const newSubmissionIds: string[] = [];
     const allSubmissions = await readSubmissions();
 
@@ -79,7 +97,7 @@ export async function addTimesheet(data: z.infer<typeof addTimesheetSchema>) {
             unproductiveEntries: submissionData.unproductiveEntries || [],
             notes: submissionData.notes,
             submittedAt: new Date(),
-            submittedById: submissionData.submittedById,
+            submittedById: submittedById,
         };
         allSubmissions.unshift(newSubmission);
         newSubmissionIds.push(newSubmission.id);
@@ -160,7 +178,8 @@ export async function getSupervisorSubmissions(supervisorId: string): Promise<Ti
 
 // User Admin Actions
 export async function getUsers(): Promise<User[]> {
-    return Promise.resolve(users.sort((a, b) => a.fullName.localeCompare(b.fullName)));
+    const users = await readUsers();
+    return users.sort((a, b) => a.fullName.localeCompare(b.fullName));
 }
 
 const userSchema = z.object({
@@ -179,6 +198,7 @@ export async function saveUser(formData: FormData) {
     }
     
     const { id, ...data } = validationResult.data;
+    const users = await readUsers();
 
     if (id) {
         // Update existing user
@@ -197,6 +217,7 @@ export async function saveUser(formData: FormData) {
         users.push(newUser);
     }
     
+    await writeUsers(users);
     revalidatePath('/admin/users');
     revalidatePath('/');
     return { success: true };
@@ -204,12 +225,29 @@ export async function saveUser(formData: FormData) {
 
 
 export async function deleteUser(userId: string) {
+    const users = await readUsers();
     const userIndex = users.findIndex(u => u.id === userId);
     if (userIndex > -1) {
         users.splice(userIndex, 1);
+        await writeUsers(users);
         revalidatePath('/admin/users');
         revalidatePath('/');
         return { success: true };
     }
     return { success: false, error: "User not found." };
+}
+
+export async function findUserById(userId: string): Promise<User | undefined> {
+    const users = await readUsers();
+    return users.find(u => u.id === userId);
+}
+
+export async function findActivityById(activityId: string): Promise<Activity | undefined> {
+    const allActivities = await Promise.resolve(activities);
+    return allActivities.find(a => a.id === activityId);
+}
+
+export async function findUnproductiveReasonById(reasonId: string): Promise<any | undefined> {
+    const reasons = await Promise.resolve(unproductiveReasons);
+    return reasons.find(r => r.id === reasonId);
 }
