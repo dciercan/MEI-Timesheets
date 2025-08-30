@@ -29,7 +29,7 @@ export default function AdminDashboard({ submissions }: AdminDashboardProps) {
           <CardDescription>Review all entries submitted by crew supervisors.</CardDescription>
         </CardHeader>
         <CardContent>
-            <SubmissionsTable submissions={submissions} />
+            <SubmissionsTable submissions={submissions} view="admin" />
         </CardContent>
       </Card>
   );

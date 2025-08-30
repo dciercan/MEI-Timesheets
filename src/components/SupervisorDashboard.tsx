@@ -18,7 +18,7 @@ export default function SupervisorDashboard({ submissions }: SupervisorDashboard
           <CardDescription>A record of all timesheets you have submitted.</CardDescription>
         </CardHeader>
         <CardContent>
-            <SubmissionsTable submissions={submissions} />
+            <SubmissionsTable submissions={submissions} view="supervisor" />
         </CardContent>
       </Card>
   );

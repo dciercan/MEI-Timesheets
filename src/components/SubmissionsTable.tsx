@@ -12,6 +12,7 @@ import {
   getSortedRowModel,
   ColumnFiltersState,
   getFilteredRowModel,
+  VisibilityState,
 } from '@tanstack/react-table';
 import {
   Table,
@@ -49,13 +50,15 @@ import EditTimesheetDialog from './EditTimesheetDialog';
 
 interface SubmissionsTableProps {
     submissions: TimesheetSubmissionWithDetails[];
+    view: 'admin' | 'supervisor';
 }
 
-export default function SubmissionsTable({ submissions: initialSubmissions }: SubmissionsTableProps) {
+export default function SubmissionsTable({ submissions: initialSubmissions, view }: SubmissionsTableProps) {
   const [submissions, setSubmissions] = React.useState(initialSubmissions);
   const [sorting, setSorting] = React.useState<SortingState>([ { id: 'timesheetDate', desc: true }]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = React.useState(false);
   const [selectedSubmission, setSelectedSubmission] = React.useState<TimesheetSubmissionWithDetails | null>(null);
@@ -211,6 +214,7 @@ export default function SubmissionsTable({ submissions: initialSubmissions }: Su
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
+    onColumnVisibilityChange: setColumnVisibility,
     initialState: {
         pagination: {
             pageSize: 20,
@@ -219,8 +223,20 @@ export default function SubmissionsTable({ submissions: initialSubmissions }: Su
     state: {
       sorting,
       columnFilters,
+      columnVisibility,
     },
   });
+
+  React.useEffect(() => {
+    if (view === 'supervisor') {
+      table.setColumnVisibility({
+        notes: false,
+        submittedBy_fullName: false,
+        submittedAt: false,
+      });
+    }
+  }, [table, view]);
+
 
   return (
     <>
