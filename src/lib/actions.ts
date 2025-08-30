@@ -27,10 +27,8 @@ const addTimesheetSchema = z.object({
     notes: z.string().optional(),
 });
 
-type AddTimesheetData = z.infer<typeof addTimesheetSchema>;
 
-
-export async function addTimesheet(data: AddTimesheetData) {
+export async function addTimesheet(data: z.infer<typeof addTimesheetSchema>) {
     const validation = addTimesheetSchema.safeParse(data);
 
     if (!validation.success) {
@@ -38,23 +36,23 @@ export async function addTimesheet(data: AddTimesheetData) {
         return { success: false, error: "Invalid data submitted." };
     }
 
-    const { crewMemberIds, submittedById, ...restOfData } = validation.data;
+    const { crewMemberIds, ...submissionData } = validation.data;
 
     for (const crewMemberId of crewMemberIds) {
         const newSubmission: TimesheetSubmission = {
             id: `ts-${Date.now()}-${Math.random()}`,
-            submittedById: submittedById,
+            submittedById: submissionData.submittedById,
             crewMemberId: crewMemberId,
-            timesheetDate: restOfData.timesheetDate,
-            zone: restOfData.zone,
-            section: restOfData.section,
-            asset: restOfData.asset,
-            subAsset: restOfData.subAsset,
-            activityId: restOfData.activityId,
-            productiveHours: restOfData.productiveHours,
-            quantity: restOfData.quantity,
-            unproductiveEntries: restOfData.unproductiveEntries || [],
-            notes: restOfData.notes,
+            timesheetDate: submissionData.timesheetDate,
+            zone: submissionData.zone,
+            section: submissionData.section,
+            asset: submissionData.asset,
+            subAsset: submissionData.subAsset,
+            activityId: submissionData.activityId,
+            productiveHours: submissionData.productiveHours,
+            quantity: submissionData.quantity,
+            unproductiveEntries: submissionData.unproductiveEntries || [],
+            notes: submissionData.notes,
             submittedAt: new Date(),
         };
         timesheetSubmissions.unshift(newSubmission);
