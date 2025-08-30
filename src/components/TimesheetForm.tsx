@@ -45,6 +45,7 @@ const formSchema = z.object({
 });
 
 const zoneOptions = ['S1', 'S2', 'S3', 'S4', 'S5', 'MAN RAMPS', 'LPR RAMPS'];
+const sectionOptions = ['M011', 'M01J', 'M020 S1', 'M020 S2', 'Central Corridor', 'XP1', 'XP2', 'XP3', 'XP4', 'XP5'];
 
 export default function TimesheetForm() {
   const { toast } = useToast();
@@ -245,9 +246,16 @@ export default function TimesheetForm() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Section</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., A1" {...field} />
-                        </FormControl>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                                <SelectTrigger>
+                                <SelectValue placeholder="Select a section" />
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {sectionOptions.map(section => <SelectItem key={section} value={section}>{section}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
