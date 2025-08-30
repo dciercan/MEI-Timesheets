@@ -109,27 +109,34 @@ export default function TimesheetForm() {
         return;
     }
     try {
-        for (const crewMemberId of values.crewMemberIds) {
-            await addTimesheet({ ...values, crewMemberId, submittedById: loggedInUser.id });
+        const result = await addTimesheet({ ...values, submittedById: loggedInUser.id });
+
+        if (result.success) {
+             toast({
+                title: "Timesheet Submitted!",
+                description: `Timesheet for ${values.crewMemberIds.length} crew member(s) has been saved.`,
+            });
+            form.reset({
+                timesheetDate: new Date(),
+                crewMemberIds: [],
+                zone: "",
+                section: "",
+                asset: "",
+                subAsset: "",
+                activityId: "",
+                productiveHours: 8,
+                quantity: 0,
+                unproductiveEntries: [],
+                notes: "",
+            });
+            setSelectedActivity(null);
+        } else {
+             toast({
+                variant: "destructive",
+                title: "Submission Failed",
+                description: "There was an error submitting the timesheet.",
+             });
         }
-      toast({
-        title: "Timesheet Submitted!",
-        description: `Timesheet for ${values.crewMemberIds.length} crew member(s) has been saved.`,
-      });
-      form.reset({
-        timesheetDate: new Date(),
-        crewMemberIds: [],
-        zone: "",
-        section: "",
-        asset: "",
-        subAsset: "",
-        activityId: "",
-        productiveHours: 8,
-        quantity: 0,
-        unproductiveEntries: [],
-        notes: "",
-      });
-      setSelectedActivity(null);
     } catch (error) {
       console.error("Submission failed:", error);
       toast({

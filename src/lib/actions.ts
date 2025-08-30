@@ -8,20 +8,30 @@ import { z } from 'zod';
 
 // In a real app, you would not mutate an in-memory array.
 // This is for demonstration purposes only.
-export async function addTimesheet(data: Omit<TimesheetSubmission, 'id' | 'submittedAt'>) {
-    const newSubmission: TimesheetSubmission = {
-        ...data,
-        id: `ts-${Date.now()}`,
-        timesheetDate: new Date(data.timesheetDate), // Ensure this is a Date object
-        submittedAt: new Date(),
-    };
-    timesheetSubmissions.unshift(newSubmission); // Add to the beginning of the array
+
+type AddTimesheetData = Omit<TimesheetSubmission, 'id' | 'submittedAt' | 'crewMemberId'> & {
+    crewMemberIds: string[];
+};
+
+export async function addTimesheet(data: AddTimesheetData) {
+    const { crewMemberIds, ...restOfData } = data;
+
+    for (const crewMemberId of crewMemberIds) {
+        const newSubmission: TimesheetSubmission = {
+            ...restOfData,
+            id: `ts-${Date.now()}-${Math.random()}`, // Add random to avoid collision in batch
+            crewMemberId,
+            timesheetDate: new Date(data.timesheetDate),
+            submittedAt: new Date(),
+        };
+        timesheetSubmissions.unshift(newSubmission);
+    }
     
-    // Revalidate paths to show the new submission
+    // Revalidate paths once after the batch operation to show the new submissions
     revalidatePath('/admin');
     revalidatePath('/timesheet/my-submissions');
     
-    return { success: true, submission: newSubmission };
+    return { success: true };
 }
 
 const timesheetSchema = z.object({
