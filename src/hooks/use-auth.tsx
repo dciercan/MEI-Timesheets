@@ -73,14 +73,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = (userToLogin: User) => {
-    setCookie('currentUser', JSON.stringify(userToLogin), 7); // Store for 7 days
     setUser(userToLogin); // Update state immediately
-    // Force a full page reload to ensure server components get the new cookie.
-    if (userToLogin.appRole === 'Admin') {
-        window.location.href = '/admin';
-    } else {
-        window.location.href = '/timesheet';
-    }
+    setCookie('currentUser', JSON.stringify(userToLogin), 7); // Store for 7 days
+
+    // Redirect after a very short delay to allow state to propagate
+    setTimeout(() => {
+        if (userToLogin.appRole === 'Admin') {
+            window.location.href = '/admin';
+        } else {
+            window.location.href = '/timesheet';
+        }
+    }, 50);
   };
 
   const logout = () => {
