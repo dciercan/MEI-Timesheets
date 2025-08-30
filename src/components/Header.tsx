@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Menu, User, LayoutDashboard, Users, LogOut, FileText } from 'lucide-react';
+import { Menu, User, LayoutDashboard, Users, LogOut, FileText, Eye } from 'lucide-react';
 import Logo from './Logo';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
@@ -16,7 +16,7 @@ const defaultLinks = [
 ];
 
 const adminLinks = [
-  { href: '/admin', label: 'Admin Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Subcontractor Admin'] },
+  { href: '/admin', label: 'Admin Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Subcontractor Admin', 'Read Only'] },
   { href: '/admin/users', label: 'User Admin', icon: Users, roles: ['Admin', 'Subcontractor Admin'] },
 ]
 

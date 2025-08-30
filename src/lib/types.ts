@@ -4,7 +4,7 @@ export type User = {
   id: string;
   fullName: string;
   company: string;
-  appRole: 'Crew Member' | 'Crew Supervisor' | 'Admin' | 'Subcontractor Admin' | 'MEI Supervisor';
+  appRole: 'Crew Member' | 'Crew Supervisor' | 'Admin' | 'Subcontractor Admin' | 'MEI Supervisor' | 'Read Only';
 };
 
 export type Activity = {

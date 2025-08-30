@@ -268,7 +268,7 @@ const userSchema = z.object({
     id: z.string().optional(),
     fullName: z.string().min(1, "Full name is required."),
     company: z.string().min(1, "Company is required."),
-    appRole: z.enum(['Crew Member', 'Crew Supervisor', 'Admin', 'Subcontractor Admin', 'MEI Supervisor']),
+    appRole: z.enum(['Crew Member', 'Crew Supervisor', 'Admin', 'Subcontractor Admin', 'MEI Supervisor', 'Read Only']),
 });
 
 export async function saveUser(formData: FormData) {
