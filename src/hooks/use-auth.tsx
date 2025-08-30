@@ -49,6 +49,7 @@ function eraseCookie(name: string) {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     try {
@@ -67,12 +68,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (userToLogin: User) => {
     setUser(userToLogin);
     setCookie('currentUser', JSON.stringify(userToLogin), 7);
+    // Let the component handle the redirect
   }, []);
 
   const logout = useCallback(() => {
     eraseCookie('currentUser');
     setUser(null);
-    window.location.assign('/');
+    // Use window.location to ensure a full refresh to the login page
+    window.location.href = '/';
   }, []);
 
   return (

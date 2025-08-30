@@ -45,16 +45,18 @@ export default function Welcome({ users }: WelcomeProps) {
     if (userToLogin) {
       setIsLoggingIn(true);
       await login(userToLogin);
-      // Use the router for a soft navigation.
-      // This allows the middleware to handle the redirect correctly.
+      // Use the router for a soft navigation after login.
+      // The middleware will handle the redirect to the correct dashboard.
       router.push('/');
-      router.refresh(); // Ensures the server-side state is re-evaluated.
+      router.refresh(); 
     } else {
         setError('Could not find user. Please try again.');
         setIsLoggingIn(false);
     }
   };
 
+  // The AuthWrapper handles the main loading state. 
+  // We can show a simpler loader here if needed while the user object is resolved post-login.
   if (isLoading || user) {
      return (
         <div className="flex items-center justify-center min-h-screen bg-background">

@@ -4,11 +4,13 @@
 import { useAuth } from '@/hooks/use-auth';
 import { Skeleton } from './ui/skeleton';
 import Header from './Header';
-import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 
 export default function AuthWrapper({ children }: { children: React.ReactNode }) {
     const { user, isLoading } = useAuth();
+    const pathname = usePathname();
 
+    // Show a full-page loading skeleton only during the initial auth check
     if (isLoading) {
         return (
            <div className="flex flex-col min-h-screen">
@@ -26,6 +28,7 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
        );
     }
     
+    // If the user is logged in, show the header and the page content
     if (user) {
         return (
              <div className="flex flex-col min-h-screen">
@@ -36,6 +39,9 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
             </div>
         );
     }
-    
+
+    // If the user is not logged in (and not loading), show the page content directly
+    // This allows public pages like the login page to render.
+    // The middleware is responsible for protecting routes.
     return <>{children}</>;
 }
