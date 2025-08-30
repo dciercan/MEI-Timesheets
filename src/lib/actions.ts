@@ -6,7 +6,7 @@ import type { TimesheetSubmission } from './types';
 
 // In a real app, you would not mutate an in-memory array.
 // This is for demonstration purposes only.
-export async function addTimesheet(data: Omit<TimesheetSubmission, 'id' | 'submittedAt' | 'workDescription'>) {
+export async function addTimesheet(data: Omit<TimesheetSubmission, 'id' | 'submittedAt'>) {
     const newSubmission: TimesheetSubmission = {
         ...data,
         id: `ts-${Date.now()}`,
@@ -26,3 +26,5 @@ export async function getTimesheetSubmissions(): Promise<TimesheetSubmission[]> 
     // Sorting by submittedAt descending to show newest first.
     return Promise.resolve(timesheetSubmissions.sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime()));
 }
+
+    

@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -30,6 +30,8 @@ const formSchema = z.object({
   crewMemberIds: z.array(z.string()).min(1, "Please select at least one crew member."),
   zone: z.string().min(1, "Zone is required."),
   section: z.string().min(1, "Section is required."),
+  asset: z.string().min(1, "Please select an asset."),
+  subAsset: z.string().min(1, "Please select a sub-asset."),
   activityId: z.string().min(1, "Please select an activity."),
   productiveHours: z.coerce.number().min(0.1, "Productive hours must be greater than 0."),
   quantity: z.coerce.number().min(0, "Quantity is required."),
@@ -53,6 +55,8 @@ export default function TimesheetForm() {
       crewMemberIds: [],
       zone: "",
       section: "",
+      asset: "",
+      subAsset: "",
       activityId: "",
       productiveHours: 8,
       quantity: 0,
@@ -65,6 +69,20 @@ export default function TimesheetForm() {
     control: form.control,
     name: "unproductiveEntries",
   });
+
+  const selectedAsset = form.watch("asset");
+  const selectedSubAsset = form.watch("subAsset");
+
+  const assets = useMemo(() => [...new Set(activities.map(a => a.asset))], []);
+  const subAssets = useMemo(() => {
+    if (!selectedAsset) return [];
+    return [...new Set(activities.filter(a => a.asset === selectedAsset).map(a => a.subAsset))];
+  }, [selectedAsset]);
+  const filteredActivities = useMemo(() => {
+    if (!selectedAsset || !selectedSubAsset) return [];
+    return activities.filter(a => a.asset === selectedAsset && a.subAsset === selectedSubAsset);
+  }, [selectedAsset, selectedSubAsset]);
+
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
@@ -80,6 +98,8 @@ export default function TimesheetForm() {
         crewMemberIds: [],
         zone: "",
         section: "",
+        asset: "",
+        subAsset: "",
         activityId: "",
         productiveHours: 8,
         quantity: 0,
@@ -229,59 +249,112 @@ export default function TimesheetForm() {
               <div className="space-y-2">
                 <h3 className="text-lg font-medium font-headline">Activity</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end pt-4">
-                  <div className="md:col-span-1">
-                      <FormField
-                          control={form.control}
-                          name="activityId"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Activity Selection</FormLabel>
-                              <Select onValueChange={(value) => {
-                                  field.onChange(value);
-                                  setSelectedActivity(activities.find(a => a.id === value) || null);
-                              }} value={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select an activity" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                    {activities.map(act => (
-                                        <SelectItem key={act.id} value={act.id}>{act.activity}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                  </div>
                   <FormField
-                      control={form.control}
-                      name="productiveHours"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Productive Hours</FormLabel>
+                    control={form.control}
+                    name="asset"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Asset</FormLabel>
+                        <Select onValueChange={(value) => {
+                          field.onChange(value);
+                          form.setValue("subAsset", "");
+                          form.setValue("activityId", "");
+                          setSelectedActivity(null);
+                        }} value={field.value}>
                           <FormControl>
-                            <Input type="number" step="0.1" placeholder="e.g., 8" {...field} />
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select an asset" />
+                            </SelectTrigger>
                           </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="quantity"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Quantity {selectedActivity ? `(${selectedActivity.activityUom})` : ''}</FormLabel>
+                          <SelectContent>
+                            {assets.map(asset => <SelectItem key={asset} value={asset}>{asset}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="subAsset"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Sub Asset</FormLabel>
+                        <Select onValueChange={(value) => {
+                          field.onChange(value);
+                          form.setValue("activityId", "");
+                          setSelectedActivity(null);
+                        }} value={field.value} disabled={!selectedAsset}>
                           <FormControl>
-                            <Input type="number" step="0.1" placeholder="e.g., 25" {...field} />
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a sub-asset" />
+                            </SelectTrigger>
                           </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                          <SelectContent>
+                            {subAssets.map(subAsset => <SelectItem key={subAsset} value={subAsset}>{subAsset}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="activityId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Activity Selection</FormLabel>
+                        <Select
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            setSelectedActivity(activities.find(a => a.id === value) || null);
+                          }}
+                          value={field.value}
+                          disabled={!selectedSubAsset}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select an activity" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {filteredActivities.map(act => (
+                              <SelectItem key={act.id} value={act.id}>{act.activity}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end pt-4">
+                  <FormField
+                    control={form.control}
+                    name="productiveHours"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Productive Hours</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.1" placeholder="e.g., 8" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="quantity"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Quantity {selectedActivity ? `(${selectedActivity.activityUom})` : ''}</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.1" placeholder="e.g., 25" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
               </div>
 
@@ -371,3 +444,5 @@ export default function TimesheetForm() {
     </div>
   );
 }
+
+    

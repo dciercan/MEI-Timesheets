@@ -17,11 +17,23 @@ export const users: User[] = [
 ];
 
 export const activities: Activity[] = [
+  // Asset: Road
   { id: 'act-001', contract: 'C-123', zone: 'North', section: 'A1', asset: 'Road', subAsset: 'Pavement', activity: 'Asphalt Patching', activityUom: 'm2', wbsCode: 'WBS-101' },
+  { id: 'act-001b', contract: 'C-123', zone: 'North', section: 'A1', asset: 'Road', subAsset: 'Pavement', activity: 'Crack Sealing', activityUom: 'm', wbsCode: 'WBS-101' },
   { id: 'act-002', contract: 'C-123', zone: 'North', section: 'A1', asset: 'Road', subAsset: 'Signage', activity: 'Install Sign', activityUom: 'Each', wbsCode: 'WBS-102' },
+  { id: 'act-002b', contract: 'C-123', zone: 'North', section: 'A1', asset: 'Road', subAsset: 'Signage', activity: 'Repair Sign', activityUom: 'Each', wbsCode: 'WBS-102' },
+  { id: 'act-002c', contract: 'C-123', zone: 'North', section: 'A1', asset: 'Road', subAsset: 'Linemarking', activity: 'Paint Centerline', activityUom: 'km', wbsCode: 'WBS-103' },
+  
+  // Asset: Bridge
   { id: 'act-003', contract: 'C-124', zone: 'South', section: 'B2', asset: 'Bridge', subAsset: 'Deck', activity: 'Concrete Repair', activityUom: 'm3', wbsCode: 'WBS-201' },
+  { id: 'act-003b', contract: 'C-124', zone: 'South', section: 'B2', asset: 'Bridge', subAsset: 'Deck', activity: 'Waterproofing', activityUom: 'm2', wbsCode: 'WBS-201' },
   { id: 'act-004', contract: 'C-124', zone: 'South', section: 'B2', asset: 'Bridge', subAsset: 'Guardrail', activity: 'Guardrail Installation', activityUom: 'm', wbsCode: 'WBS-202' },
+  { id: 'act-004b', contract: 'C-124', zone: 'South', section: 'B2', asset: 'Bridge', subAsset: 'Guardrail', activity: 'Guardrail Repair', activityUom: 'm', wbsCode: 'WBS-202' },
+  
+  // Asset: Drainage
   { id: 'act-005', contract: 'C-125', zone: 'East', section: 'C3', asset: 'Drainage', subAsset: 'Culvert', activity: 'Culvert Cleaning', activityUom: 'Each', wbsCode: 'WBS-301' },
+  { id: 'act-005b', contract: 'C-125', zone: 'East', section: 'C3', asset: 'Drainage', subAsset: 'Culvert', activity: 'Culvert Repair', activityUom: 'Each', wbsCode: 'WBS-301' },
+  { id: 'act-006', contract: 'C-125', zone: 'East', section: 'C3', asset: 'Drainage', subAsset: 'Ditch', activity: 'Ditch Cleaning', activityUom: 'm', wbsCode: 'WBS-302' },
 ];
 
 export const unproductiveReasons: UnproductiveReason[] = [
@@ -38,6 +50,8 @@ export const timesheetSubmissions: TimesheetSubmission[] = [
         crewMemberId: '1',
         zone: 'North',
         section: 'A1',
+        asset: 'Road',
+        subAsset: 'Pavement',
         activityId: 'act-001',
         productiveHours: 6,
         quantity: 15,
@@ -54,6 +68,8 @@ export const timesheetSubmissions: TimesheetSubmission[] = [
         crewMemberId: '2',
         zone: 'South',
         section: 'B2',
+        asset: 'Bridge',
+        subAsset: 'Deck',
         activityId: 'act-003',
         productiveHours: 8,
         quantity: 2,
@@ -62,3 +78,5 @@ export const timesheetSubmissions: TimesheetSubmission[] = [
         submittedAt: new Date('2024-07-21T18:00:00.000Z'),
     }
 ];
+
+    

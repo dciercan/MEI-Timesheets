@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import type { TimesheetSubmission } from "@/lib/types";
 import { users, activities, unproductiveReasons } from "@/lib/data";
 import { format } from "date-fns";
-import { User, Calendar, Clock, Edit3, Hash, Briefcase, ListTodo, FileText } from "lucide-react";
+import { User, Calendar, Clock, Edit3, Hash, Briefcase, ListTodo, FileText, Building, Layers } from "lucide-react";
 
 interface AdminDashboardProps {
   submissions: TimesheetSubmission[];
@@ -67,9 +67,11 @@ export default function AdminDashboard({ submissions }: AdminDashboardProps) {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <InfoItem icon={Calendar} label="Timesheet Date" value={format(new Date(submission.timesheetDate), "PPP")} />
                         <InfoItem icon={User} label="Crew Member" value={crewMember?.fullName} />
+                        <InfoItem icon={Building} label="Asset" value={submission.asset} />
+                        <InfoItem icon={Layers} label="Sub Asset" value={submission.subAsset} />
+                        <InfoItem icon={Briefcase} label="Activity" value={activity?.activity} />
                         <InfoItem icon={Clock} label="Productive Hours" value={submission.productiveHours} badge={activity?.activityUom === "Hours" ? null : "Hours"}/>
                         <InfoItem icon={Hash} label="Quantity" value={submission.quantity} badge={activity?.activityUom} />
-                        <InfoItem icon={Briefcase} label="Activity" value={activity?.activity} />
                         <InfoItem icon={FileText} label="WBS Code" value={activity?.wbsCode} />
                         <div className="md:col-span-2 lg:col-span-3">
                             <h4 className="font-semibold mb-2 flex items-center gap-2"><ListTodo className="h-4 w-4" /> Unproductive Time</h4>
@@ -119,3 +121,5 @@ function InfoItem({ icon: Icon, label, value, badge }: { icon: React.ElementType
     </div>
   )
 }
+
+    

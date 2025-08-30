@@ -35,6 +35,8 @@ export type TimesheetSubmission = {
   crewMemberId: string;
   zone: string;
   section: string;
+  asset: string;
+  subAsset: string;
   activityId: string;
   productiveHours: number;
   quantity: number;
@@ -42,3 +44,5 @@ export type TimesheetSubmission = {
   notes?: string;
   submittedAt: Date;
 };
+
+    
