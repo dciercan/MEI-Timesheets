@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { Skeleton } from './ui/skeleton';
 
 export default function AuthWrapper({ children }: { children: React.ReactNode }) {
-    const { isLoading } = useAuth();
+    const { user, isLoading } = useAuth();
 
     if (isLoading) {
          return (
@@ -23,5 +23,13 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
         );
     }
     
+    // If loading is finished and we still don't have a user,
+    // it means the user is on the login page (enforced by middleware).
+    // In that case, we should render nothing from the wrapper.
+    if (!user) {
+        return null;
+    }
+
+    // If loading is finished and we have a user, render the children.
     return <>{children}</>;
 }

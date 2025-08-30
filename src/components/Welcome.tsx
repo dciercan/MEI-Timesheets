@@ -20,7 +20,7 @@ export default function Welcome({ users }: WelcomeProps) {
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [error, setError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const { login, user } = useAuth();
+  const { login, user, isLoading } = useAuth();
   const router = useRouter();
 
   const companies = useMemo(() => [...new Set(users.map(u => u.company))], [users]);
@@ -28,14 +28,10 @@ export default function Welcome({ users }: WelcomeProps) {
   const filteredUsers = useMemo(() => {
     if (!selectedCompany) return [];
     
-    // Admins can log in as anyone, but normal users are restricted.
-    // The main admin company is 'Spark'.
     if (selectedCompany === 'Spark') {
         return users.filter(u => u.company === selectedCompany && u.appRole === 'Admin');
     }
 
-    // Subcontractor Admins and Crew Supervisors are the only roles that can log in from the welcome screen
-    // for non-admin companies.
     return users.filter(u => u.company === selectedCompany && (u.appRole === 'Crew Supervisor' || u.appRole === 'Subcontractor Admin'));
 
   }, [selectedCompany, users]);
@@ -49,7 +45,9 @@ export default function Welcome({ users }: WelcomeProps) {
     if (userToLogin) {
       setIsLoggingIn(true);
       login(userToLogin);
-      // This will trigger the middleware to redirect
+      // Trigger a navigation to the root. The middleware will catch this
+      // and redirect to the appropriate dashboard. This is more reliable
+      // than client-side routing logic.
       router.push('/');
     } else {
         setError('Could not find user. Please try again.');
@@ -57,10 +55,14 @@ export default function Welcome({ users }: WelcomeProps) {
     }
   };
 
-  // If the user is already logged in, the middleware should handle redirection.
-  // This component shouldn't be visible for a logged-in user.
-  if (user) {
-    return null;
+  // While the auth status is loading, or if the user is already logged in,
+  // the middleware should be handling redirection, so we can show a spinner or nothing.
+  if (isLoading || user) {
+     return (
+        <div className="flex items-center justify-center min-h-screen bg-background">
+         <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </div>
+    );
   }
 
   return (

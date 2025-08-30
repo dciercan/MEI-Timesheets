@@ -20,10 +20,10 @@ export function middleware(request: NextRequest) {
 
   if (currentUser) {
     const isUserAdmin = currentUser.appRole === 'Admin' || currentUser.appRole === 'Subcontractor Admin';
-    const targetUrl = isUserAdmin ? '/admin' : '/timesheet';
-
+    
     // If logged-in user is on the auth page, redirect them to their dashboard.
     if (isAuthPage) {
+      const targetUrl = isUserAdmin ? '/admin' : '/timesheet';
       return NextResponse.redirect(new URL(targetUrl, request.url));
     }
     

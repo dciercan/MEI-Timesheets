@@ -2,7 +2,6 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
 import type { User } from '@/lib/types';
 
 interface AuthContextType {
@@ -50,7 +49,6 @@ function eraseCookie(name: string) {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
 
   useEffect(() => {
     try {
@@ -74,7 +72,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     eraseCookie('currentUser');
     setUser(null);
-    router.push('/');
+    // Force a reload to ensure middleware runs and redirects to login page.
+    window.location.assign('/');
   };
 
   return (
