@@ -21,18 +21,18 @@ export function middleware(request: NextRequest) {
   if (currentUser) {
     const isUserAdmin = currentUser.appRole === 'Admin' || currentUser.appRole === 'Subcontractor Admin';
     
-    // If logged-in user is on the auth page, redirect them to their dashboard.
+    // If a logged-in user is on the auth page, redirect them to their dashboard.
     if (isAuthPage) {
       const targetUrl = isUserAdmin ? '/admin' : '/timesheet';
       return NextResponse.redirect(new URL(targetUrl, request.url));
     }
     
-    // Protect admin routes from non-admins
+    // Protect admin routes from non-admins.
     if (pathname.startsWith('/admin') && !isUserAdmin) {
        return NextResponse.redirect(new URL('/timesheet', request.url));
     }
 
-    // Protect supervisor-only pages from admins
+    // Protect supervisor-only pages from admins (who have a different dashboard).
     if (pathname === '/timesheet/my-submissions' && isUserAdmin) {
          return NextResponse.redirect(new URL('/admin', request.url));
     }
