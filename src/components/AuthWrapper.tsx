@@ -29,9 +29,10 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
              }
         }
     }, [user, isLoading, router, pathname]);
-    
-    // Show a full-page loading skeleton only if we are still loading AND not on the initial server render.
-    if (isLoading && pathname !== '/') {
+
+    const isAuthPage = pathname === '/';
+
+    if (isLoading && !isAuthPage) {
         return (
             <div className="flex flex-col items-center justify-center h-screen bg-background">
                 <div className='mb-8'>
@@ -43,10 +44,9 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
                     <Skeleton className="h-12 w-full mt-6" />
                 </div>
             </div>
-        )
+        );
     }
-
-    const isAuthPage = pathname === '/';
+    
     // On the server, or after loading, if we're on the auth page, render it.
     if (isAuthPage) {
         return <>{children}</>;
