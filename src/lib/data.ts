@@ -62,10 +62,11 @@ export const activities: Activity[] = [
 ];
 
 export const unproductiveReasons: UnproductiveReason[] = [
-  { id: 'unprod-01', code: 'WEATHER', reason: 'Inclement Weather', uom: 'Hours' },
-  { id: 'unprod-02', code: 'EQUIP-DOWN', reason: 'Equipment Breakdown', uom: 'Hours' },
-  { id: 'unprod-03', code: 'SITE-ISSUE', reason: 'Site Access Issue', uom: 'Hours' },
-  { id: 'unprod-04', code: 'MEETING', reason: 'Safety Meeting / Toolbox Talk', uom: 'Hours' },
+  { id: 'unprod-01', code: 'SAF', reason: 'Safety Meeting', uom: 'min' },
+  { id: 'unprod-02', code: 'PRE', reason: 'Prestarts', uom: 'min' },
+  { id: 'unprod-03', code: 'CRB', reason: 'Crib', uom: 'min' },
+  { id: 'unprod-04', code: 'LOG', reason: 'Logistics - Transit Travel', uom: 'min' },
+  { id: 'unprod-05', code: 'TOB', reason: 'Toilet Breaks', uom: 'min' },
 ];
 
 export const timesheetSubmissions: TimesheetSubmission[] = [
@@ -81,7 +82,6 @@ export const timesheetSubmissions: TimesheetSubmission[] = [
         productiveHours: 6,
         quantity: 1,
         unproductiveEntries: [
-            { reasonId: 'unprod-04', hours: 1 },
             { reasonId: 'unprod-01', hours: 1 },
         ],
         notes: 'Installed one VMS unit on gantry 5. Heavy rain in the afternoon.',

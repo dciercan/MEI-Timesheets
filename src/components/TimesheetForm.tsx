@@ -408,9 +408,9 @@ export default function TimesheetForm() {
                                 name={`unproductiveEntries.${index}.hours`}
                                 render={({ field }) => (
                                     <FormItem>
-                                    <FormLabel>Hours</FormLabel>
+                                    <FormLabel>Time (minutes)</FormLabel>
                                     <FormControl>
-                                        <Input type="number" step="0.1" placeholder="e.g., 1" {...field} />
+                                        <Input type="number" step="1" placeholder="e.g., 30" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                     </FormItem>
@@ -426,7 +426,7 @@ export default function TimesheetForm() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => append({ reasonId: "", hours: 1 })}
+                    onClick={() => append({ reasonId: "", hours: 30 })}
                   >
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Add Unproductive Time

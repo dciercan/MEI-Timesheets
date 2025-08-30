@@ -70,7 +70,7 @@ export default function AdminDashboard({ submissions }: AdminDashboardProps) {
                         <InfoItem icon={Building} label="Asset" value={submission.asset} />
                         <InfoItem icon={Layers} label="Sub Asset" value={submission.subAsset} />
                         <InfoItem icon={Briefcase} label="Activity" value={activity?.activity} />
-                        <InfoItem icon={Clock} label="Productive Hours" value={submission.productiveHours} badge={activity?.activityUom === "Hours" ? null : "Hours"}/>
+                        <InfoItem icon={Clock} label="Productive Hours" value={submission.productiveHours} badge={"Hours"}/>
                         <InfoItem icon={Hash} label="Quantity" value={submission.quantity} badge={activity?.activityUom} />
                         <InfoItem icon={FileText} label="WBS Code" value={activity?.wbsCode} />
                         <div className="md:col-span-2 lg:col-span-3">
@@ -79,7 +79,7 @@ export default function AdminDashboard({ submissions }: AdminDashboardProps) {
                             <ul className="list-disc list-inside space-y-1 text-sm">
                                 {submission.unproductiveEntries.map((entry, idx) => {
                                 const reason = findById(unproductiveReasons, entry.reasonId);
-                                return <li key={idx}>{reason?.reason || 'Unknown Reason'}: {entry.hours} hrs</li>;
+                                return <li key={idx}>{reason?.reason || 'Unknown Reason'}: {entry.hours} mins</li>;
                                 })}
                             </ul>
                             ) : (
