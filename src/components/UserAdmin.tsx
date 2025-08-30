@@ -84,7 +84,7 @@ type UserFormData = z.infer<typeof userFormSchema>;
 
 interface UserAdminProps {
     initialUsers: User[];
-    currentUser?: User | null;
+    currentUser: User;
 }
 
 export default function UserAdmin({ initialUsers, currentUser }: UserAdminProps) {
@@ -120,7 +120,7 @@ export default function UserAdmin({ initialUsers, currentUser }: UserAdminProps)
     setSelectedUser(null);
     form.reset({ 
         fullName: '', 
-        company: isSubcontractorAdmin ? currentUser?.company : '', 
+        company: isSubcontractorAdmin ? currentUser.company : '', 
         appRole: 'Crew Member' 
     });
     setIsFormOpen(true);
