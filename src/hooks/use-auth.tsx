@@ -9,7 +9,7 @@ interface AuthContextType {
   user: User | null;
   login: (user: User) => Promise<void>;
   logout: () => void;
-  isLoading: boolean; // Keep this for initial load check, but simplify its use.
+  isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -67,12 +67,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (userToLogin: User) => {
     setUser(userToLogin);
     setCookie('currentUser', JSON.stringify(userToLogin), 7);
-    // The component calling login is responsible for navigation.
   }, []);
 
   const logout = useCallback(() => {
     eraseCookie('currentUser');
     setUser(null);
+    // Hard redirect to ensure clean state
     window.location.href = '/';
   }, []);
 

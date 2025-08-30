@@ -4,22 +4,13 @@
 import { useAuth } from '@/hooks/use-auth';
 import { Skeleton } from './ui/skeleton';
 import Header from './Header';
-import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
 
 export default function AuthWrapper({ children }: { children: React.ReactNode }) {
-    const { user } = useAuth();
-    const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+    const { user, isLoading } = useAuth();
 
-    // This effect runs only once on initial mount to prevent a flash of the login page
-    // if the user is already authenticated.
-    useEffect(() => {
-        setIsCheckingAuth(false);
-    }, []);
-
-    // While checking the initial auth status, show a full-page skeleton.
-    if (isCheckingAuth) {
-        return (
+    // While checking the initial auth status from the cookie, show a full-page skeleton.
+    if (isLoading) {
+       return (
            <div className="flex flex-col min-h-screen">
                <header className="sticky top-0 z-50 w-full border-b bg-card shadow-sm">
                    <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
