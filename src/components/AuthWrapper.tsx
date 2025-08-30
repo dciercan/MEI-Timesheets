@@ -45,18 +45,22 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
         return null; 
     }
     
-    const isAuthPage = pathname === '/';
-    const isAdminSection = pathname.startsWith('/admin');
-    
     // Prevent flicker of content during redirect
-    if (user && isAuthPage) {
-        return null; // Don't show login page if user is logged in
-    }
-    if (!user && !isAuthPage) {
-        return null; // Don't show app content if user is not logged in
-    }
-    if (user && (user.appRole !== 'Admin' && user.appRole !== 'Subcontractor Admin') && isAdminSection) {
-        return null; // Don't show admin section to non-admins
+    if (user) {
+        const isAuthPage = pathname === '/';
+        const isAdminSection = pathname.startsWith('/admin');
+
+        // If user is logged in but on the auth page
+        if (isAuthPage) return null;
+
+        // If non-admin user tries to access admin section
+        if ((user.appRole !== 'Admin' && user.appRole !== 'Subcontractor Admin') && isAdminSection) {
+            return null;
+        }
+
+    } else { // If user is not logged in
+        // and is not on the auth page, we are about to redirect, so don't show anything
+        if (pathname !== '/') return null;
     }
 
 
