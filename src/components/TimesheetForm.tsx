@@ -208,7 +208,7 @@ export default function TimesheetForm() {
                                         />
                                         </FormControl>
                                         <FormLabel className="font-normal">
-                                        {user.fullName} ({user.appRole})
+                                        {user.fullName} ({user.company})
                                         </FormLabel>
                                     </FormItem>
                                     )
