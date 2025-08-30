@@ -33,10 +33,10 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
              }
         }
     }, [user, isLoading, pathname, isMounted]);
-
-    if (!isMounted || isLoading) {
-        // Show a full-page loader to prevent layout shifts and content flashing
-        // while we wait for client-side auth state to be confirmed.
+    
+    // While loading or before the component has mounted, show a full-page loader.
+    // This prevents content flashing and ensures we don't make redirect decisions prematurely.
+    if (isLoading || !isMounted) {
         return (
              <div className="flex flex-col items-center justify-center h-screen bg-background">
                 <div className='mb-8'>
@@ -52,9 +52,9 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
     }
     
     const isAuthPage = pathname === '/';
-    
-    // If user is logged in, but on the auth page, we are redirecting, so show loader.
-    if(user && isAuthPage) {
+
+    // If we are in the process of redirecting, show a simple "Redirecting..." message.
+    if ((user && isAuthPage) || (!user && !isAuthPage)) {
          return (
              <div className="flex flex-col items-center justify-center h-screen bg-background">
                 <div className='mb-8'>
@@ -64,18 +64,7 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
             </div>
         );
     }
-
-    // If user is not logged in and not on auth page, we are redirecting, so show loader.
-    if(!user && !isAuthPage) {
-        return (
-             <div className="flex flex-col items-center justify-center h-screen bg-background">
-                <div className='mb-8'>
-                    <Logo />
-                </div>
-                 <p>Redirecting...</p>
-            </div>
-        );
-    }
     
+    // If all checks pass, render the children components.
     return <>{children}</>;
 }
