@@ -83,9 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } else {
         router.push('/timesheet');
     }
-    // We intentionally don't set loading to false here.
-    // The page redirect will cause a re-render, and the useEffect in AuthProvider 
-    // will set isLoading to false after it initializes the user from the cookie.
+    setIsLoading(false);
   };
 
   const logout = () => {
