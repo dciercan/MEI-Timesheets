@@ -30,9 +30,9 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
         }
     }, [user, isLoading, router, pathname]);
 
-    const isAuthPage = pathname === '/';
-
-    if (isLoading && !isAuthPage) {
+    // While loading, if we're not on an auth page, show a skeleton loader.
+    // This prevents content flashing for protected pages.
+    if (isLoading && pathname !== '/') {
         return (
             <div className="flex flex-col items-center justify-center h-screen bg-background">
                 <div className='mb-8'>
@@ -47,16 +47,18 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
         );
     }
     
-    // On the server, or after loading, if we're on the auth page, render it.
-    if (isAuthPage) {
+    // If we're on the login page, always render it, regardless of auth state.
+    // The useEffect will handle redirection if the user is already logged in.
+    if (pathname === '/') {
         return <>{children}</>;
     }
-    
-    // If we have a user, we can render the children.
+
+    // For any other page, if we have a user, render the content.
     if (user) {
         return <>{children}</>;
     }
 
-    // Otherwise, we are likely redirecting, so render nothing to avoid flicker.
+    // If there's no user and we're not on the login page, we are likely redirecting.
+    // Return null to avoid flashing content before the redirect happens.
     return null;
 }

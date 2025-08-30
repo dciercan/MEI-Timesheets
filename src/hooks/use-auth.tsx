@@ -54,7 +54,6 @@ function eraseCookie(name: string) {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
 
   useEffect(() => {
     // This effect runs once on mount to initialize auth state from cookie.
@@ -76,6 +75,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = (userToLogin: User) => {
     setCookie('currentUser', JSON.stringify(userToLogin), 7); // Store for 7 days
+    setUser(userToLogin); // Update state immediately
+    // Force a full page reload to ensure server components get the new cookie.
     if (userToLogin.appRole === 'Admin') {
         window.location.href = '/admin';
     } else {
@@ -85,6 +86,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     eraseCookie('currentUser');
+    setUser(null);
+    // Force a full page reload to ensure server components recognize the logged-out state.
     window.location.href = '/';
   };
 
