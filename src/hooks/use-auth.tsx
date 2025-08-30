@@ -75,21 +75,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = (userToLogin: User) => {
-    setIsLoading(true); // Set loading true during login transition
     setCookie('currentUser', JSON.stringify(userToLogin), 7); // Store for 7 days
-    setUser(userToLogin);
     if (userToLogin.appRole === 'Admin') {
-        router.push('/admin');
+        window.location.href = '/admin';
     } else {
-        router.push('/timesheet');
+        window.location.href = '/timesheet';
     }
-    setIsLoading(false);
   };
 
   const logout = () => {
-    setUser(null);
     eraseCookie('currentUser');
-    router.push('/');
+    window.location.href = '/';
   };
 
   return (

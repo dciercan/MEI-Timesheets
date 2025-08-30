@@ -2,13 +2,12 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import type { User } from '@/lib/types';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { LogIn } from 'lucide-react';
+import { LogIn, Loader2 } from 'lucide-react';
 import Logo from './Logo';
 
 interface WelcomeProps {
@@ -19,6 +18,7 @@ export default function Welcome({ users }: WelcomeProps) {
   const [selectedCompany, setSelectedCompany] = useState<string>('');
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [error, setError] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const { login } = useAuth();
 
   const companies = useMemo(() => [...new Set(users.map(u => u.company))], [users]);
@@ -43,6 +43,7 @@ export default function Welcome({ users }: WelcomeProps) {
     }
     const userToLogin = users.find(u => u.id === selectedUserId);
     if (userToLogin) {
+      setIsLoggingIn(true);
       login(userToLogin);
     } else {
         setError('Could not find user. Please try again.');
@@ -92,7 +93,7 @@ export default function Welcome({ users }: WelcomeProps) {
                         <SelectItem key={user.id} value={user.id}>{user.fullName}</SelectItem>
                     ))
                 ) : (
-                    <div className="px-2 py-1.5 text-sm text-muted-foreground">No users available for this selection.</div>
+                    <div className="px-2 py-1.5 text-sm text-muted-foreground">No supervisors available for this company.</div>
                 )}
               </SelectContent>
             </Select>
@@ -100,9 +101,9 @@ export default function Welcome({ users }: WelcomeProps) {
           {error && <p className="text-sm text-destructive">{error}</p>}
         </CardContent>
         <CardFooter>
-          <Button onClick={handleLogin} className="w-full" size="lg" disabled={!selectedUserId}>
-            <LogIn className="mr-2" />
-            Sign In
+          <Button onClick={handleLogin} className="w-full" size="lg" disabled={!selectedUserId || isLoggingIn}>
+            {isLoggingIn ? <Loader2 className="mr-2 animate-spin" /> : <LogIn className="mr-2" />}
+            {isLoggingIn ? 'Signing In...' : 'Sign In'}
           </Button>
         </CardFooter>
       </Card>
