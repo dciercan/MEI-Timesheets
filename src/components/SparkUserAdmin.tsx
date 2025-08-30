@@ -100,11 +100,11 @@ export default function SparkUserAdmin({ initialUsers, currentUser }: UserAdminP
 
   const refetchUsers = React.useCallback(async () => {
     // Spark admin gets all users
-    const updatedUsers = await getUsers();
+    const updatedUsers = await getUsers(currentUser);
     setUsers(updatedUsers);
     const companies = [...new Set(updatedUsers.map(u => u.company))].sort();
     setAllCompanies(companies);
-  }, []);
+  }, [currentUser]);
 
   React.useEffect(() => {
     const companies = [...new Set(initialUsers.map(u => u.company))].sort();
