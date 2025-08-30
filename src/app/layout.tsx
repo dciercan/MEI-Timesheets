@@ -3,6 +3,9 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import Header from '@/components/Header';
 import { cn } from '@/lib/utils';
+import { AuthProvider } from '@/hooks/use-auth';
+import AuthWrapper from '@/components/AuthWrapper';
+
 
 export const metadata: Metadata = {
   title: 'MEI Timesheet',
@@ -22,13 +25,17 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Lora:wght@400;700&display=swap" rel="stylesheet" />
       </head>
       <body className={cn("font-body antialiased")}>
-        <div className="flex flex-col min-h-screen">
-          <Header />
-          <main className="flex-grow">
-            {children}
-          </main>
-          <Toaster />
-        </div>
+        <AuthProvider>
+            <AuthWrapper>
+                <div className="flex flex-col min-h-screen">
+                    <Header />
+                    <main className="flex-grow">
+                        {children}
+                    </main>
+                    <Toaster />
+                </div>
+            </AuthWrapper>
+        </AuthProvider>
       </body>
     </html>
   );

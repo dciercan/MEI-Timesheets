@@ -1,13 +1,14 @@
 
+
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { cn } from "@/lib/utils";
-import { addTimesheet } from "@/lib/actions";
-import { users, activities, unproductiveReasons } from "@/lib/data";
+import { addTimesheet, getUsers } from "@/lib/actions";
+import { activities, unproductiveReasons } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -19,9 +20,10 @@ import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { CalendarIcon, PlusCircle, Trash2, Loader2, Send } from "lucide-react";
-import type { Activity } from "@/lib/types";
+import type { Activity, User } from "@/lib/types";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useAuth } from "@/hooks/use-auth";
 
 const formSchema = z.object({
   timesheetDate: z.date({
@@ -49,7 +51,17 @@ const sectionOptions = ['M011', 'M01J', 'M020 S1', 'M020 S2', 'Central Corridor'
 
 export default function TimesheetForm() {
   const { toast } = useToast();
+  const { user: loggedInUser } = useAuth();
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+
+  useEffect(() => {
+    async function fetchUsers() {
+      const users = await getUsers();
+      setAllUsers(users);
+    }
+    fetchUsers();
+  }, [])
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -120,13 +132,15 @@ export default function TimesheetForm() {
     }
   };
 
-  const crewMembers = users
-  .filter(u => u.appRole === 'Crew Member' || u.appRole === 'Crew Supervisor')
-  .sort((a, b) => {
-    if (a.appRole === 'Crew Supervisor' && b.appRole !== 'Crew Supervisor') return -1;
-    if (a.appRole !== 'Crew Supervisor' && b.appRole === 'Crew Supervisor') return 1;
-    return a.fullName.localeCompare(b.fullName);
-  });
+ const crewMembers = useMemo(() => {
+    return allUsers
+      .filter(u => u.appRole === 'Crew Member' || u.appRole === 'Crew Supervisor')
+      .sort((a, b) => {
+        if (a.appRole === 'Crew Supervisor' && b.appRole !== 'Crew Supervisor') return -1;
+        if (a.appRole !== 'Crew Supervisor' && b.appRole === 'Crew Supervisor') return 1;
+        return a.fullName.localeCompare(b.fullName);
+      });
+ }, [allUsers]);
 
   return (
     <div className="container mx-auto max-w-4xl py-8 px-4 md:px-6">
@@ -135,7 +149,9 @@ export default function TimesheetForm() {
           <Card className="shadow-lg">
             <CardHeader>
               <CardTitle className="font-headline text-3xl">New Timesheet</CardTitle>
-              <CardDescription>Enter details for a crew's work day.</CardDescription>
+              <CardDescription>
+                Timesheet for supervisor: <span className="font-semibold">{loggedInUser?.fullName} ({loggedInUser?.company})</span>
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -198,7 +214,7 @@ export default function TimesheetForm() {
                                             checked={field.value?.includes(user.id)}
                                             onCheckedChange={(checked) => {
                                             return checked
-                                                ? field.onChange([...field.value, user.id])
+                                                ? field.onChange([...(field.value || []), user.id])
                                                 : field.onChange(
                                                     field.value?.filter(
                                                     (value) => value !== user.id

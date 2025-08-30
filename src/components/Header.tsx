@@ -1,24 +1,42 @@
+
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Menu, User, LayoutDashboard, Users } from 'lucide-react';
+import { Menu, User, LayoutDashboard, Users, LogOut } from 'lucide-react';
 import Logo from './Logo';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/use-auth';
 
-const navLinks = [
-  { href: '/', label: 'Timesheet Entry', icon: User },
-  { href: '/admin', label: 'Admin Dashboard', icon: LayoutDashboard },
-  { href: '/admin/users', label: 'User Admin', icon: Users },
+const defaultLinks = [
+  { href: '/timesheet', label: 'Timesheet Entry', icon: User, roles: ['Crew Supervisor', 'Timesheet Admin'] },
 ];
+
+const adminLinks = [
+  { href: '/admin', label: 'Admin Dashboard', icon: LayoutDashboard, roles: ['Timesheet Admin'] },
+  { href: '/admin/users', label: 'User Admin', icon: Users, roles: ['Timesheet Admin'] },
+]
 
 export default function Header() {
   const pathname = usePathname();
+  const { user, logout, isLoading } = useAuth();
+  
+  if (isLoading || !user) {
+    return (
+        <header className="sticky top-0 z-50 w-full border-b bg-card shadow-sm">
+             <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
+                <Logo />
+             </div>
+        </header>
+    );
+  }
+
+  const availableLinks = [...defaultLinks, ...adminLinks].filter(link => user?.appRole && link.roles.includes(user.appRole));
 
   const renderNavLinks = (isMobile = false) =>
-    navLinks.map((link) => (
+    availableLinks.map((link) => (
       <Link key={link.href} href={link.href} passHref>
         <Button
           variant={pathname === link.href ? 'secondary' : 'ghost'}
@@ -36,30 +54,37 @@ export default function Header() {
         <Link href="/">
           <Logo />
         </Link>
-
-        <nav className="hidden items-center gap-4 md:flex">
-          {renderNavLinks()}
-        </nav>
-
-        <div className="md:hidden">
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="icon">
-                <Menu className="h-6 w-6" />
-                <span className="sr-only">Open navigation menu</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left">
-              <div className="flex h-full flex-col">
-                <div className="mb-8">
-                  <Link href="/">
-                    <Logo />
-                  </Link>
+        <div className='flex items-center gap-4'>
+            <nav className="hidden items-center gap-4 md:flex">
+            {renderNavLinks()}
+            </nav>
+            <div className="flex items-center gap-2">
+                <span className="text-sm font-medium hidden sm:inline">{user.fullName}</span>
+                 <Button onClick={logout} variant="outline" size="icon">
+                    <LogOut className="h-5 w-5" />
+                    <span className="sr-only">Logout</span>
+                </Button>
+            </div>
+            <div className="md:hidden">
+            <Sheet>
+                <SheetTrigger asChild>
+                <Button variant="outline" size="icon">
+                    <Menu className="h-6 w-6" />
+                    <span className="sr-only">Open navigation menu</span>
+                </Button>
+                </SheetTrigger>
+                <SheetContent side="left">
+                <div className="flex h-full flex-col">
+                    <div className="mb-8">
+                    <Link href="/">
+                        <Logo />
+                    </Link>
+                    </div>
+                    <nav className="flex flex-col gap-4">{renderNavLinks(true)}</nav>
                 </div>
-                <nav className="flex flex-col gap-4">{renderNavLinks(true)}</nav>
-              </div>
-            </SheetContent>
-          </Sheet>
+                </SheetContent>
+            </Sheet>
+            </div>
         </div>
       </div>
     </header>

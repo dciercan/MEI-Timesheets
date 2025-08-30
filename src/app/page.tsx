@@ -1,5 +1,9 @@
-import TimesheetForm from "@/components/TimesheetForm";
+import Welcome from "@/components/Welcome";
+import { getUsers } from "@/lib/actions";
 
-export default function Home() {
-  return <TimesheetForm />;
+export const dynamic = 'force-dynamic';
+
+export default async function WelcomePage() {
+  const users = await getUsers();
+  return <Welcome users={users} />;
 }
