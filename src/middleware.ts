@@ -9,11 +9,9 @@ export function middleware(request: NextRequest) {
 
   if (currentUserCookie?.value) {
     try {
-      // The cookie value might be URL-encoded.
       currentUser = JSON.parse(decodeURIComponent(currentUserCookie.value));
     } catch (e) {
       currentUser = null;
-      // If the cookie is malformed, delete it and redirect to login
       const response = NextResponse.redirect(new URL('/', request.url));
       response.cookies.delete('currentUser');
       return response;
@@ -22,37 +20,29 @@ export function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
   const isLoginPage = pathname === '/';
+  const isAdminRoute = pathname.startsWith('/admin');
   
-  // If user is logged in
   if (currentUser) {
-    const isAdminUser = currentUser.appRole === 'Admin' || currentUser.appRole === 'Subcontractor Admin';
-    const isSupervisor = currentUser.appRole === 'Crew Supervisor';
-    const isAdminRoute = pathname.startsWith('/admin');
+    const isAllowedAdmin = currentUser.appRole === 'Admin' || currentUser.appRole === 'Subcontractor Admin';
 
-    // If a logged-in user is trying to access the login page, redirect them to their correct dashboard.
+    // If logged in user is on the login page, redirect them.
     if (isLoginPage) {
-      const targetUrl = isAdminUser ? '/admin' : '/timesheet';
+      const targetUrl = isAllowedAdmin ? '/admin' : '/timesheet';
       return NextResponse.redirect(new URL(targetUrl, request.url));
     }
     
-    // If a non-admin user tries to access an admin route, redirect them to their dashboard.
-    if (isAdminRoute && !isAdminUser) {
+    // If a non-admin tries to access an admin route, redirect them.
+    if (isAdminRoute && !isAllowedAdmin) {
        return NextResponse.redirect(new URL('/timesheet', request.url));
-    }
-
-    // If an admin user tries to access a supervisor-only page, redirect them to the admin dashboard.
-    if (pathname.startsWith('/timesheet/my-submissions') && isAdminUser) {
-        return NextResponse.redirect(new URL('/admin', request.url));
     }
     
   } else {
-    // If user is not logged in and trying to access any page other than the login page, redirect them to login.
+    // If user is not logged in and not on the login page, redirect them to login.
     if (!isLoginPage) {
       return NextResponse.redirect(new URL('/', request.url));
     }
   }
   
-  // If none of the above conditions are met, allow the request to proceed.
   return NextResponse.next();
 }
 

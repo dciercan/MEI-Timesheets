@@ -8,7 +8,6 @@ import Header from './Header';
 export default function AuthWrapper({ children }: { children: React.ReactNode }) {
     const { user, isLoading } = useAuth();
 
-    // While checking the initial auth status from the cookie, show a full-page skeleton.
     if (isLoading) {
        return (
            <div className="flex flex-col min-h-screen">
@@ -26,7 +25,6 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
        );
     }
     
-    // If the user is logged in, show the header and the protected page content.
     if (user) {
         return (
              <div className="flex flex-col min-h-screen">
@@ -38,7 +36,5 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
         );
     }
 
-    // If the user is not logged in, show the public page content directly (e.g., the login page).
-    // The middleware is responsible for protecting routes and redirecting.
     return <>{children}</>;
 }

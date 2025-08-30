@@ -9,7 +9,7 @@ interface AuthContextType {
   user: User | null;
   login: (user: User) => Promise<void>;
   logout: () => void;
-  isLoading: boolean;
+  isLoading: boolean; // Keep for initial page load skeleton
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -48,7 +48,7 @@ function eraseCookie(name: string) {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true); // Only for the very initial app load
 
   useEffect(() => {
     try {
@@ -72,7 +72,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(() => {
     eraseCookie('currentUser');
     setUser(null);
-    // Hard redirect to ensure clean state
     window.location.href = '/';
   }, []);
 
