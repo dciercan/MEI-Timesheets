@@ -1,5 +1,41 @@
 [
   {
+    "id": "TS-1756624205528-f8fx20j",
+    "crewDocketId": "DOCKET-1756624205527-1tdomo4",
+    "crewMemberId": "15",
+    "productiveHours": 6,
+    "unproductiveEntries": [
+      {
+        "reasonId": "unprod-03",
+        "minutes": 30
+      }
+    ]
+  },
+  {
+    "id": "TS-1756624205528-ak0hl0l",
+    "crewDocketId": "DOCKET-1756624205527-1tdomo4",
+    "crewMemberId": "11",
+    "productiveHours": 6,
+    "unproductiveEntries": [
+      {
+        "reasonId": "unprod-03",
+        "minutes": 30
+      }
+    ]
+  },
+  {
+    "id": "TS-1756624205528-t34wfo5",
+    "crewDocketId": "DOCKET-1756624205527-1tdomo4",
+    "crewMemberId": "2",
+    "productiveHours": 6,
+    "unproductiveEntries": [
+      {
+        "reasonId": "unprod-03",
+        "minutes": 30
+      }
+    ]
+  },
+  {
     "id": "TS-1756624012032-mvmbog8",
     "crewDocketId": "DOCKET-1756624012031-a3udx2f",
     "crewMemberId": "4",
