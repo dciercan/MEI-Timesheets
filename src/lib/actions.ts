@@ -319,16 +319,12 @@ export async function getCrewDockets(
     }
 
     let filteredDockets: CrewDocket[];
-    const isSparkAdminOrReadOnly = ['Admin', 'Read Only'].includes(currentUser.appRole);
+    const isSparkUser = ['Admin', 'MEI Supervisor', 'Read Only'].includes(currentUser.appRole);
 
-    if (isSparkAdminOrReadOnly) {
-        // Spark Admins and Read Only see all dockets from all companies
+    if (isSparkUser) {
+        // Spark Admins, Supervisors and Read Only see all dockets from all companies
         filteredDockets = allDockets;
-    } else if (currentUser.appRole === 'MEI Supervisor') {
-        // MEI Supervisor sees all dockets for approval/oversight
-        filteredDockets = allDockets;
-    }
-    else if (currentUser.appRole === 'Subcontractor Admin') {
+    } else if (currentUser.appRole === 'Subcontractor Admin') {
         // Subcontractor Admin sees all dockets for their company
         filteredDockets = allDockets.filter(s => s.company === currentUser.company);
     } else if (currentUser.appRole === 'Crew Supervisor') {
