@@ -147,24 +147,24 @@ export default function SupervisorDashboard({ dockets }: SupervisorDashboardProp
                         </div>
                     </div>
                      <div className="flex items-center gap-3">
-                        <Building className="h-5 w-5 text-primary"/>
-                        <div>
-                            <p className="font-semibold text-sm">{docket.company}</p>
-                            <p className="text-xs text-muted-foreground">Company</p>
-                        </div>
-                    </div>
-                     <div className="flex items-center gap-3">
                         <MapPin className="h-5 w-5 text-primary"/>
                         <div>
                             <p className="font-semibold text-sm">{docket.zone} / {docket.section}</p>
                             <p className="text-xs text-muted-foreground">Location</p>
                         </div>
                     </div>
-                     <div className="flex items-center gap-3">
-                        <Activity className="h-5 w-5 text-primary"/>
+                    <div className="flex items-center gap-3">
+                        <Users className="h-5 w-5 text-primary"/>
                         <div>
-                            <p className="font-semibold text-sm">{docket.activity?.activity}</p>
-                            <p className="text-xs text-muted-foreground">Activity</p>
+                            <p className="font-semibold text-sm">{docket.crewMembers.length}</p>
+                            <p className="text-xs text-muted-foreground">Crew</p>
+                        </div>
+                    </div>
+                     <div className="flex items-center gap-3">
+                        <FileText className="h-5 w-5 text-primary"/>
+                        <div>
+                            <p className="font-semibold text-sm">{docket.asset} / {docket.subAsset}</p>
+                            <p className="text-xs text-muted-foreground">Asset / Sub-Asset</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
@@ -258,8 +258,8 @@ export default function SupervisorDashboard({ dockets }: SupervisorDashboardProp
               <AccordionContent className="px-6 pb-4">
                  <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6 pt-4 border-t">
                     <InfoItem icon={Hash} label="Docket ID" value={docket.id} />
-                    <InfoItem icon={Users} label="Crew Members" value={docket.crewMembers.length} />
-                    <InfoItem icon={FileText} label="Asset / Sub-Asset" value={`${docket.asset} / ${docket.subAsset}`} />
+                    <InfoItem icon={Building} label="Company" value={docket.company} />
+                     <InfoItem icon={Activity} label="Activity" value={docket.activity?.activity} />
                     <InfoItem icon={Clock} label="Productive Hours" value={productiveHours} />
                     <InfoItem icon={Hash} label="Quantity" value={docket.quantity} badge={docket.activity?.activityUom} />
                     <InfoItem icon={Watch} label="Unproductive Time" value={totalUnproductiveMinutes} badge="minutes per person" />
@@ -309,3 +309,4 @@ export default function SupervisorDashboard({ dockets }: SupervisorDashboardProp
     </Card>
   );
 }
+
