@@ -29,6 +29,7 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import {
   AlertDialog,
@@ -42,14 +43,16 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { MoreHorizontal, ArrowUpDown, Trash2, Edit } from 'lucide-react';
-import type { CrewDocketWithDetails } from '@/lib/types';
-import { deleteCrewDocket } from '@/lib/actions';
+import { MoreHorizontal, ArrowUpDown, Trash2, Edit, CheckCircle, XCircle } from 'lucide-react';
+import type { CrewDocketWithDetails, CrewDocketStatus } from '@/lib/types';
+import { deleteCrewDocket, updateDocketStatus } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import EditSubmissionGroupDialog from './EditSubmissionGroupDialog';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
+import { Badge } from './ui/badge';
+import { cn } from '@/lib/utils';
 
 interface SubmissionsTableProps {
     dockets: CrewDocketWithDetails[];
@@ -90,6 +93,16 @@ export default function SubmissionsTable({ dockets: initialDockets }: Submission
       setSelectedDocket(null);
     }
   };
+
+  const handleStatusUpdate = async (docketId: string, status: 'Approved' | 'Rejected') => {
+    const result = await updateDocketStatus(docketId, status);
+    if (result.success) {
+        toast({ title: result.message });
+        router.refresh();
+    } else {
+        toast({ variant: 'destructive', title: 'Error', description: result.error });
+    }
+  };
   
   const handleSubmissionUpdated = () => {
     setIsEditDialogOpen(false);
@@ -97,6 +110,16 @@ export default function SubmissionsTable({ dockets: initialDockets }: Submission
     toast({ title: "Crew Docket updated successfully" });
     router.refresh();
   };
+
+  const statusBadgeVariant = (status: CrewDocketStatus) => {
+    switch (status) {
+        case 'Submitted': return 'secondary';
+        case 'Approved': return 'default';
+        case 'Rejected': return 'destructive';
+        case 'Processed': return 'outline';
+        default: return 'secondary';
+    }
+  }
 
   const columns: ColumnDef<CrewDocketWithDetails>[] = [
     {
@@ -107,6 +130,14 @@ export default function SubmissionsTable({ dockets: initialDockets }: Submission
             </Button>
         ),
         cell: ({ row }) => format(new Date(row.getValue('timesheetDate')), 'PPP')
+    },
+    {
+        accessorKey: 'status',
+        header: 'Status',
+        cell: ({ row }) => {
+            const status = row.getValue('status') as CrewDocketStatus;
+            return <Badge variant={statusBadgeVariant(status)} className={cn(status === 'Approved' && 'bg-green-600')}>{status}</Badge>;
+        }
     },
     {
         accessorKey: 'company',
@@ -150,6 +181,9 @@ export default function SubmissionsTable({ dockets: initialDockets }: Submission
       id: 'actions',
       cell: ({ row }) => {
         const docket = row.original;
+        const canApproveReject = currentUser?.appRole === 'MEI Supervisor' && docket.status === 'Submitted';
+        const canEdit = currentUser?.appRole === 'Crew Supervisor' && docket.status === 'Rejected';
+        
         if (currentUser?.appRole === 'Read Only') return null;
         
         return (
@@ -163,8 +197,25 @@ export default function SubmissionsTable({ dockets: initialDockets }: Submission
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                    <DropdownMenuItem onClick={() => handleEdit(docket)}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleDelete(docket)} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
+                    
+                    {canApproveReject && (
+                        <>
+                            <DropdownMenuItem onClick={() => handleStatusUpdate(docket.id, 'Approved')} className="text-green-600 focus:text-green-700">
+                                <CheckCircle className="mr-2 h-4 w-4" /> Approve
+                            </DropdownMenuItem>
+                             <DropdownMenuItem onClick={() => handleStatusUpdate(docket.id, 'Rejected')} className="text-red-600 focus:text-red-700">
+                                <XCircle className="mr-2 h-4 w-4" /> Reject
+                            </DropdownMenuItem>
+                             <DropdownMenuSeparator />
+                        </>
+                    )}
+
+                    <DropdownMenuItem onClick={() => handleEdit(docket)} disabled={!canEdit && currentUser?.appRole !== 'Admin'}>
+                        <Edit className="mr-2 h-4 w-4" /> Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDelete(docket)} className="text-destructive">
+                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+                    </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
           </div>

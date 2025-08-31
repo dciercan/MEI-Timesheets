@@ -31,6 +31,8 @@ export type UnproductiveEntry = {
   minutes: number;
 };
 
+export type TimesheetStatus = 'Submitted' | 'Approved' | 'Rejected' | 'For Payment' | 'Paid';
+
 // New data model for individual timesheets
 export type Timesheet = {
   id: string;
@@ -39,7 +41,10 @@ export type Timesheet = {
   submittedById: string;
   productiveHours: number;
   unproductiveEntries: UnproductiveEntry[];
+  status: TimesheetStatus;
 };
+
+export type CrewDocketStatus = 'Submitted' | 'Approved' | 'Rejected' | 'Processed';
 
 // New data model for crew-level work dockets
 export type CrewDocket = {
@@ -56,6 +61,7 @@ export type CrewDocket = {
   submittedAt: Date;
   submittedById: string;
   crewMemberIds: string[];
+  status: CrewDocketStatus;
 };
 
 // Enriched type for displaying data in the UI

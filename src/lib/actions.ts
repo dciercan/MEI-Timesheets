@@ -2,7 +2,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import type { User, Activity, UnproductiveReason, CrewDocket, Timesheet, CrewDocketWithDetails, TimesheetWithDetails } from './types';
+import type { User, Activity, UnproductiveReason, CrewDocket, Timesheet, CrewDocketWithDetails, TimesheetWithDetails, CrewDocketStatus } from './types';
 import { z } from 'zod';
 import fs from 'fs/promises';
 import path from 'path';
@@ -113,6 +113,7 @@ export async function addCrewDocket(data: z.infer<typeof addCrewDocketSchema>) {
         company: supervisor.company,
         crewMemberIds: allCrewForSubmission,
         submittedAt: new Date(),
+        status: 'Submitted',
     };
 
     allDockets.unshift(newDocket);
@@ -125,6 +126,7 @@ export async function addCrewDocket(data: z.infer<typeof addCrewDocketSchema>) {
             submittedById: newDocket.submittedById,
             productiveHours: productiveHours,
             unproductiveEntries: unproductiveEntries || [],
+            status: 'Submitted',
         };
         allTimesheets.unshift(newTimesheet);
     }
@@ -182,10 +184,12 @@ export async function updateCrewDocket(data: z.infer<typeof updateCrewDocketSche
     const allCrewForSubmission = [...new Set([...docketUpdates.crewMemberIds, originalDocket.submittedById])];
     
     // Update the docket
-    const updatedDocket = {
+    const updatedDocket: CrewDocket = {
         ...originalDocket,
         ...docketUpdates,
         crewMemberIds: allCrewForSubmission,
+        // If a rejected docket is edited, it should go back to "Submitted"
+        status: originalDocket.status === 'Rejected' ? 'Submitted' : originalDocket.status,
     };
     allDockets[docketIndex] = updatedDocket;
 
@@ -201,6 +205,7 @@ export async function updateCrewDocket(data: z.infer<typeof updateCrewDocketSche
         submittedById: updatedDocket.submittedById,
         productiveHours: productiveHours,
         unproductiveEntries: unproductiveEntries || [],
+        status: updatedDocket.status, // Match the docket's new status
     }));
 
     const finalTimesheets = [...otherTimesheets, ...newTimesheets];
@@ -233,6 +238,44 @@ export async function deleteCrewDocket(crewDocketId: string) {
     revalidatePath('/timesheet', 'layout');
     revalidatePath('/reports', 'layout');
     return { success: true };
+}
+
+
+export async function updateDocketStatus(crewDocketId: string, newStatus: 'Approved' | 'Rejected') {
+    const currentUser = await getCurrentUser();
+    if (currentUser?.appRole !== 'MEI Supervisor') {
+        return { success: false, error: "Permission denied." };
+    }
+
+    const allDockets = await readCrewDockets();
+    const docketIndex = allDockets.findIndex(d => d.id === crewDocketId);
+
+    if (docketIndex === -1) {
+        return { success: false, error: "Crew docket not found." };
+    }
+
+    if (allDockets[docketIndex].status !== 'Submitted') {
+        return { success: false, error: `Cannot change status of a docket that is already ${allDockets[docketIndex].status}.` };
+    }
+
+    allDockets[docketIndex].status = newStatus;
+
+    const allTimesheets = await readTimesheets();
+    const updatedTimesheets = allTimesheets.map(ts => {
+        if (ts.crewDocketId === crewDocketId) {
+            return { ...ts, status: newStatus };
+        }
+        return ts;
+    });
+
+    await writeCrewDockets(allDockets);
+    await writeTimesheets(updatedTimesheets);
+
+    revalidatePath('/admin', 'layout');
+    revalidatePath('/timesheet', 'layout');
+    revalidatePath('/reports', 'layout');
+
+    return { success: true, message: `Docket ${newStatus.toLowerCase()}.` };
 }
 
 async function enrichCrewDockets(dockets: CrewDocket[]): Promise<CrewDocketWithDetails[]> {
@@ -280,6 +323,7 @@ export async function getCrewDockets(
     } else if (['Subcontractor Admin', 'Crew Supervisor'].includes(currentUser.appRole)) {
         filteredDockets = allDockets.filter(s => s.company === currentUser.company);
     } else {
+         // Default to only seeing your own if no specific role matches above
         filteredDockets = allDockets.filter(s => s.submittedById === currentUser.id);
     }
     

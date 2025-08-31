@@ -1,3 +1,4 @@
+
 [
   {
     "id": "DOCKET-1756624205527-1tdomo4",
@@ -16,7 +17,8 @@
     "quantity": 20,
     "notes": "",
     "company": "ConstructCo",
-    "submittedAt": "2025-08-31T07:10:05.527Z"
+    "submittedAt": "2025-08-31T07:10:05.527Z",
+    "status": "Submitted"
   },
   {
     "id": "DOCKET-1756624012031-a3udx2f",
@@ -35,6 +37,7 @@
     "quantity": 11,
     "notes": "",
     "company": "BuildIt",
-    "submittedAt": "2025-08-31T07:06:52.032Z"
+    "submittedAt": "2025-08-31T07:06:52.032Z",
+    "status": "Submitted"
   }
 ]
