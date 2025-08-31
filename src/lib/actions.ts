@@ -123,6 +123,7 @@ export async function addCrewDocket(data: z.infer<typeof addCrewDocketSchema>) {
             id: `TS-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
             crewDocketId: newDocket.id,
             crewMemberId: crewMemberId,
+            submittedById: newDocket.submittedById,
             productiveHours: productiveHours,
             unproductiveEntries: unproductiveEntries || [],
         };
@@ -182,11 +183,13 @@ export async function updateCrewDocket(data: z.infer<typeof updateCrewDocketSche
     const allCrewForSubmission = [...new Set([...docketUpdates.crewMemberIds, originalDocket.submittedById])];
     
     // Update the docket
-    allDockets[docketIndex] = {
+    const updatedDocket = {
         ...originalDocket,
         ...docketUpdates,
         crewMemberIds: allCrewForSubmission,
     };
+    allDockets[docketIndex] = updatedDocket;
+
     
     // Remove old timesheets for this docket
     const otherTimesheets = allTimesheets.filter(t => t.crewDocketId !== crewDocketId);
@@ -196,6 +199,7 @@ export async function updateCrewDocket(data: z.infer<typeof updateCrewDocketSche
         id: `TS-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
         crewDocketId: crewDocketId,
         crewMemberId: crewMemberId,
+        submittedById: updatedDocket.submittedById,
         productiveHours: productiveHours,
         unproductiveEntries: unproductiveEntries || [],
     }));
@@ -271,16 +275,11 @@ export async function getCrewDockets(
 
     let filteredDockets: CrewDocket[];
     const isSparkUser = ['Admin', 'Read Only', 'MEI Supervisor'].includes(currentUser.appRole);
-    const isSubbieAdmin = currentUser.appRole === 'Subcontractor Admin';
-    const isSubbieSupervisor = currentUser.appRole === 'Crew Supervisor';
 
     if (isSparkUser) {
         filteredDockets = allDockets;
-    } else if (isSubbieAdmin || isSubbieSupervisor) {
-        filteredDockets = allDockets.filter(s => s.company === currentUser.company);
     } else {
-        // Fallback for other roles (like Crew Member) to see their own dockets if needed in future
-        filteredDockets = allDockets.filter(docket => docket.crewMemberIds.includes(currentUser.id));
+        filteredDockets = allDockets.filter(s => s.company === currentUser.company);
     }
 
     const sorted = filteredDockets.sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());

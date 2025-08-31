@@ -1,8 +1,10 @@
+
 [
   {
     "id": "TS-1756624205528-f8fx20j",
     "crewDocketId": "DOCKET-1756624205527-1tdomo4",
     "crewMemberId": "15",
+    "submittedById": "15",
     "productiveHours": 6,
     "unproductiveEntries": [
       {
@@ -15,6 +17,7 @@
     "id": "TS-1756624205528-ak0hl0l",
     "crewDocketId": "DOCKET-1756624205527-1tdomo4",
     "crewMemberId": "11",
+    "submittedById": "15",
     "productiveHours": 6,
     "unproductiveEntries": [
       {
@@ -27,6 +30,7 @@
     "id": "TS-1756624205528-t34wfo5",
     "crewDocketId": "DOCKET-1756624205527-1tdomo4",
     "crewMemberId": "2",
+    "submittedById": "15",
     "productiveHours": 6,
     "unproductiveEntries": [
       {
@@ -39,6 +43,7 @@
     "id": "TS-1756624012032-mvmbog8",
     "crewDocketId": "DOCKET-1756624012031-a3udx2f",
     "crewMemberId": "4",
+    "submittedById": "4",
     "productiveHours": 7,
     "unproductiveEntries": [
       {
@@ -51,6 +56,7 @@
     "id": "TS-1756624012032-k7d89eb",
     "crewDocketId": "DOCKET-1756624012031-a3udx2f",
     "crewMemberId": "3",
+    "submittedById": "4",
     "productiveHours": 7,
     "unproductiveEntries": [
       {
@@ -63,6 +69,7 @@
     "id": "TS-1756624012032-yfur4hm",
     "crewDocketId": "DOCKET-1756624012031-a3udx2f",
     "crewMemberId": "8",
+    "submittedById": "4",
     "productiveHours": 7,
     "unproductiveEntries": [
       {

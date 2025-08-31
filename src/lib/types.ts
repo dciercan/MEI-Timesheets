@@ -36,6 +36,7 @@ export type Timesheet = {
   id: string;
   crewDocketId: string;
   crewMemberId: string;
+  submittedById: string;
   productiveHours: number;
   unproductiveEntries: UnproductiveEntry[];
 };
