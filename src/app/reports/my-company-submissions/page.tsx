@@ -69,16 +69,8 @@ export default function MyCompanySubmissionsPage() {
     }
 
     return (
-        <div className="container mx-auto max-w-6xl py-8 px-4 md:px-6">
-            <Card className="shadow-lg">
-                <CardHeader>
-                    <CardTitle className="font-headline text-3xl">All {currentUser.company} Crew Dockets</CardTitle>
-                    <CardDescription>A log of all crew dockets from your company.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <AdminDashboard dockets={dockets} />
-                </CardContent>
-            </Card>
+        <div className="container mx-auto max-w-screen-2xl py-8 px-4 md:px-6">
+            <AdminDashboard dockets={dockets} title={`All ${currentUser.company} Crew Dockets`} description="A log of all crew dockets from your company." />
         </div>
     );
 }

@@ -26,11 +26,6 @@ const adminLinks = [
   { href: '/admin', label: 'Admin Dashboard', icon: LayoutDashboard, roles: ['Admin'] },
   { href: '/admin/users', label: 'User Admin', icon: Users, roles: ['Admin', 'Subcontractor Admin'] },
   { href: '/reports', label: 'Reports', icon: BarChart, roles: ['Admin', 'Read Only', 'Crew Supervisor', 'MEI Supervisor', 'Subcontractor Admin'], exact: true },
-  { href: '/reports/my-company-submissions', label: 'Company Dockets', icon: Building, roles: ['Subcontractor Admin'] },
-  { href: '/reports/my-company-timesheets', label: 'Company Timesheets', icon: FileText, roles: ['Subcontractor Admin']},
-  { href: '/reports/all-submissions', label: 'All Crew Dockets', icon: BarChart, roles: ['Admin']},
-  { href: '/reports/crew-activity', label: 'Global Crew Activity', icon: Users, roles: ['Admin', 'MEI Supervisor', 'Read Only']},
-  { href: '/reports/all-timesheets', label: 'Global Timesheets', icon: Book, roles: ['Admin', 'MEI Supervisor', 'Read Only']},
 ]
 
 export default function Header() {

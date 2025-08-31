@@ -45,7 +45,6 @@ export default function ReportsPage() {
             </Card>
         )}
         
-        {/* Crew Activity Report visible to all spark users */}
         {isSparkUser && (
         <>
           <Card className="shadow-lg hover:shadow-xl transition-shadow">
@@ -98,8 +97,8 @@ export default function ReportsPage() {
                             <Building className="h-6 w-6 text-primary" />
                         </div>
                         <div>
-                            <CardTitle className="font-headline text-xl">All {user.company} Crew Activity Report</CardTitle>
-                            <CardDescription>A summary of all crew dockets from your company, showing key productivity metrics.</CardDescription>
+                            <CardTitle className="font-headline text-xl">All {user.company} Crew Dockets</CardTitle>
+                            <CardDescription>A log of all crew dockets from your company.</CardDescription>
                         </div>
                         </div>
                         <ChevronRight className="h-6 w-6 text-muted-foreground" />
