@@ -271,13 +271,15 @@ export async function getCrewDockets(
 
     let filteredDockets: CrewDocket[];
     const isSparkUser = ['Admin', 'Read Only', 'MEI Supervisor'].includes(currentUser.appRole);
+    const isCompanyUser = ['Subcontractor Admin', 'Crew Supervisor'].includes(currentUser.appRole);
 
     if (isSparkUser) {
         filteredDockets = allDockets;
-    } else if (currentUser.appRole === 'Crew Supervisor') {
-         filteredDockets = allDockets.filter(s => s.submittedById === currentUser.id);
-    } else { // Subcontractor Admin
+    } else if (isCompanyUser) {
         filteredDockets = allDockets.filter(s => s.company === currentUser.company);
+    } else {
+        // Fallback for other roles (like Crew Member) to see their own dockets if needed in future
+        filteredDockets = allDockets.filter(docket => docket.crewMemberIds.includes(currentUser.id));
     }
 
     const sorted = filteredDockets.sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());
