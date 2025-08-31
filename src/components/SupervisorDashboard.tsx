@@ -62,7 +62,7 @@ export default function SupervisorDashboard({ dockets }: SupervisorDashboardProp
         toast({ title: result.message });
         router.refresh();
     } else {
-        toast({ variant: 'destructive', title: 'Error', description: result.error });
+        toast({ variant: "destructive", title: "Error", description: result.error });
     }
   };
 
