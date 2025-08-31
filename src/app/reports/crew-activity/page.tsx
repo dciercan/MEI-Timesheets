@@ -8,8 +8,10 @@ export const dynamic = 'force-dynamic';
 
 export default async function CrewActivityReportPage() {
     const currentUser = await getCurrentUser();
+    // Pass the current user to getCrewDockets to correctly filter data based on role
     const dockets = await getCrewDockets(currentUser); 
     
+    // Determine the report title and description based on the user's role
     const isSparkUser = currentUser?.appRole === 'Admin' || currentUser?.appRole === 'MEI Supervisor' || currentUser?.appRole === 'Read Only';
     const reportTitle = isSparkUser ? "Global Crew Activity Report" : (currentUser?.company ? `${currentUser.company} Crew Activity Report` : "Crew Activity Report");
     const reportDescription = isSparkUser ? "A summary of all crew dockets from all companies, showing key productivity metrics." : "A summary of all crew dockets from your company, showing key productivity metrics.";

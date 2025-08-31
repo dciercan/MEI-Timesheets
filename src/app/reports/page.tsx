@@ -23,8 +23,9 @@ export default function ReportsPage() {
             Select a report to view.
           </p>
         </header>
-
-        {isSparkAdmin && (
+        
+        {isSparkUser && (
+        <>
             <Card className="shadow-lg hover:shadow-xl transition-shadow">
                 <Link href="/reports/all-submissions" className="block">
                     <CardHeader>
@@ -43,10 +44,6 @@ export default function ReportsPage() {
                     </CardHeader>
                 </Link>
             </Card>
-        )}
-        
-        {isSparkUser && (
-        <>
           <Card className="shadow-lg hover:shadow-xl transition-shadow">
             <Link href="/reports/crew-activity" className="block">
                 <CardHeader>
@@ -99,6 +96,24 @@ export default function ReportsPage() {
                         <div>
                             <CardTitle className="font-headline text-xl">All {user.company} Crew Dockets</CardTitle>
                             <CardDescription>A log of all crew dockets from your company.</CardDescription>
+                        </div>
+                        </div>
+                        <ChevronRight className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    </CardHeader>
+                </Link>
+              </Card>
+               <Card className="shadow-lg hover:shadow-xl transition-shadow">
+                <Link href="/reports/crew-activity" className="block">
+                    <CardHeader>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                        <div className="p-3 bg-primary/10 rounded-full">
+                            <Users className="h-6 w-6 text-primary" />
+                        </div>
+                        <div>
+                            <CardTitle className="font-headline text-xl">{user.company} Crew Activity Report</CardTitle>
+                            <CardDescription>A summary of all crew dockets from your company, showing key productivity metrics.</CardDescription>
                         </div>
                         </div>
                         <ChevronRight className="h-6 w-6 text-muted-foreground" />

@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { ListTodo } from "lucide-react";
@@ -15,6 +14,7 @@ interface AdminDashboardProps {
 
 export default function AdminDashboard({ dockets, title, description }: AdminDashboardProps) {
 
+  // The no-docket message is now handled by the parent pages, simplifying this component.
   if (dockets.length === 0) {
     return (
       <Card className="shadow-lg">
