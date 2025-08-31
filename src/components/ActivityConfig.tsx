@@ -23,18 +23,110 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, ArrowUpDown, Edit, Trash2 } from 'lucide-react';
+import { MoreHorizontal, ArrowUpDown, Edit, Trash2, PlusCircle, Loader2 } from 'lucide-react';
 import type { Activity } from '@/lib/types';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel } from './ui/dropdown-menu';
 import { Input } from './ui/input';
+import { useToast } from '@/hooks/use-toast';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from './ui/dialog';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from './ui/form';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { deleteActivity, getActivities, saveActivity } from '@/lib/actions';
+import { useRouter } from 'next/navigation';
 
 interface ActivityConfigProps {
   activities: Activity[];
 }
 
-export default function ActivityConfig({ activities }: ActivityConfigProps) {
+const activityFormSchema = z.object({
+    id: z.string().optional(),
+    asset: z.string().min(1, 'Asset is required'),
+    subAsset: z.string().min(1, 'Sub-Asset is required'),
+    activity: z.string().min(1, 'Activity is required'),
+    activityUom: z.string().min(1, 'UoM is required'),
+    wbsCode: z.string().min(1, 'WBS Code is required'),
+    // These are part of the model but not edited here
+    contract: z.string().optional(),
+    zone: z.string().optional(),
+    section: z.string().optional(),
+});
+type ActivityFormData = z.infer<typeof activityFormSchema>;
+
+
+export default function ActivityConfig({ activities: initialActivities }: ActivityConfigProps) {
+  const [activities, setActivities] = React.useState(initialActivities);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+  const { toast } = useToast();
+  const router = useRouter();
+
+  const [isFormOpen, setIsFormOpen] = React.useState(false);
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = React.useState(false);
+  const [selectedActivity, setSelectedActivity] = React.useState<Activity | null>(null);
+  const [isSaving, setIsSaving] = React.useState(false);
+
+  const form = useForm<ActivityFormData>({
+    resolver: zodResolver(activityFormSchema),
+    defaultValues: {
+      asset: '',
+      subAsset: '',
+      activity: '',
+      activityUom: '',
+      wbsCode: '',
+    },
+  });
+
+  const refetchData = async () => {
+    const data = await getActivities();
+    setActivities(data);
+  }
+
+  const handleAddNew = () => {
+    setSelectedActivity(null);
+    form.reset({ asset: '', subAsset: '', activity: '', activityUom: '', wbsCode: '' });
+    setIsFormOpen(true);
+  };
+
+  const handleEdit = (activity: Activity) => {
+    setSelectedActivity(activity);
+    form.reset(activity);
+    setIsFormOpen(true);
+  };
+
+  const handleDelete = (activity: Activity) => {
+    setSelectedActivity(activity);
+    setIsDeleteAlertOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (selectedActivity) {
+      const result = await deleteActivity(selectedActivity.id);
+      if (result.success) {
+        toast({ title: 'Activity deleted successfully.' });
+        await refetchData();
+      } else {
+        toast({ variant: 'destructive', title: 'Error', description: result.error });
+      }
+      setIsDeleteAlertOpen(false);
+      setSelectedActivity(null);
+    }
+  };
+
+  const onSubmit = async (data: ActivityFormData) => {
+    setIsSaving(true);
+    const result = await saveActivity(data);
+    if (result.success) {
+        toast({ title: `Activity ${data.id ? 'updated' : 'created'} successfully.` });
+        await refetchData();
+        setIsFormOpen(false);
+    } else {
+        toast({ variant: 'destructive', title: 'Error', description: result.error });
+    }
+    setIsSaving(false);
+  };
 
   const columns: ColumnDef<Activity>[] = [
     {
@@ -72,8 +164,9 @@ export default function ActivityConfig({ activities }: ActivityConfigProps) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => {}}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => {}} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
+                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => handleEdit(activity)}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleDelete(activity)} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -97,13 +190,17 @@ export default function ActivityConfig({ activities }: ActivityConfigProps) {
 
   return (
     <>
-        <div className="flex items-center py-4">
+        <div className="flex items-center justify-between py-4">
             <Input
                 placeholder="Filter by activity..."
                 value={(table.getColumn('activity')?.getFilterValue() as string) ?? ''}
                 onChange={(event) => table.getColumn('activity')?.setFilterValue(event.target.value)}
                 className="max-w-sm"
             />
+            <Button onClick={handleAddNew}>
+                <PlusCircle className="mr-2 h-4 w-4"/>
+                Add Activity
+            </Button>
         </div>
       <div className="rounded-md border">
         <Table>
@@ -145,6 +242,62 @@ export default function ActivityConfig({ activities }: ActivityConfigProps) {
           Next
         </Button>
       </div>
+
+       {/* Form Dialog */}
+        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>{selectedActivity ? 'Edit Activity' : 'Add New Activity'}</DialogTitle>
+                    <DialogDescription>
+                        {selectedActivity ? "Update the activity details below." : "Enter details for the new activity."}
+                    </DialogDescription>
+                </DialogHeader>
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+                        <FormField control={form.control} name="asset" render={({ field }) => (
+                            <FormItem><FormLabel>Asset</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )}/>
+                        <FormField control={form.control} name="subAsset" render={({ field }) => (
+                            <FormItem><FormLabel>Sub-Asset</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )}/>
+                         <FormField control={form.control} name="activity" render={({ field }) => (
+                            <FormItem><FormLabel>Activity</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )}/>
+                         <FormField control={form.control} name="activityUom" render={({ field }) => (
+                            <FormItem><FormLabel>Unit of Measure (UoM)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )}/>
+                        <FormField control={form.control} name="wbsCode" render={({ field }) => (
+                            <FormItem><FormLabel>WBS Code</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )}/>
+                       
+                        <DialogFooter>
+                            <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
+                            <Button type="submit" disabled={isSaving}>
+                                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                Save
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </Form>
+            </DialogContent>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete the activity: <span className='font-bold'>{selectedActivity?.activity}</span>.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={confirmDelete} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     </>
   );
 }
+

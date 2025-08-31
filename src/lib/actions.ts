@@ -14,6 +14,11 @@ import { listModels } from 'genkit';
 const crewDocketsDbPath = path.join(process.cwd(), 'src', 'lib', 'crew-dockets.json');
 const timesheetsDbPath = path.join(process.cwd(), 'src', 'lib', 'timesheets.json');
 const usersDbPath = path.join(process.cwd(), 'src', 'lib', 'users.json');
+const activitiesDbPath = path.join(process.cwd(), 'src', 'lib', 'activities.json');
+const unproductiveReasonsDbPath = path.join(process.cwd(), 'src', 'lib', 'unproductiveReasons.json');
+const zonesDbPath = path.join(process.cwd(), 'src', 'lib', 'zones.json');
+const sectionsDbPath = path.join(process.cwd(), 'src', 'lib', 'sections.json');
+
 
 // Data Functions
 async function readCrewDockets(): Promise<CrewDocket[]> {
@@ -61,24 +66,57 @@ async function writeUsers(users: User[]): Promise<void> {
      await fs.writeFile(usersDbPath, JSON.stringify(users, null, 2), 'utf-8');
 }
 
-export async function getActivities(): Promise<Activity[]> {
-    const data = await fs.readFile(path.join(process.cwd(), 'src', 'lib', 'activities.json'), 'utf-8');
+async function readActivities(): Promise<Activity[]> {
+    const data = await fs.readFile(activitiesDbPath, 'utf-8');
     return JSON.parse(data);
+}
+
+async function writeActivities(activities: Activity[]): Promise<void> {
+    await fs.writeFile(activitiesDbPath, JSON.stringify(activities, null, 2), 'utf-8');
+}
+
+async function readUnproductiveReasons(): Promise<UnproductiveReason[]> {
+    const data = await fs.readFile(unproductiveReasonsDbPath, 'utf-8');
+    return JSON.parse(data);
+}
+
+async function writeUnproductiveReasons(reasons: UnproductiveReason[]): Promise<void> {
+    await fs.writeFile(unproductiveReasonsDbPath, JSON.stringify(reasons, null, 2), 'utf-8');
+}
+
+async function readZones(): Promise<string[]> {
+    const data = await fs.readFile(zonesDbPath, 'utf-8');
+    return JSON.parse(data);
+}
+
+async function writeZones(zones: string[]): Promise<void> {
+    await fs.writeFile(zonesDbPath, JSON.stringify(zones, null, 2), 'utf-8');
+}
+
+async function readSections(): Promise<string[]> {
+    const data = await fs.readFile(sectionsDbPath, 'utf-8');
+    return JSON.parse(data);
+}
+
+async function writeSections(sections: string[]): Promise<void> {
+    await fs.writeFile(sectionsDbPath, JSON.stringify(sections, null, 2), 'utf-8');
+}
+
+
+export async function getActivities(): Promise<Activity[]> {
+    return readActivities();
 }
 
 export async function getUnproductiveReasons(): Promise<UnproductiveReason[]> {
-    const data = await fs.readFile(path.join(process.cwd(), 'src', 'lib', 'unproductiveReasons.json'), 'utf-8');
-    return JSON.parse(data);
+    return readUnproductiveReasons();
 }
 
 export async function getZones(): Promise<string[]> {
-    const data = await fs.readFile(path.join(process.cwd(), 'src', 'lib', 'zones.json'), 'utf-8');
-    return JSON.parse(data);
+    return readZones();
 }
 
 export async function getSections(): Promise<string[]> {
-    const data = await fs.readFile(path.join(process.cwd(), 'src', 'lib', 'sections.json'), 'utf-8');
-    return JSON.parse(data);
+    return readSections();
 }
 
 
@@ -491,3 +529,151 @@ export async function getAvailableModels() {
     const models = await listModels();
     return models;
 }
+
+
+// CONFIGURATION ACTIONS
+const locationSchema = z.object({
+  type: z.enum(['Zone', 'Section']),
+  name: z.string().min(1, 'Name is required'),
+  originalName: z.string().optional(),
+});
+
+export async function saveLocation(data: z.infer<typeof locationSchema>) {
+    const validation = locationSchema.safeParse(data);
+    if (!validation.success) return { success: false, error: "Invalid data" };
+    
+    const { type, name, originalName } = validation.data;
+    
+    const items = type === 'Zone' ? await readZones() : await readSections();
+
+    if (items.includes(name) && name !== originalName) {
+        return { success: false, error: `${type} already exists.` };
+    }
+    
+    if (originalName) { // Editing existing
+        const index = items.findIndex(item => item === originalName);
+        if (index > -1) {
+            items[index] = name;
+        }
+    } else { // Adding new
+        items.push(name);
+    }
+    
+    if (type === 'Zone') await writeZones(items);
+    else await writeSections(items);
+    
+    revalidatePath('/admin/configuration');
+    return { success: true };
+}
+
+export async function deleteLocation(type: 'Zone' | 'Section', name: string) {
+    const items = type === 'Zone' ? await readZones() : await readSections();
+    const newItems = items.filter(item => item !== name);
+    
+    if (items.length === newItems.length) {
+        return { success: false, error: `${type} not found.` };
+    }
+
+    if (type === 'Zone') await writeZones(newItems);
+    else await writeSections(newItems);
+
+    revalidatePath('/admin/configuration');
+    return { success: true };
+}
+
+
+const activitySchema = z.object({
+    id: z.string().optional(),
+    asset: z.string().min(1, 'Asset is required'),
+    subAsset: z.string().min(1, 'Sub-Asset is required'),
+    activity: z.string().min(1, 'Activity is required'),
+    activityUom: z.string().min(1, 'UoM is required'),
+    wbsCode: z.string().min(1, 'WBS Code is required'),
+});
+
+export async function saveActivity(data: z.infer<typeof activitySchema>) {
+    const validation = activitySchema.safeParse(data);
+    if (!validation.success) return { success: false, error: "Invalid data" };
+
+    const { id, ...newActivityData } = validation.data;
+    const activities = await readActivities();
+
+    if (id) {
+        const index = activities.findIndex(a => a.id === id);
+        if (index > -1) {
+            activities[index] = { ...activities[index], ...newActivityData };
+        } else {
+            return { success: false, error: 'Activity not found' };
+        }
+    } else {
+        const newActivity: Activity = {
+            id: `act-${Date.now()}`,
+            contract: 'C-456', // Default value
+            zone: 'S1', // Default value
+            section: 'M011', // Default value
+            ...newActivityData,
+        };
+        activities.push(newActivity);
+    }
+    await writeActivities(activities);
+    revalidatePath('/admin/configuration');
+    return { success: true };
+}
+
+
+export async function deleteActivity(id: string) {
+    const activities = await readActivities();
+    const newActivities = activities.filter(a => a.id !== id);
+    if (activities.length === newActivities.length) {
+        return { success: false, error: 'Activity not found' };
+    }
+    await writeActivities(newActivities);
+    revalidatePath('/admin/configuration');
+    return { success: true };
+}
+
+const unproductiveReasonSchema = z.object({
+    id: z.string().optional(),
+    code: z.string().min(1, 'Code is required'),
+    reason: z.string().min(1, 'Reason is required'),
+    uom: z.string().min(1, 'UoM is required'),
+});
+
+export async function saveUnproductiveReason(data: z.infer<typeof unproductiveReasonSchema>) {
+    const validation = unproductiveReasonSchema.safeParse(data);
+    if (!validation.success) return { success: false, error: "Invalid data" };
+    
+    const { id, ...newReasonData } = validation.data;
+    const reasons = await readUnproductiveReasons();
+
+    if (id) {
+        const index = reasons.findIndex(r => r.id === id);
+        if (index > -1) {
+            reasons[index] = { ...reasons[index], ...newReasonData };
+        } else {
+            return { success: false, error: 'Reason not found' };
+        }
+    } else {
+        const newReason: UnproductiveReason = {
+            id: `unprod-${Date.now()}`,
+            ...newReasonData
+        };
+        reasons.push(newReason);
+    }
+
+    await writeUnproductiveReasons(reasons);
+    revalidatePath('/admin/configuration');
+    return { success: true };
+}
+
+export async function deleteUnproductiveReason(id: string) {
+    const reasons = await readUnproductiveReasons();
+    const newReasons = reasons.filter(r => r.id !== id);
+    if (reasons.length === newReasons.length) {
+        return { success: false, error: 'Reason not found' };
+    }
+    await writeUnproductiveReasons(newReasons);
+    revalidatePath('/admin/configuration');
+    return { success: true };
+}
+
