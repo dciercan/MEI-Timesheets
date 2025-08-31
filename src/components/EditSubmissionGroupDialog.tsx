@@ -61,8 +61,10 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, docket,
 
   useEffect(() => {
     async function loadUsers() {
-      const fetchedUsers = await getUsers(loggedInUser || undefined);
-      setAllUsers(fetchedUsers);
+      if(loggedInUser) {
+        const fetchedUsers = await getUsers(loggedInUser);
+        setAllUsers(fetchedUsers);
+      }
     }
     loadUsers();
   }, [loggedInUser]);
@@ -71,7 +73,7 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, docket,
 
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
+    defaultValues: useMemo(() => ({
         crewDocketId: docket.id,
         timesheetDate: new Date(docket.timesheetDate),
         crewMemberIds: docket.crewMemberIds.filter(id => id !== docket.submittedById),
@@ -84,8 +86,31 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, docket,
         notes: docket.notes,
         productiveHours: representativeTimesheet.productiveHours,
         unproductiveEntries: representativeTimesheet.unproductiveEntries,
-    }
+    }), [docket, representativeTimesheet])
   });
+
+  useEffect(() => {
+    if (docket && isOpen) {
+        const repTimesheet = docket.timesheets[0] || {};
+        form.reset({
+            crewDocketId: docket.id,
+            timesheetDate: new Date(docket.timesheetDate),
+            crewMemberIds: docket.crewMemberIds.filter(id => id !== docket.submittedById),
+            zone: docket.zone,
+            section: docket.section,
+            asset: docket.asset,
+            subAsset: docket.subAsset,
+            activityId: docket.activityId,
+            quantity: docket.quantity,
+            notes: docket.notes,
+            productiveHours: repTimesheet.productiveHours,
+            unproductiveEntries: repTimesheet.unproductiveEntries,
+        });
+        const initialActivity = activities.find(a => a.id === docket.activityId) || null;
+        setSelectedActivity(initialActivity);
+    }
+}, [docket, isOpen, form]);
+
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -133,14 +158,16 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, docket,
 
   const crewMembers = useMemo(() => {
     if (!loggedInUser) return [];
+    // For admins, show users from the docket's company. For sub-admins, from their own company.
+    const companyToShow = loggedInUser.appRole === 'Admin' ? docket.company : loggedInUser.company;
     return allUsers
       .filter(u => 
-        u.company === loggedInUser.company && 
+        u.company === companyToShow && 
         (u.appRole === 'Crew Member' || u.appRole === 'Crew Supervisor') &&
-        u.id !== loggedInUser.id // Exclude the logged in supervisor
+        u.id !== docket.submittedById // Exclude the supervisor who submitted it
       )
       .sort((a, b) => a.fullName.localeCompare(b.fullName));
-  }, [allUsers, loggedInUser]);
+  }, [allUsers, loggedInUser, docket]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
