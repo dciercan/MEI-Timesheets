@@ -215,34 +215,36 @@ export default function SupervisorDashboard({ dockets }: SupervisorDashboardProp
                       </TooltipProvider>
                     </>
                   )}
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                       <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button variant="outline" size="icon" className="h-9 w-9">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                             <TooltipContent>
-                              <p>Delete Crew Docket</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete this crew docket and all associated timesheets.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleDeleteCrew(docket.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                  {!isMeiSupervisor && (
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                <Button variant="outline" size="icon" className="h-9 w-9">
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                <p>Delete Crew Docket</p>
+                                </TooltipContent>
+                            </Tooltip>
+                            </TooltipProvider>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete this crew docket and all associated timesheets.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteCrew(docket.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                        </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                  )}
                    <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>
@@ -322,5 +324,3 @@ export default function SupervisorDashboard({ dockets }: SupervisorDashboardProp
     </Card>
   );
 }
-
-    
