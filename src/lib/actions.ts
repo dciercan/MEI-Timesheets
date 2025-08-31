@@ -314,17 +314,13 @@ export async function getTimesheetSubmissions(
     }
 
     let filteredSubmissions: TimesheetSubmission[];
-
     const isSparkUser = ['Admin', 'Read Only', 'MEI Supervisor'].includes(currentUser.appRole);
 
-    if (context === 'my-submissions') {
-        // Supervisor looking at their own submissions page sees only what they submitted.
-        filteredSubmissions = allSubmissions.filter(s => s.submittedById === currentUser.id);
-    } else if (isSparkUser) {
-        // Spark users see everything in reports/admin views.
+    if (isSparkUser) {
         filteredSubmissions = allSubmissions;
+    } else if (context === 'my-submissions' && currentUser.appRole === 'Crew Supervisor') {
+        filteredSubmissions = allSubmissions.filter(s => s.submittedById === currentUser.id);
     } else {
-        // Non-Spark users (Subbie Admin/Supervisor) see everything from their company in reports.
         filteredSubmissions = allSubmissions.filter(s => {
             const submittingUser = userMap.get(s.submittedById);
             return submittingUser?.company === currentUser.company;
