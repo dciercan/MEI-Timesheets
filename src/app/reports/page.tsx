@@ -44,42 +44,6 @@ export default function ReportsPage() {
                     </CardHeader>
                 </Link>
             </Card>
-          <Card className="shadow-lg hover:shadow-xl transition-shadow">
-            <Link href="/reports/crew-activity" className="block">
-                <CardHeader>
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                    <div className="p-3 bg-primary/10 rounded-full">
-                        <Users className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                        <CardTitle className="font-headline text-xl">Global Crew Activity Report</CardTitle>
-                        <CardDescription>A summary of all crew dockets, showing key productivity metrics.</CardDescription>
-                    </div>
-                    </div>
-                    <ChevronRight className="h-6 w-6 text-muted-foreground" />
-                </div>
-                </CardHeader>
-            </Link>
-          </Card>
-           <Card className="shadow-lg hover:shadow-xl transition-shadow">
-            <Link href="/reports/all-timesheets" className="block">
-                <CardHeader>
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                    <div className="p-3 bg-primary/10 rounded-full">
-                        <Book className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                        <CardTitle className="font-headline text-xl">Global Timesheets Report</CardTitle>
-                        <CardDescription>A detailed log of all individual timesheet entries from all companies.</CardDescription>
-                    </div>
-                    </div>
-                    <ChevronRight className="h-6 w-6 text-muted-foreground" />
-                </div>
-                </CardHeader>
-            </Link>
-          </Card>
         </>
         )}
 
