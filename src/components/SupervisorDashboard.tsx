@@ -56,7 +56,8 @@ export default function SupervisorDashboard({ dockets }: SupervisorDashboardProp
   };
 
   const handleStatusUpdate = async (docketId: string, status: 'Approved' | 'Rejected') => {
-    const result = await updateDocketStatus(docketId, status);
+    if (!currentUser) return;
+    const result = await updateDocketStatus(currentUser.id, docketId, status);
     if (result.success) {
         toast({ title: result.message });
         router.refresh();

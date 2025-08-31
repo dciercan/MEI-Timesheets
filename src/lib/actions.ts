@@ -242,8 +242,10 @@ export async function deleteCrewDocket(crewDocketId: string) {
 }
 
 
-export async function updateDocketStatus(crewDocketId: string, newStatus: 'Approved' | 'Rejected') {
-    const currentUser = await getCurrentUser();
+export async function updateDocketStatus(requestingUserId: string, crewDocketId: string, newStatus: 'Approved' | 'Rejected') {
+    const allUsers = await readUsers();
+    const currentUser = allUsers.find(u => u.id === requestingUserId);
+    
     if (currentUser?.appRole !== 'MEI Supervisor') {
         return { success: false, error: "Permission denied." };
     }
