@@ -13,7 +13,7 @@ import { deleteCrewDocket, updateDocketStatus } from "@/lib/actions";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { useRouter } from 'next/navigation';
-import { Calendar, Users, Activity, Clock, Hash, Trash2, Copy, Edit, FileText, ListTodo, MapPin, Watch, ShieldCheck, CheckCircle, XCircle, Building } from 'lucide-react';
+import { Calendar, Users, Activity, Clock, Hash, Trash2, Copy, Edit, FileText, ListTodo, MapPin, Watch, ShieldCheck, CheckCircle, XCircle, Building, User } from 'lucide-react';
 import InfoItem from './InfoItem';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import EditSubmissionGroupDialog from './EditSubmissionGroupDialog';
@@ -138,8 +138,8 @@ export default function SupervisorDashboard({ dockets }: SupervisorDashboardProp
             <AccordionItem value={docket.id} key={docket.id} className="border rounded-lg shadow-sm bg-background">
               <div className="flex items-center justify-between pl-6 pr-2 py-2">
                 <AccordionTrigger className="flex-grow py-2 hover:no-underline">
-                  <div className="flex-grow grid grid-cols-1 md:grid-cols-5 gap-4 text-left">
-                    <div className="flex items-center gap-3">
+                   <div className="flex-grow grid grid-cols-1 md:grid-cols-6 gap-4 text-left">
+                     <div className="flex items-center gap-3">
                         <Calendar className="h-5 w-5 text-primary"/>
                         <div>
                             <p className="font-semibold text-sm">{format(new Date(docket.timesheetDate), 'PPP')}</p>
@@ -154,17 +154,24 @@ export default function SupervisorDashboard({ dockets }: SupervisorDashboardProp
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
-                        <Users className="h-5 w-5 text-primary"/>
+                        <Activity className="h-5 w-5 text-primary"/>
                         <div>
-                            <p className="font-semibold text-sm">{docket.crewMembers.length}</p>
-                            <p className="text-xs text-muted-foreground">Crew</p>
+                            <p className="font-semibold text-sm">{docket.activity?.activity || 'N/A'}</p>
+                            <p className="text-xs text-muted-foreground">Activity</p>
                         </div>
                     </div>
-                     <div className="flex items-center gap-3">
-                        <FileText className="h-5 w-5 text-primary"/>
+                    <div className="flex items-center gap-3">
+                        <Clock className="h-5 w-5 text-primary"/>
                         <div>
-                            <p className="font-semibold text-sm">{docket.asset} / {docket.subAsset}</p>
-                            <p className="text-xs text-muted-foreground">Asset / Sub-Asset</p>
+                            <p className="font-semibold text-sm">{productiveHours}</p>
+                            <p className="text-xs text-muted-foreground">Productive Hours</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <Hash className="h-5 w-5 text-primary"/>
+                        <div>
+                            <p className="font-semibold text-sm">{`${docket.quantity} ${docket.activity?.activityUom || ''}`.trim()}</p>
+                            <p className="text-xs text-muted-foreground">Quantity</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
@@ -259,10 +266,9 @@ export default function SupervisorDashboard({ dockets }: SupervisorDashboardProp
                  <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6 pt-4 border-t">
                     <InfoItem icon={Hash} label="Docket ID" value={docket.id} />
                     <InfoItem icon={Building} label="Company" value={docket.company} />
-                     <InfoItem icon={Activity} label="Activity" value={docket.activity?.activity} />
-                    <InfoItem icon={Clock} label="Productive Hours" value={productiveHours} />
-                    <InfoItem icon={Hash} label="Quantity" value={docket.quantity} badge={docket.activity?.activityUom} />
+                    <InfoItem icon={Users} label="Crew Members" value={docket.crewMembers.length} />
                     <InfoItem icon={Watch} label="Unproductive Time" value={totalUnproductiveMinutes} badge="minutes per person" />
+                    <InfoItem icon={User} label="Supervisor" value={docket.submittedBy?.fullName} />
                  </div>
                 
                  <div className="border rounded-md">
@@ -309,4 +315,3 @@ export default function SupervisorDashboard({ dockets }: SupervisorDashboardProp
     </Card>
   );
 }
-
