@@ -189,6 +189,70 @@ export async function updateTimesheet(formData: FormData) {
     return { success: false, error: "Submission not found." };
 }
 
+const timesheetGroupSchema = z.object({
+  submissionGroupId: z.string(),
+  timesheetDate: z.coerce.date(),
+  crewMemberIds: z.array(z.string()).min(1, "Please select at least one crew member."),
+  zone: z.string().min(1, "Zone is required."),
+  section: z.string().min(1, "Section is required."),
+  asset: z.string().min(1, "Asset is required."),
+  subAsset: z.string().min(1, "Sub-asset is required."),
+  activityId: z.string().min(1, "Activity is required."),
+  productiveHours: z.coerce.number().min(0.1, "Productive hours must be greater than 0."),
+  quantity: z.coerce.number().min(0, "Quantity is required."),
+  unproductiveEntries: z.array(
+    z.object({
+      reasonId: z.string().min(1, "Please select a reason."),
+      hours: z.coerce.number().min(1, "Minutes must be greater than 0."),
+    })
+  ).optional(),
+  notes: z.string().optional(),
+});
+
+export async function updateTimesheetGroup(data: z.infer<typeof timesheetGroupSchema>) {
+    const validationResult = timesheetGroupSchema.safeParse(data);
+    if (!validationResult.success) {
+        console.error("Update group validation error:", validationResult.error.flatten());
+        return { success: false, error: validationResult.error.flatten() };
+    }
+    
+    const { submissionGroupId, crewMemberIds, ...updateData } = validationResult.data;
+    
+    const allSubmissions = await readSubmissions();
+    const groupEntries = allSubmissions.filter(s => s.submissionGroupId === submissionGroupId);
+
+    if (groupEntries.length === 0) {
+        return { success: false, error: "Submission group not found." };
+    }
+    
+    const submittedById = groupEntries[0].submittedById;
+
+    // Delete existing entries in the group
+    const otherSubmissions = allSubmissions.filter(s => s.submissionGroupId !== submissionGroupId);
+    
+    const allCrewForSubmission = [...new Set([...crewMemberIds, submittedById])];
+    
+    // Create new entries for the group
+    const newEntries: TimesheetSubmission[] = allCrewForSubmission.map(crewMemberId => ({
+        id: `ts-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+        submissionGroupId,
+        ...updateData,
+        submittedById,
+        crewMemberId,
+        submittedAt: new Date(),
+        unproductiveEntries: updateData.unproductiveEntries || [],
+    }));
+
+    const finalSubmissions = [...otherSubmissions, ...newEntries];
+    await writeSubmissions(finalSubmissions);
+    
+    revalidatePath('/admin');
+    revalidatePath('/timesheet/my-submissions');
+    revalidatePath('/reports/my-company-submissions');
+    return { success: true };
+}
+
+
 export async function deleteTimesheet(submissionId: string) {
     const allSubmissions = await readSubmissions();
     const filteredSubmissions = allSubmissions.filter(s => s.id !== submissionId);
@@ -240,13 +304,15 @@ async function enrichSubmissions(submissions: TimesheetSubmission[]): Promise<Ti
 export async function getTimesheetSubmissions(requestingUser?: User | null): Promise<TimesheetSubmissionWithDetails[]> {
     let submissions = await readSubmissions();
     
-    if (requestingUser) {
-        if (requestingUser.appRole === 'Subcontractor Admin') {
+    const currentUser = requestingUser ?? await getCurrentUser();
+
+    if (currentUser) {
+        if (currentUser.appRole === 'Subcontractor Admin') {
             const users = await readUsers();
-            const companyUserIds = users.filter(u => u.company === requestingUser.company).map(u => u.id);
+            const companyUserIds = users.filter(u => u.company === currentUser.company).map(u => u.id);
             submissions = submissions.filter(s => companyUserIds.includes(s.crewMemberId));
-        } else if (requestingUser.appRole === 'MEI Supervisor' || requestingUser.appRole === 'Crew Supervisor') {
-            submissions = submissions.filter(s => s.submittedById === requestingUser.id);
+        } else if (currentUser.appRole === 'MEI Supervisor' || currentUser.appRole === 'Crew Supervisor') {
+            submissions = submissions.filter(s => s.submittedById === currentUser.id);
         }
     }
     

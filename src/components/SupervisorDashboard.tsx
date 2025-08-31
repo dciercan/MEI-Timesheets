@@ -17,6 +17,7 @@ import { useRouter } from 'next/navigation';
 import { Calendar, Users, Activity, Clock, Hash, Trash2, Copy, Edit, FileText, ListTodo, MapPin } from 'lucide-react';
 import InfoItem from './InfoItem';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
+import EditSubmissionGroupDialog from './EditSubmissionGroupDialog';
 
 
 interface SupervisorDashboardProps {
@@ -37,6 +38,9 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
   const [selectedEntry, setSelectedEntry] = React.useState<TimesheetSubmissionWithDetails | null>(null);
 
+  const [isGroupEditDialogOpen, setIsGroupEditDialogOpen] = React.useState(false);
+  const [selectedGroup, setSelectedGroup] = React.useState<GroupedSubmission | null>(null);
+
   const handleEdit = (entry: TimesheetSubmissionWithDetails) => {
     setSelectedEntry(entry);
     setIsEditDialogOpen(true);
@@ -46,6 +50,18 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
     setIsEditDialogOpen(false);
     setSelectedEntry(null);
     toast({ title: "Submission updated successfully" });
+    router.refresh();
+  };
+
+  const handleGroupEdit = (group: GroupedSubmission) => {
+    setSelectedGroup(group);
+    setIsGroupEditDialogOpen(true);
+  }
+
+  const handleGroupSubmissionUpdated = () => {
+    setIsGroupEditDialogOpen(false);
+    setSelectedGroup(null);
+    toast({ title: "Submission group updated successfully" });
     router.refresh();
   };
 
@@ -60,11 +76,12 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
   };
 
   const groupedSubmissions = React.useMemo(() => {
-    const groups: Record<string, GroupedSubmission> = {};
     if (!initialSubmissions) return [];
-
+    
+    const groups: Record<string, GroupedSubmission> = {};
+    
     initialSubmissions.forEach(s => {
-      const groupId = s.submissionGroupId || s.id; // Fallback for older data
+      const groupId = s.submissionGroupId || `single-${s.id}`;
       if (!groups[groupId]) {
         groups[groupId] = { id: groupId, entries: [], representative: s };
       }
@@ -88,7 +105,9 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
         .map(e => e.crewMemberId)
         .filter(id => id !== representative.submittedById) || [];
 
-     params.set('crewMemberIds', JSON.stringify(crewIds));
+     if (crewIds.length > 0) {
+        params.set('crewMemberIds', JSON.stringify(crewIds));
+     }
      
      router.push(`/timesheet?${params.toString()}`);
   }
@@ -169,6 +188,18 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
+                   <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                             <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => handleGroupEdit(group)}>
+                                <Edit className="h-4 w-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                        <p>Edit</p>
+                        </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                   <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>
@@ -227,6 +258,14 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
             submission={selectedEntry}
             onSubmissionUpdated={handleSubmissionUpdated}
           />
+        )}
+        {selectedGroup && (
+            <EditSubmissionGroupDialog
+                isOpen={isGroupEditDialogOpen}
+                onOpenChange={setIsGroupEditDialogOpen}
+                submissionGroup={selectedGroup}
+                onSubmissionUpdated={handleGroupSubmissionUpdated}
+            />
         )}
       </CardContent>
     </Card>
