@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -23,11 +24,12 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowUpDown } from 'lucide-react';
+import { ArrowUpDown, Download } from 'lucide-react';
 import type { TimesheetWithDetails, TimesheetStatus } from '@/lib/types';
 import { format } from 'date-fns';
 import { Badge } from './ui/badge';
 import { cn } from '@/lib/utils';
+import Papa from 'papaparse';
 
 interface TimesheetReportProps {
   timesheets: TimesheetWithDetails[];
@@ -50,21 +52,15 @@ export default function TimesheetReport({ timesheets }: TimesheetReportProps) {
     {
         accessorKey: 'id',
         header: 'TS ID',
-        cell: ({ row }) => <span className="font-mono text-xs">{row.getValue('id')}</span>
     },
     {
         accessorKey: 'crewDocketId',
         header: 'CD ID',
-        cell: ({ row }) => <span className="font-mono text-xs">{row.getValue('crewDocketId')}</span>
     },
     {
         accessorKey: 'crewDocket.timesheetDate',
         id: 'timesheetDate',
-        header: ({ column }) => (
-            <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-                Date <ArrowUpDown className="ml-2 h-4 w-4" />
-            </Button>
-        ),
+        header: 'Date',
         cell: ({ row }) => format(new Date(row.original.crewDocket.timesheetDate), 'dd/MM/yy')
     },
     {
@@ -105,11 +101,7 @@ export default function TimesheetReport({ timesheets }: TimesheetReportProps) {
     },
     {
         accessorKey: 'company',
-        header: ({ column }) => (
-            <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-                Company <ArrowUpDown className="ml-2 h-4 w-4" />
-            </Button>
-        )
+        header: 'Company',
     },
   ];
 
@@ -126,27 +118,65 @@ export default function TimesheetReport({ timesheets }: TimesheetReportProps) {
     state: { sorting, columnFilters },
   });
 
+  const handleExport = () => {
+    const dataToExport = table.getFilteredRowModel().rows.map(row => {
+      const productiveHours = row.original.productiveHours || 0;
+      const unproductiveMinutes = row.original.unproductiveEntries?.reduce((acc, entry) => acc + entry.minutes, 0) || 0;
+      const unproductiveHours = unproductiveMinutes / 60;
+      const totalHours = productiveHours + unproductiveHours;
+        return {
+            'TS ID': row.original.id,
+            'CD ID': row.original.crewDocketId,
+            'Date': format(new Date(row.original.crewDocket.timesheetDate), 'dd/MM/yy'),
+            'Crew Member': row.original.crewMember?.fullName,
+            'Supervisor': row.original.submittedBy?.fullName,
+            'Prod Hours': productiveHours,
+            'Unprod Mins': unproductiveMinutes,
+            'Total Hours': totalHours.toFixed(2),
+            'Status': row.original.status,
+            'Company': row.original.company,
+        }
+    });
+
+    const csv = Papa.unparse(dataToExport);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'timesheet_report.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
   return (
     <>
         <div className="flex items-center gap-4 py-4">
-            <Input
-                placeholder="Filter by crew member..."
-                value={(table.getColumn('crewMember_fullName')?.getFilterValue() as string) ?? ''}
-                onChange={(event) => table.getColumn('crewMember_fullName')?.setFilterValue(event.target.value)}
-                className="max-w-sm"
-            />
-             <Input
-                placeholder="Filter by supervisor..."
-                value={(table.getColumn('submittedBy_fullName')?.getFilterValue() as string) ?? ''}
-                onChange={(event) => table.getColumn('submittedBy_fullName')?.setFilterValue(event.target.value)}
-                className="max-w-sm"
-            />
-             <Input
-                placeholder="Filter by company..."
-                value={(table.getColumn('company')?.getFilterValue() as string) ?? ''}
-                onChange={(event) => table.getColumn('company')?.setFilterValue(event.target.value)}
-                className="max-w-sm"
-            />
+             <div className="flex-grow flex items-center gap-4">
+                <Input
+                    placeholder="Filter by crew member..."
+                    value={(table.getColumn('crewMember_fullName')?.getFilterValue() as string) ?? ''}
+                    onChange={(event) => table.getColumn('crewMember_fullName')?.setFilterValue(event.target.value)}
+                    className="max-w-sm"
+                />
+                <Input
+                    placeholder="Filter by supervisor..."
+                    value={(table.getColumn('submittedBy_fullName')?.getFilterValue() as string) ?? ''}
+                    onChange={(event) => table.getColumn('submittedBy_fullName')?.setFilterValue(event.target.value)}
+                    className="max-w-sm"
+                />
+                <Input
+                    placeholder="Filter by company..."
+                    value={(table.getColumn('company')?.getFilterValue() as string) ?? ''}
+                    onChange={(event) => table.getColumn('company')?.setFilterValue(event.target.value)}
+                    className="max-w-sm"
+                />
+            </div>
+             <Button onClick={handleExport} variant="outline">
+                <Download className="mr-2 h-4 w-4" />
+                Export to CSV
+            </Button>
         </div>
         <div className="rounded-md border">
             <Table>

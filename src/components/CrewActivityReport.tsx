@@ -24,11 +24,12 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowUpDown } from 'lucide-react';
+import { ArrowUpDown, Download } from 'lucide-react';
 import type { CrewDocketWithDetails, CrewDocketStatus } from '@/lib/types';
 import { format } from 'date-fns';
 import { Badge } from './ui/badge';
 import { cn } from '@/lib/utils';
+import Papa from 'papaparse';
 
 interface CrewActivityReportProps {
   dockets: CrewDocketWithDetails[];
@@ -52,29 +53,19 @@ export default function CrewActivityReport({ dockets }: CrewActivityReportProps)
     {
         accessorKey: 'id',
         header: 'Docket ID',
-        cell: ({ row }) => <span className="font-mono text-xs">{row.getValue('id')}</span>
     },
-    { 
+     { 
         accessorKey: 'company', 
-        header: ({ column }) => (
-            <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-                Company <ArrowUpDown className="ml-2 h-4 w-4" />
-            </Button>
-        ),
+        header: 'Company',
     },
     {
         accessorKey: 'timesheetDate',
-        header: ({ column }) => (
-            <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-                Date <ArrowUpDown className="ml-2 h-4 w-4" />
-            </Button>
-        ),
+        header: 'Date',
         cell: ({ row }) => format(new Date(row.getValue('timesheetDate')), 'dd/MM/yy')
     },
     { 
         accessorKey: 'submittedBy.fullName', 
         header: 'Supervisor',
-        cell: ({ row }) => row.original.submittedBy?.fullName || 'N/A'
     },
     { accessorKey: 'zone', header: 'Zone' },
     { accessorKey: 'section', header: 'Section' },
@@ -83,7 +74,6 @@ export default function CrewActivityReport({ dockets }: CrewActivityReportProps)
     { 
         accessorKey: 'activity.activity', 
         header: 'Activity',
-        cell: ({ row }) => row.original.activity?.activity || 'N/A'
     },
     {
         accessorKey: 'quantity',
@@ -132,27 +122,66 @@ export default function CrewActivityReport({ dockets }: CrewActivityReportProps)
     state: { sorting, columnFilters },
   });
 
+   const handleExport = () => {
+    const dataToExport = table.getFilteredRowModel().rows.map(row => {
+        const unproductiveMinutes = row.original.timesheets[0]?.unproductiveEntries?.reduce((total, entry) => total + entry.minutes, 0) || 0;
+        return {
+            'Docket ID': row.original.id,
+            'Company': row.original.company,
+            'Date': format(new Date(row.original.timesheetDate), 'dd/MM/yy'),
+            'Supervisor': row.original.submittedBy?.fullName || 'N/A',
+            'Zone': row.original.zone,
+            'Section': row.original.section,
+            'Asset': row.original.asset,
+            'Sub-Asset': row.original.subAsset,
+            'Activity': row.original.activity?.activity || 'N/A',
+            'Quantity': `${row.original.quantity} ${row.original.activity?.activityUom || ''}`.trim(),
+            'Crew Size': row.original.crewMembers.length,
+            'Productive Hours': row.original.timesheets[0]?.productiveHours || 0,
+            'Unproductive Hours': (unproductiveMinutes / 60).toFixed(2),
+            'Status': row.original.status,
+        }
+    });
+
+    const csv = Papa.unparse(dataToExport);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'crew_activity_report.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
   return (
     <>
         <div className="flex items-center gap-4 py-4">
-            <Input
-                placeholder="Filter by supervisor..."
-                value={(table.getColumn('submittedBy_fullName')?.getFilterValue() as string) ?? ''}
-                onChange={(event) => table.getColumn('submittedBy_fullName')?.setFilterValue(event.target.value)}
-                className="max-w-sm"
-            />
-             <Input
-                placeholder="Filter by activity..."
-                value={(table.getColumn('activity_activity')?.getFilterValue() as string) ?? ''}
-                onChange={(event) => table.getColumn('activity_activity')?.setFilterValue(event.target.value)}
-                className="max-w-sm"
-            />
-              <Input
-                placeholder="Filter by company..."
-                value={(table.getColumn('company')?.getFilterValue() as string) ?? ''}
-                onChange={(event) => table.getColumn('company')?.setFilterValue(event.target.value)}
-                className="max-w-sm"
-            />
+            <div className="flex-grow flex items-center gap-4">
+                <Input
+                    placeholder="Filter by supervisor..."
+                    value={(table.getColumn('submittedBy_fullName')?.getFilterValue() as string) ?? ''}
+                    onChange={(event) => table.getColumn('submittedBy_fullName')?.setFilterValue(event.target.value)}
+                    className="max-w-sm"
+                />
+                <Input
+                    placeholder="Filter by activity..."
+                    value={(table.getColumn('activity_activity')?.getFilterValue() as string) ?? ''}
+                    onChange={(event) => table.getColumn('activity_activity')?.setFilterValue(event.target.value)}
+                    className="max-w-sm"
+                />
+                <Input
+                    placeholder="Filter by company..."
+                    value={(table.getColumn('company')?.getFilterValue() as string) ?? ''}
+                    onChange={(event) => table.getColumn('company')?.setFilterValue(event.target.value)}
+                    className="max-w-sm"
+                />
+            </div>
+            <Button onClick={handleExport} variant="outline">
+                <Download className="mr-2 h-4 w-4" />
+                Export to CSV
+            </Button>
         </div>
         <div className="rounded-md border">
             <Table>

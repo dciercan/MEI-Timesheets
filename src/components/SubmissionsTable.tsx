@@ -43,7 +43,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { MoreHorizontal, ArrowUpDown, Trash2, Edit, CheckCircle, XCircle } from 'lucide-react';
+import { MoreHorizontal, ArrowUpDown, Trash2, Edit, CheckCircle, XCircle, Download } from 'lucide-react';
 import type { CrewDocketWithDetails, CrewDocketStatus } from '@/lib/types';
 import { deleteCrewDocket, updateDocketStatus } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
@@ -53,6 +53,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { Badge } from './ui/badge';
 import { cn } from '@/lib/utils';
+import Papa from 'papaparse';
 
 interface SubmissionsTableProps {
     dockets: CrewDocketWithDetails[];
@@ -252,26 +253,62 @@ export default function SubmissionsTable({ dockets: initialDockets }: Submission
     },
   });
 
+  const handleExport = () => {
+    const dataToExport = table.getFilteredRowModel().rows.map(row => {
+        return {
+            'Date': format(new Date(row.original.timesheetDate), 'dd/MM/yy'),
+            'Status': row.original.status,
+            'Company': row.original.company,
+            'Crew Size': row.original.crewMembers.length,
+            'Asset': row.original.asset,
+            'Sub-Asset': row.original.subAsset,
+            'Activity': row.original.activity?.activity || 'N/A',
+            'Hours': row.original.timesheets[0]?.productiveHours || 0,
+            'Quantity': `${row.original.quantity} ${row.original.activity?.activityUom || ''}`.trim(),
+            'Zone': row.original.zone,
+            'Section': row.original.section,
+            'Notes': row.original.notes,
+            'Submitted By': row.original.submittedBy?.fullName || 'N/A'
+        }
+    });
+
+    const csv = Papa.unparse(dataToExport);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'submissions_report.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
 
   return (
     <>
         <div className="flex items-center gap-4 py-4">
-            <Input
-              placeholder="Filter by company..."
-              value={(table.getColumn('company')?.getFilterValue() as string) ?? ''}
-              onChange={(event) =>
-                  table.getColumn('company')?.setFilterValue(event.target.value)
-              }
-              className="max-w-sm"
-            />
-             <Input
-            placeholder="Filter by activity..."
-            value={(table.getColumn('activity_activity')?.getFilterValue() as string) ?? ''}
-            onChange={(event) =>
-                table.getColumn('activity_activity')?.setFilterValue(event.target.value)
-            }
-            className="max-w-sm"
-            />
+             <div className="flex-grow flex items-center gap-4">
+                <Input
+                placeholder="Filter by company..."
+                value={(table.getColumn('company')?.getFilterValue() as string) ?? ''}
+                onChange={(event) =>
+                    table.getColumn('company')?.setFilterValue(event.target.value)
+                }
+                className="max-w-sm"
+                />
+                <Input
+                placeholder="Filter by activity..."
+                value={(table.getColumn('activity_activity')?.getFilterValue() as string) ?? ''}
+                onChange={(event) =>
+                    table.getColumn('activity_activity')?.setFilterValue(event.target.value)
+                }
+                className="max-w-sm"
+                />
+            </div>
+             <Button onClick={handleExport} variant="outline">
+                <Download className="mr-2 h-4 w-4" />
+                Export to CSV
+            </Button>
         </div>
         <div className="rounded-md border">
             <Table>
