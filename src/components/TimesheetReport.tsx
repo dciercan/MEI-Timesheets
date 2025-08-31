@@ -133,12 +133,6 @@ export default function TimesheetReport({ timesheets }: TimesheetReportProps) {
                 onChange={(event) => table.getColumn('submittedBy_fullName')?.setFilterValue(event.target.value)}
                 className="max-w-sm"
             />
-             <Input
-                placeholder="Filter by company..."
-                value={(table.getColumn('company')?.getFilterValue() as string) ?? ''}
-                onChange={(event) => table.getColumn('company')?.setFilterValue(event.target.value)}
-                className="max-w-sm"
-            />
         </div>
         <div className="rounded-md border">
             <Table>
