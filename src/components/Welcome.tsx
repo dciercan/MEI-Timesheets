@@ -40,6 +40,8 @@ export default function Welcome({ users }: WelcomeProps) {
     if (user) {
         if (user.appRole === 'Read Only') {
             router.push('/reports');
+        } else if (user.appRole === 'MEI Supervisor') {
+            router.push('/timesheet/my-submissions');
         } else {
             const isAdmin = user.appRole === 'Admin' || user.appRole === 'Subcontractor Admin';
             const targetUrl = isAdmin ? '/admin' : '/timesheet';
