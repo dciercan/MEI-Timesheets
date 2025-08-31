@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import EditTimesheetDialog from "./EditTimesheetDialog";
 import { useRouter } from 'next/navigation';
-import { Calendar, Users, Activity, Clock, Hash, Trash2, Copy, Edit, FileText, ListTodo, MapPin } from 'lucide-react';
+import { Calendar, Users, Activity, Clock, Hash, Trash2, Copy, Edit, FileText, ListTodo, MapPin, Watch } from 'lucide-react';
 import InfoItem from './InfoItem';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import EditSubmissionGroupDialog from './EditSubmissionGroupDialog';
@@ -131,7 +131,10 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
       </CardHeader>
       <CardContent>
         <Accordion type="single" collapsible className="w-full space-y-4">
-          {groupedSubmissions.map((group) => (
+          {groupedSubmissions.map((group) => {
+            const totalUnproductiveMinutes = group.representative.unproductiveEntries?.reduce((total, entry) => total + entry.hours, 0) || 0;
+
+            return (
             <AccordionItem value={group.id} key={group.id} className="border rounded-lg shadow-sm bg-background">
               <div className="flex items-center justify-between pl-6 pr-2 py-2">
                 <AccordionTrigger className="flex-grow py-2 hover:no-underline">
@@ -221,6 +224,7 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
                     <InfoItem icon={FileText} label="Asset / Sub-Asset" value={`${group.representative.asset} / ${group.representative.subAsset}`} />
                     <InfoItem icon={Clock} label="Productive Hours" value={group.representative.productiveHours} />
                     <InfoItem icon={Hash} label="Quantity" value={group.representative.quantity} badge={group.representative.activity?.activityUom} />
+                    <InfoItem icon={Watch} label="Unproductive Time" value={totalUnproductiveMinutes} badge="minutes" />
                  </div>
                 
                  <div className="border rounded-md max-w-sm">
@@ -241,7 +245,8 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
                 </div>
               </AccordionContent>
             </AccordionItem>
-          ))}
+            );
+          })}
         </Accordion>
 
         {selectedEntry && (
