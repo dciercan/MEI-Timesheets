@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import SupervisorDashboard from "@/components/SupervisorDashboard";
-import { getSupervisorSubmissions } from "@/lib/actions";
+import { getTimesheetSubmissions } from "@/lib/actions";
 import { useAuth } from '@/hooks/use-auth';
 import type { TimesheetSubmissionWithDetails } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -16,7 +16,7 @@ export default function SupervisorSubmissionsPage() {
     useEffect(() => {
         if (user) {
             setIsLoading(true);
-            getSupervisorSubmissions(user.id)
+            getTimesheetSubmissions(user)
                 .then(data => {
                     setSubmissions(data);
                 })

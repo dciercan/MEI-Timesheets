@@ -239,24 +239,17 @@ async function enrichSubmissions(submissions: TimesheetSubmission[]): Promise<Ti
 
 export async function getTimesheetSubmissions(requestingUser?: User | null): Promise<TimesheetSubmissionWithDetails[]> {
     let submissions = await readSubmissions();
-    const users = await readUsers();
-
-    if (requestingUser && (requestingUser.appRole === 'Subcontractor Admin' || requestingUser.appRole === 'Crew Supervisor')) {
-        const userMap = new Map(users.map(u => [u.id, u]));
-        
-        submissions = submissions.filter(s => {
-            const crewMember = userMap.get(s.crewMemberId);
-            return crewMember?.company === requestingUser.company;
-        });
+    
+    if (requestingUser) {
+        if (requestingUser.appRole === 'Subcontractor Admin') {
+            const users = await readUsers();
+            const companyUserIds = users.filter(u => u.company === requestingUser.company).map(u => u.id);
+            submissions = submissions.filter(s => companyUserIds.includes(s.crewMemberId));
+        } else if (requestingUser.appRole === 'MEI Supervisor' || requestingUser.appRole === 'Crew Supervisor') {
+            submissions = submissions.filter(s => s.submittedById === requestingUser.id);
+        }
     }
     
-    const sorted = submissions.sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());
-    return enrichSubmissions(sorted);
-}
-
-export async function getSupervisorSubmissions(supervisorId: string): Promise<TimesheetSubmissionWithDetails[]> {
-    const allSubmissions = await readSubmissions();
-    const submissions = allSubmissions.filter(s => s.submittedById === supervisorId);
     const sorted = submissions.sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());
     return enrichSubmissions(sorted);
 }
