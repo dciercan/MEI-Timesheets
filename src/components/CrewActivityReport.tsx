@@ -57,18 +57,19 @@ export default function CrewActivityReport({ submissions }: CrewActivityReportPr
   const crewSummaries = React.useMemo(() => {
     const crews: Record<string, {
         entries: TimesheetSubmissionWithDetails[],
+        representative: TimesheetSubmissionWithDetails | null,
     }> = {};
 
     submissions.forEach(s => {
       const crewId = s.submissionCrewId || `individual-${s.id}`;
       if (!crews[crewId]) {
-        crews[crewId] = { entries: [] };
+        crews[crewId] = { entries: [], representative: s };
       }
       crews[crewId].entries.push(s);
     });
     
     return Object.entries(crews).map(([crewId, crew]): CrewSummary => {
-        const representative = crew.entries[0];
+        const representative = crew.representative!;
         const totalUnproductiveMinutes = representative.unproductiveEntries?.reduce((total, entry) => total + entry.minutes, 0) || 0;
         const unproductiveHours = totalUnproductiveMinutes / 60;
         const totalHours = representative.productiveHours + unproductiveHours;
