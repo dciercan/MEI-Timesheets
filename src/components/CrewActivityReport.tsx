@@ -25,8 +25,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowUpDown } from 'lucide-react';
-import type { CrewDocketWithDetails } from '@/lib/types';
+import type { CrewDocketWithDetails, CrewDocketStatus } from '@/lib/types';
 import { format } from 'date-fns';
+import { Badge } from './ui/badge';
+import { cn } from '@/lib/utils';
 
 interface CrewActivityReportProps {
   dockets: CrewDocketWithDetails[];
@@ -36,11 +38,29 @@ export default function CrewActivityReport({ dockets }: CrewActivityReportProps)
   const [sorting, setSorting] = React.useState<SortingState>([ { id: 'timesheetDate', desc: true }]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
 
+  const statusBadgeVariant = (status: CrewDocketStatus) => {
+    switch (status) {
+        case 'Submitted': return 'secondary';
+        case 'Approved': return 'default';
+        case 'Rejected': return 'destructive';
+        case 'Processed': return 'outline';
+        default: return 'secondary';
+    }
+  }
+
   const columns: ColumnDef<CrewDocketWithDetails>[] = [
     {
         accessorKey: 'id',
         header: 'Docket ID',
         cell: ({ row }) => <span className="font-mono text-xs">{row.getValue('id')}</span>
+    },
+    { 
+        accessorKey: 'company', 
+        header: ({ column }) => (
+            <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+                Company <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
+        ),
     },
     {
         accessorKey: 'timesheetDate',
@@ -51,6 +71,11 @@ export default function CrewActivityReport({ dockets }: CrewActivityReportProps)
         ),
         cell: ({ row }) => format(new Date(row.getValue('timesheetDate')), 'dd/MM/yy')
     },
+    { 
+        accessorKey: 'submittedBy.fullName', 
+        header: 'Supervisor',
+        cell: ({ row }) => row.original.submittedBy?.fullName || 'N/A'
+    },
     { accessorKey: 'zone', header: 'Zone' },
     { accessorKey: 'section', header: 'Section' },
     { accessorKey: 'asset', header: 'Asset' },
@@ -60,18 +85,10 @@ export default function CrewActivityReport({ dockets }: CrewActivityReportProps)
         header: 'Activity',
         cell: ({ row }) => row.original.activity?.activity || 'N/A'
     },
-    { 
-        accessorKey: 'company', 
-        header: ({ column }) => (
-            <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-                Company <ArrowUpDown className="ml-2 h-4 w-4" />
-            </Button>
-        ),
-    },
-    { 
-        accessorKey: 'submittedBy.fullName', 
-        header: 'Supervisor',
-        cell: ({ row }) => row.original.submittedBy?.fullName || 'N/A'
+    {
+        accessorKey: 'quantity',
+        header: 'Quantity',
+        cell: ({ row }) => `${row.original.quantity} ${row.original.activity?.activityUom || ''}`.trim()
     },
     { 
         accessorKey: 'crewMembers', 
@@ -83,11 +100,6 @@ export default function CrewActivityReport({ dockets }: CrewActivityReportProps)
         header: 'Productive Hours',
         cell: ({ row }) => row.original.timesheets[0]?.productiveHours || 0
     },
-    {
-        accessorKey: 'quantity',
-        header: 'Quantity',
-        cell: ({ row }) => `${row.original.quantity} ${row.original.activity?.activityUom || ''}`.trim()
-    },
     { 
         id: 'unproductiveHours',
         header: 'Unproductive Hours',
@@ -97,15 +109,12 @@ export default function CrewActivityReport({ dockets }: CrewActivityReportProps)
             return unproductiveHours.toFixed(2);
         }
     },
-    { 
-        id: 'totalHours', 
-        header: 'Total Hours',
+    {
+        accessorKey: 'status',
+        header: 'Status',
         cell: ({ row }) => {
-            const productiveHours = row.original.timesheets[0]?.productiveHours || 0;
-            const totalUnproductiveMinutes = row.original.timesheets[0]?.unproductiveEntries?.reduce((total, entry) => total + entry.minutes, 0) || 0;
-            const unproductiveHours = totalUnproductiveMinutes / 60;
-            const totalHours = productiveHours + unproductiveHours;
-            return totalHours.toFixed(2);
+            const status = row.getValue('status') as CrewDocketStatus;
+            return <Badge variant={statusBadgeVariant(status)} className={cn(status === 'Approved' && 'bg-green-600')}>{status}</Badge>;
         }
     },
   ];
