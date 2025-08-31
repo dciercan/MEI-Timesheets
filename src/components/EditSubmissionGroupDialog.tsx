@@ -77,6 +77,34 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, docket,
         unproductiveEntries: [],
     }
   });
+  
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "unproductiveEntries",
+  });
+  
+  const selectedAsset = form.watch("asset");
+  const selectedSubAsset = form.watch("subAsset");
+
+  const assets = useMemo(() => [...new Set(activities.map(a => a.asset))], []);
+  
+  const subAssets = useMemo(() => {
+    if (!selectedAsset) return [];
+    return [...new Set(activities.filter(a => a.asset === selectedAsset).map(a => a.subAsset))];
+  }, [selectedAsset]);
+
+  useEffect(() => {
+    if (subAssets.length === 1) {
+      form.setValue("subAsset", subAssets[0]);
+    }
+  }, [subAssets, form]);
+
+
+  const filteredActivities = useMemo(() => {
+    if (!selectedAsset || !selectedSubAsset) return [];
+    return activities.filter(a => a.asset === selectedAsset && a.subAsset === selectedSubAsset);
+  }, [selectedAsset, selectedSubAsset]);
+
 
   useEffect(() => {
     async function loadUsers() {
@@ -111,27 +139,7 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, docket,
         const initialActivity = activities.find(a => a.id === docket.activityId) || null;
         setSelectedActivity(initialActivity);
     }
-}, [docket, isOpen, form]);
-
-
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: "unproductiveEntries",
-  });
-  
-  const selectedAsset = form.watch("asset");
-  const selectedSubAsset = form.watch("subAsset");
-
-  const assets = useMemo(() => [...new Set(activities.map(a => a.asset))], []);
-  const subAssets = useMemo(() => {
-    if (!selectedAsset) return [];
-    return [...new Set(activities.filter(a => a.asset === selectedAsset).map(a => a.subAsset))];
-  }, [selectedAsset]);
-  const filteredActivities = useMemo(() => {
-    if (!selectedAsset || !selectedSubAsset) return [];
-    return activities.filter(a => a.asset === selectedAsset && a.subAsset === selectedSubAsset);
-  }, [selectedAsset, selectedSubAsset]);
-
+  }, [docket, isOpen, form]);
 
   const onSubmit = async (values: FormSchemaType) => {
     const result = await updateCrewDocket(values);
@@ -279,28 +287,28 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, docket,
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-                control={form.control}
-                name="productiveHours"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Productive Hours (per person)</FormLabel>
-                    <FormControl><Input type="number" step="0.1" {...field} /></FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-            <FormField
-                control={form.control}
-                name="quantity"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Quantity {selectedActivity ? `(${selectedActivity.activityUom})` : ''}</FormLabel>
-                    <FormControl><Input type="number" step="0.1" {...field} /></FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
+                <FormField
+                    control={form.control}
+                    name="quantity"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Quantity {selectedActivity ? `(${selectedActivity.activityUom})` : ''}</FormLabel>
+                        <FormControl><Input type="number" step="0.1" {...field} /></FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                <FormField
+                    control={form.control}
+                    name="productiveHours"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Productive Hours (per person)</FormLabel>
+                        <FormControl><Input type="number" step="0.1" {...field} /></FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
             </div>
 
             <div className="space-y-2">

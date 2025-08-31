@@ -116,6 +116,33 @@ function TimesheetFormContent() {
     },
   });
 
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "unproductiveEntries",
+  });
+
+  const selectedAsset = form.watch("asset");
+  const selectedSubAsset = form.watch("subAsset");
+
+  const assets = useMemo(() => [...new Set(activities.map(a => a.asset))], []);
+
+  const subAssets = useMemo(() => {
+    if (!selectedAsset) return [];
+    return [...new Set(activities.filter(a => a.asset === selectedAsset).map(a => a.subAsset))];
+  }, [selectedAsset]);
+
+  useEffect(() => {
+    if (subAssets.length === 1) {
+      form.setValue("subAsset", subAssets[0]);
+    }
+  }, [subAssets, form]);
+
+  const filteredActivities = useMemo(() => {
+    if (!selectedAsset || !selectedSubAsset) return [];
+    return activities.filter(a => a.asset === selectedAsset && a.subAsset === selectedSubAsset);
+  }, [selectedAsset, selectedSubAsset]);
+
+
   useEffect(() => {
     if (searchParams.has('asset')) {
       const initialData: { [key: string]: any } = {
@@ -144,25 +171,6 @@ function TimesheetFormContent() {
       form.setValue("submittedById", selectedSupervisorId);
     }
    }, [selectedSupervisorId, form]);
-
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: "unproductiveEntries",
-  });
-
-  const selectedAsset = form.watch("asset");
-  const selectedSubAsset = form.watch("subAsset");
-
-  const assets = useMemo(() => [...new Set(activities.map(a => a.asset))], []);
-  const subAssets = useMemo(() => {
-    if (!selectedAsset) return [];
-    return [...new Set(activities.filter(a => a.asset === selectedAsset).map(a => a.subAsset))];
-  }, [selectedAsset]);
-  const filteredActivities = useMemo(() => {
-    if (!selectedAsset || !selectedSubAsset) return [];
-    return activities.filter(a => a.asset === selectedAsset && a.subAsset === selectedSubAsset);
-  }, [selectedAsset, selectedSubAsset]);
-
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!loggedInUser) {
