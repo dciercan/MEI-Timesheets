@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { TimesheetSubmissionWithDetails, User } from "@/lib/types";
-import { deleteTimesheetGroup, deleteTimesheet } from "@/lib/actions";
+import { deleteTimesheetGroup } from "@/lib/actions";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import EditTimesheetDialog from "./EditTimesheetDialog";
