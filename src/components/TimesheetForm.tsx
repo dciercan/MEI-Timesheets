@@ -434,6 +434,17 @@ function TimesheetFormContent() {
                   />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end pt-4">
+                   <FormField
+                    control={form.control}
+                    name="quantity"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Quantity {selectedActivity ? `(${selectedActivity.activityUom})` : ''}</FormLabel>
+                        <FormControl><Input type="number" step="0.1" placeholder="e.g., 25" {...field} disabled={!selectedSupervisorId}/></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   <FormField
                     control={form.control}
                     name="productiveHours"
@@ -441,17 +452,6 @@ function TimesheetFormContent() {
                       <FormItem>
                         <FormLabel>Productive Hours (per person)</FormLabel>
                         <FormControl><Input type="number" step="0.1" placeholder="e.g., 8" {...field} disabled={!selectedSupervisorId}/></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="quantity"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Quantity {selectedActivity ? `(${selectedActivity.activityUom})` : ''}</FormLabel>
-                        <FormControl><Input type="number" step="0.1" placeholder="e.g., 25" {...field} disabled={!selectedSupervisorId}/></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
