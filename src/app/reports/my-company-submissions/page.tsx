@@ -53,14 +53,14 @@ export default function MyCompanySubmissionsPage() {
             <div className="container mx-auto max-w-6xl py-8 px-4 md:px-6">
                 <Card className="shadow-lg">
                     <CardHeader>
-                        <CardTitle className="font-headline text-3xl">All {currentUser.company} Submissions</CardTitle>
+                        <CardTitle className="font-headline text-3xl">All {currentUser.company} Crew Dockets</CardTitle>
                         <CardDescription>A log of all crew dockets from your company.</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="flex flex-col items-center justify-center h-[40vh] text-center">
                             <ListTodo className="h-16 w-16 text-muted-foreground" />
                             <h2 className="mt-4 text-2xl font-semibold font-headline">No Dockets Submitted Yet</h2>
-                            <p className="mt-2 text-muted-foreground">Check back later to see submissions from your company's crew supervisors.</p>
+                            <p className="mt-2 text-muted-foreground">Check back later to see crew dockets from your company's crew supervisors.</p>
                         </div>
                     </CardContent>
                 </Card>
@@ -72,7 +72,7 @@ export default function MyCompanySubmissionsPage() {
         <div className="container mx-auto max-w-6xl py-8 px-4 md:px-6">
             <Card className="shadow-lg">
                 <CardHeader>
-                    <CardTitle className="font-headline text-3xl">All {currentUser.company} Submissions</CardTitle>
+                    <CardTitle className="font-headline text-3xl">All {currentUser.company} Crew Dockets</CardTitle>
                     <CardDescription>A log of all crew dockets from your company.</CardDescription>
                 </CardHeader>
                 <CardContent>

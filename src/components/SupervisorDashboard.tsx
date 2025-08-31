@@ -82,8 +82,8 @@ export default function SupervisorDashboard({ dockets }: SupervisorDashboardProp
     return (
         <div className="flex flex-col items-center justify-center h-[50vh] text-center">
             <ListTodo className="h-16 w-16 text-muted-foreground" />
-            <h2 className="mt-4 text-2xl font-semibold font-headline">No Timesheets Submitted Yet</h2>
-            <p className="mt-2 text-muted-foreground">Once you submit timesheets, they will appear here.</p>
+            <h2 className="mt-4 text-2xl font-semibold font-headline">No Crew Dockets Submitted Yet</h2>
+            <p className="mt-2 text-muted-foreground">Once you submit a crew docket, it will appear here.</p>
         </div>
     );
   }

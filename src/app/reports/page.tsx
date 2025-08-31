@@ -34,8 +34,8 @@ export default function ReportsPage() {
                             <BarChart className="h-6 w-6 text-primary" />
                         </div>
                         <div>
-                            <CardTitle className="font-headline text-xl">All Submissions</CardTitle>
-                            <CardDescription>A complete log of all individual timesheet submissions from all supervisors.</CardDescription>
+                            <CardTitle className="font-headline text-xl">All Crew Dockets</CardTitle>
+                            <CardDescription>A complete log of all individual timesheet dockets from all supervisors.</CardDescription>
                         </div>
                         </div>
                         <ChevronRight className="h-6 w-6 text-muted-foreground" />
@@ -56,7 +56,7 @@ export default function ReportsPage() {
                 </div>
                 <div>
                     <CardTitle className="font-headline text-xl">Crew Activity Report</CardTitle>
-                    <CardDescription>A summary of all crew submissions, showing key productivity metrics.</CardDescription>
+                    <CardDescription>A summary of all crew dockets, showing key productivity metrics.</CardDescription>
                 </div>
                 </div>
                 <ChevronRight className="h-6 w-6 text-muted-foreground" />
@@ -75,8 +75,8 @@ export default function ReportsPage() {
                         <Building className="h-6 w-6 text-primary" />
                     </div>
                     <div>
-                        <CardTitle className="font-headline text-xl">All {user.company} Submissions</CardTitle>
-                        <CardDescription>A complete log of all timesheet submissions from supervisors at your company.</CardDescription>
+                        <CardTitle className="font-headline text-xl">All {user.company} Crew Dockets</CardTitle>
+                        <CardDescription>A complete log of all timesheet dockets from supervisors at your company.</CardDescription>
                     </div>
                     </div>
                     <ChevronRight className="h-6 w-6 text-muted-foreground" />

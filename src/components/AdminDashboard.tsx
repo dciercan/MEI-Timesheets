@@ -16,8 +16,8 @@ export default function AdminDashboard({ dockets }: AdminDashboardProps) {
     return (
       <div className="flex flex-col items-center justify-center h-[50vh] text-center">
         <ListTodo className="h-16 w-16 text-muted-foreground" />
-        <h2 className="mt-4 text-2xl font-semibold font-headline">No Timesheets Submitted Yet</h2>
-        <p className="mt-2 text-muted-foreground">Check back later to see submissions from crew supervisors.</p>
+        <h2 className="mt-4 text-2xl font-semibold font-headline">No Crew Dockets Submitted Yet</h2>
+        <p className="mt-2 text-muted-foreground">Check back later to see dockets from crew supervisors.</p>
       </div>
     );
   }

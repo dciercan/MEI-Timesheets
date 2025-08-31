@@ -19,13 +19,13 @@ import {
 
 const defaultLinks = [
   { href: '/timesheet', label: 'Timesheet Entry', icon: User, roles: ['Crew Supervisor', 'Subcontractor Admin', 'MEI Supervisor'] },
-  { href: '/timesheet/my-submissions', label: 'My Submissions', icon: FileText, roles: ['Crew Supervisor', 'MEI Supervisor'] },
+  { href: '/timesheet/my-submissions', label: 'My Crew Dockets', icon: FileText, roles: ['Crew Supervisor', 'MEI Supervisor'] },
 ];
 
 const adminLinks = [
   { href: '/admin', label: 'Admin Dashboard', icon: LayoutDashboard, roles: ['Admin'] },
   { href: '/admin/users', label: 'User Admin', icon: Users, roles: ['Admin', 'Subcontractor Admin'] },
-  { href: '/reports/my-company-submissions', label: 'Company Submissions', icon: Building, roles: ['Subcontractor Admin'] },
+  { href: '/reports/my-company-submissions', label: 'Company Dockets', icon: Building, roles: ['Subcontractor Admin'] },
   { href: '/reports', label: 'Reports', icon: BarChart, roles: ['Admin', 'Read Only', 'Crew Supervisor', 'MEI Supervisor', 'Subcontractor Admin'] },
 ]
 
