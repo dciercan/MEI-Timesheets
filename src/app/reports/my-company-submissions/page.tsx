@@ -18,7 +18,7 @@ export default function MyCompanySubmissionsPage() {
     useEffect(() => {
         if (currentUser) {
             setIsLoading(true);
-            getTimesheetSubmissions(currentUser)
+            getTimesheetSubmissions(currentUser, 'report')
                 .then(data => {
                     setSubmissions(data);
                 })
