@@ -57,27 +57,24 @@ export default function CrewActivityReport({ submissions }: CrewActivityReportPr
   const crewSummaries = React.useMemo(() => {
     const crews: Record<string, {
         entries: TimesheetSubmissionWithDetails[],
-        representative: TimesheetSubmissionWithDetails,
     }> = {};
 
     submissions.forEach(s => {
-      // All submissions in a crew share the same ID.
-      const crewId = s.submissionCrewId;
+      const crewId = s.submissionCrewId || `individual-${s.id}`;
       if (!crews[crewId]) {
-        // Initialize the crew with the first entry as its representative.
-        crews[crewId] = { entries: [], representative: s };
+        crews[crewId] = { entries: [] };
       }
       crews[crewId].entries.push(s);
     });
     
-    return Object.values(crews).map((crew): CrewSummary => {
-        const { representative, entries } = crew;
+    return Object.entries(crews).map(([crewId, crew]): CrewSummary => {
+        const representative = crew.entries[0];
         const totalUnproductiveMinutes = representative.unproductiveEntries?.reduce((total, entry) => total + entry.minutes, 0) || 0;
         const unproductiveHours = totalUnproductiveMinutes / 60;
         const totalHours = representative.productiveHours + unproductiveHours;
 
         return {
-            submissionCrewId: representative.submissionCrewId,
+            submissionCrewId: crewId,
             timesheetDate: representative.timesheetDate,
             zone: representative.zone || 'N/A',
             section: representative.section || 'N/A',
@@ -86,7 +83,7 @@ export default function CrewActivityReport({ submissions }: CrewActivityReportPr
             activity: representative.activity?.activity || 'N/A',
             company: representative.submittedBy?.company || 'N/A',
             supervisor: representative.submittedBy?.fullName || 'N/A',
-            crewSize: entries.length,
+            crewSize: crew.entries.length,
             productiveHours: representative.productiveHours,
             quantity: representative.quantity,
             quantityUom: representative.activity?.activityUom || '',
