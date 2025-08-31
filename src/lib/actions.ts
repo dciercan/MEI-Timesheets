@@ -302,15 +302,17 @@ async function enrichSubmissions(submissions: TimesheetSubmission[]): Promise<Ti
 
 export async function getTimesheetSubmissions(
     requestingUser?: User | null, 
-    context?: 'my-submissions'
+    context?: 'my-submissions' | 'report'
 ): Promise<TimesheetSubmissionWithDetails[]> {
     const allSubmissions = await readSubmissions();
+    const allUsers = await readUsers();
+    const userMap = new Map(allUsers.map(u => [u.id, u]));
     const currentUser = requestingUser ?? await getCurrentUser();
 
     if (!currentUser) {
         return [];
     }
-
+    
     let filteredSubmissions: TimesheetSubmission[];
     const isSparkUser = ['Admin', 'Read Only', 'MEI Supervisor'].includes(currentUser.appRole);
 
@@ -321,12 +323,11 @@ export async function getTimesheetSubmissions(
         // Spark users see all submissions for reports/admin views
         filteredSubmissions = allSubmissions;
     } else {
-        // Non-Spark users see only their company's submissions for reports
-        const users = await readUsers();
-        const companyUserIds = new Set(
-            users.filter(u => u.company === currentUser.company).map(u => u.id)
-        );
-        filteredSubmissions = allSubmissions.filter(s => companyUserIds.has(s.submittedById));
+        // Non-Spark users see only their company's submissions
+        filteredSubmissions = allSubmissions.filter(s => {
+            const submittingUser = userMap.get(s.submittedById);
+            return submittingUser?.company === currentUser.company;
+        });
     }
     
     const sorted = filteredSubmissions.sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());
