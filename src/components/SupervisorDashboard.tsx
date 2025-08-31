@@ -222,25 +222,17 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
                     <InfoItem icon={Hash} label="Quantity" value={group.representative.quantity} badge={group.representative.activity?.activityUom} />
                  </div>
                 
-                 <div className="border rounded-md">
+                 <div className="border rounded-md max-w-sm">
                     <Table>
                         <TableHeader>
                         <TableRow>
-                            <TableHead>Crew Member</TableHead>
-                            <TableHead>Company</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
+                            <TableHead>Crew Members</TableHead>
                         </TableRow>
                         </TableHeader>
                         <TableBody>
                         {group.entries.map((entry) => (
                             <TableRow key={entry.id}>
                             <TableCell>{entry.crewMember?.fullName}</TableCell>
-                            <TableCell>{entry.crewMember?.company}</TableCell>
-                            <TableCell className="text-right">
-                                <Button variant="ghost" size="icon" onClick={() => handleEdit(entry)}>
-                                <Edit className="h-4 w-4" />
-                                </Button>
-                            </TableCell>
                             </TableRow>
                         ))}
                         </TableBody>
@@ -271,3 +263,4 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
     </Card>
   );
 }
+
