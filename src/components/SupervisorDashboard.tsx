@@ -219,7 +219,7 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
               </div>
               <AccordionContent className="px-6 pb-4">
                  <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6 pt-4 border-t">
-                    <InfoItem icon={Hash} label="Submission ID" value={group.id} />
+                    <InfoItem icon={Hash} label="Submission Group ID" value={group.id} />
                     <InfoItem icon={Users} label="Crew Members" value={group.entries.length} />
                     <InfoItem icon={FileText} label="Asset / Sub-Asset" value={`${group.representative.asset} / ${group.representative.subAsset}`} />
                     <InfoItem icon={Clock} label="Productive Hours" value={group.representative.productiveHours} />
@@ -227,17 +227,19 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
                     <InfoItem icon={Watch} label="Unproductive Time" value={totalUnproductiveMinutes} badge="minutes" />
                  </div>
                 
-                 <div className="border rounded-md max-w-sm">
+                 <div className="border rounded-md">
                     <Table>
                         <TableHeader>
                         <TableRow>
-                            <TableHead>Crew Members</TableHead>
+                            <TableHead>Crew Member</TableHead>
+                            <TableHead>Timesheet ID</TableHead>
                         </TableRow>
                         </TableHeader>
                         <TableBody>
                         {group.entries.map((entry) => (
                             <TableRow key={entry.id}>
                             <TableCell>{entry.crewMember?.fullName}</TableCell>
+                            <TableCell className="font-mono text-xs">{entry.id}</TableCell>
                             </TableRow>
                         ))}
                         </TableBody>
