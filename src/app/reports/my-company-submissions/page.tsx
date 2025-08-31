@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import AdminDashboard from "@/components/AdminDashboard";
+import SubmissionsTable from "@/components/SubmissionsTable";
 import { getCrewDockets } from "@/lib/actions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ListTodo } from "lucide-react";
@@ -30,7 +30,7 @@ export default function MyCompanySubmissionsPage() {
 
     if (isAuthLoading || isLoading || !currentUser) {
         return (
-             <div className="container mx-auto max-w-6xl py-8 px-4 md:px-6">
+             <div className="container mx-auto max-w-screen-2xl py-8 px-4 md:px-6">
                 <Card className="shadow-lg">
                     <CardHeader>
                          <Skeleton className="h-9 w-1/2" />
@@ -48,13 +48,16 @@ export default function MyCompanySubmissionsPage() {
         )
     }
     
+    const title = `All ${currentUser.company} Crew Dockets`;
+    const description = "A log of all crew dockets from your company.";
+    
     if (dockets.length === 0) {
         return (
-            <div className="container mx-auto max-w-6xl py-8 px-4 md:px-6">
+            <div className="container mx-auto max-w-screen-2xl py-8 px-4 md:px-6">
                 <Card className="shadow-lg">
                     <CardHeader>
-                        <CardTitle className="font-headline text-3xl">All {currentUser.company} Crew Dockets</CardTitle>
-                        <CardDescription>A log of all crew dockets from your company.</CardDescription>
+                        <CardTitle className="font-headline text-3xl">{title}</CardTitle>
+                        <CardDescription>{description}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="flex flex-col items-center justify-center h-[40vh] text-center">
@@ -70,7 +73,15 @@ export default function MyCompanySubmissionsPage() {
 
     return (
         <div className="container mx-auto max-w-screen-2xl py-8 px-4 md:px-6">
-            <AdminDashboard dockets={dockets} title={`All ${currentUser.company} Crew Dockets`} description="A log of all crew dockets from your company." />
+             <Card className="shadow-lg">
+                <CardHeader>
+                    <CardTitle className="font-headline text-3xl">{title}</CardTitle>
+                    <CardDescription>{description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <SubmissionsTable dockets={dockets} />
+                </CardContent>
+            </Card>
         </div>
     );
 }
