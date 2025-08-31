@@ -64,7 +64,7 @@ export default async function ConfigurationPage() {
                         <CardHeader>
                             <CardTitle>Manage Unproductive Time</CardTitle>
                             <CardDescription>Define the reasons and codes for non-productive work hours.</CardDescription>
-                        </Header>
+                        </CardHeader>
                         <CardContent>
                             <UnproductiveTimeConfig reasons={unproductiveReasons} />
                         </CardContent>
