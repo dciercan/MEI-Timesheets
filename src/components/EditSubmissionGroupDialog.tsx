@@ -10,9 +10,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { updateCrewDocket, getUsers } from "@/lib/actions";
-import type { CrewDocketWithDetails, Activity, User } from "@/lib/types";
-import { activities, unproductiveReasons } from "@/lib/data";
+import { updateCrewDocket, getUsers, getLocations, getActivities } from "@/lib/actions";
+import type { CrewDocketWithDetails, Activity, User, Location } from "@/lib/types";
+import { unproductiveReasons } from "@/lib/data";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -58,24 +58,12 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, docket,
   const { toast } = useToast();
   const { user: loggedInUser } = useAuth();
   const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
 
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-        crewDocketId: '',
-        timesheetDate: new Date(),
-        crewMemberIds: [],
-        zone: '',
-        section: '',
-        asset: '',
-        subAsset: '',
-        activityId: '',
-        quantity: 0,
-        notes: '',
-        productiveHours: 0,
-        unproductiveEntries: [],
-    }
   });
   
   const { fields, append, remove } = useFieldArray({
@@ -85,13 +73,14 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, docket,
   
   const selectedAsset = form.watch("asset");
   const selectedSubAsset = form.watch("subAsset");
+  const selectedZone = form.watch("zone");
 
-  const assets = useMemo(() => [...new Set(activities.map(a => a.asset))], []);
+  const assets = useMemo(() => [...new Set(activities.map(a => a.asset))], [activities]);
   
   const subAssets = useMemo(() => {
     if (!selectedAsset) return [];
     return [...new Set(activities.filter(a => a.asset === selectedAsset).map(a => a.subAsset))];
-  }, [selectedAsset]);
+  }, [selectedAsset, activities]);
 
   useEffect(() => {
     if (subAssets.length === 1) {
@@ -99,31 +88,39 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, docket,
     }
   }, [subAssets, form]);
 
-
   const filteredActivities = useMemo(() => {
     if (!selectedAsset || !selectedSubAsset) return [];
     return activities.filter(a => a.asset === selectedAsset && a.subAsset === selectedSubAsset);
-  }, [selectedAsset, selectedSubAsset]);
+  }, [selectedAsset, selectedSubAsset, activities]);
 
+  const sectionsForSelectedZone = useMemo(() => {
+    if (!selectedZone) return [];
+    return locations.find(l => l.zone === selectedZone)?.sections || [];
+  }, [selectedZone, locations]);
 
   useEffect(() => {
-    async function loadUsers() {
+    async function loadData() {
       if(loggedInUser) {
-        const fetchedUsers = await getUsers(loggedInUser);
+        const [fetchedUsers, fetchedLocations, fetchedActivities] = await Promise.all([
+          getUsers(loggedInUser),
+          getLocations(),
+          getActivities(),
+        ]);
         setAllUsers(fetchedUsers);
+        setLocations(fetchedLocations);
+        setActivities(fetchedActivities);
       }
     }
-    loadUsers();
+    loadData();
   }, [loggedInUser]);
 
   useEffect(() => {
-    if (docket && isOpen) {
+    if (docket && isOpen && activities.length > 0) {
         const representativeTimesheet = docket.timesheets[0] || {};
         
         form.reset({
             crewDocketId: docket.id,
             timesheetDate: new Date(docket.timesheetDate),
-            // IMPORTANT: This filters out the supervisor, as they are implicitly included.
             crewMemberIds: docket.crewMemberIds.filter(id => id !== docket.submittedById),
             zone: docket.zone,
             section: docket.section,
@@ -139,7 +136,7 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, docket,
         const initialActivity = activities.find(a => a.id === docket.activityId) || null;
         setSelectedActivity(initialActivity);
     }
-  }, [docket, isOpen, form]);
+  }, [docket, isOpen, form, activities]);
 
   const onSubmit = async (values: FormSchemaType) => {
     const result = await updateCrewDocket(values);
@@ -158,13 +155,12 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, docket,
 
   const crewMembers = useMemo(() => {
     if (!loggedInUser) return [];
-    // For admins, show users from the docket's company. For sub-admins, from their own company.
     const companyToShow = loggedInUser.appRole === 'Admin' ? docket.company : loggedInUser.company;
     return allUsers
       .filter(u => 
         u.company === companyToShow && 
         (u.appRole === 'Crew Member' || u.appRole === 'Crew Supervisor') &&
-        u.id !== docket.submittedById // Exclude the supervisor who submitted it
+        u.id !== docket.submittedById
       )
       .sort((a, b) => a.fullName.localeCompare(b.fullName));
   }, [allUsers, loggedInUser, docket]);
@@ -239,6 +235,41 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, docket,
                     </FormItem>
                   )}
                 />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 <FormField
+                    control={form.control}
+                    name="zone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Zone</FormLabel>
+                        <Select onValueChange={(value) => { field.onChange(value); form.setValue("section", ""); }} value={field.value}>
+                          <FormControl><SelectTrigger><SelectValue placeholder="Select a zone" /></SelectTrigger></FormControl>
+                          <SelectContent>
+                            {locations.map(loc => <SelectItem key={loc.zone} value={loc.zone}>{loc.zone}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="section"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Section</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value} disabled={!selectedZone}>
+                            <FormControl><SelectTrigger><SelectValue placeholder="Select a section" /></SelectTrigger></FormControl>
+                            <SelectContent>
+                                {sectionsForSelectedZone.map(section => <SelectItem key={section} value={section}>{section}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

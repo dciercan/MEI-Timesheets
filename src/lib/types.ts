@@ -52,8 +52,8 @@ export type CrewDocket = {
   id: string;
   timesheetDate: Date;
   company: string;
-  zone?: string;
-  section?: string;
+  zone: string;
+  section: string;
   asset: string;
   subAsset: string;
   activityId: string;
@@ -78,3 +78,8 @@ export type CrewDocketWithDetails = CrewDocket & {
   submittedBy: User | null;
   crewMembers: User[];
 };
+
+export type Location = {
+  zone: string;
+  sections: string[];
+}

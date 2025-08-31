@@ -7,7 +7,7 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { cn } from "@/lib/utils";
-import { addCrewDocket, getActivities, getUsers, getUnproductiveReasons, getZones, getSections } from "@/lib/actions";
+import { addCrewDocket, getActivities, getUsers, getUnproductiveReasons, getLocations } from "@/lib/actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { CalendarIcon, PlusCircle, Trash2, Loader2, Send } from "lucide-react";
-import type { Activity, User, UnproductiveReason } from "@/lib/types";
+import type { Activity, User, UnproductiveReason, Location } from "@/lib/types";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/hooks/use-auth";
@@ -55,26 +55,23 @@ function TimesheetFormContent() {
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [unproductiveReasons, setUnproductiveReasons] = useState<UnproductiveReason[]>([]);
-  const [zones, setZones] = useState<string[]>([]);
-  const [sections, setSections] = useState<string[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
 
   const [selectedCompany, setSelectedCompany] = useState<string>("");
   const [selectedSupervisorId, setSelectedSupervisorId] = useState<string>("");
 
    useEffect(() => {
     async function fetchData() {
-      const [fetchedUsers, fetchedActivities, fetchedUnproductive, fetchedZones, fetchedSections] = await Promise.all([
+      const [fetchedUsers, fetchedActivities, fetchedUnproductive, fetchedLocations] = await Promise.all([
         getUsers(),
         getActivities(),
         getUnproductiveReasons(),
-        getZones(),
-        getSections(),
+        getLocations(),
       ]);
       setAllUsers(fetchedUsers);
       setActivities(fetchedActivities);
       setUnproductiveReasons(fetchedUnproductive);
-      setZones(fetchedZones);
-      setSections(fetchedSections);
+      setLocations(fetchedLocations);
     }
     fetchData();
   }, []);
@@ -135,6 +132,7 @@ function TimesheetFormContent() {
 
   const selectedAsset = form.watch("asset");
   const selectedSubAsset = form.watch("subAsset");
+  const selectedZone = form.watch("zone");
 
   const assets = useMemo(() => [...new Set(activities.map(a => a.asset))], [activities]);
 
@@ -154,6 +152,10 @@ function TimesheetFormContent() {
     return activities.filter(a => a.asset === selectedAsset && a.subAsset === selectedSubAsset);
   }, [selectedAsset, selectedSubAsset, activities]);
 
+  const sectionsForSelectedZone = useMemo(() => {
+    if (!selectedZone) return [];
+    return locations.find(l => l.zone === selectedZone)?.sections || [];
+  }, [selectedZone, locations]);
 
   useEffect(() => {
     if (searchParams.has('asset')) {
@@ -378,10 +380,10 @@ function TimesheetFormContent() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Zone</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value} disabled={!selectedSupervisorId}>
+                        <Select onValueChange={(value) => { field.onChange(value); form.setValue("section", ""); }} value={field.value} disabled={!selectedSupervisorId}>
                           <FormControl><SelectTrigger><SelectValue placeholder="Select a zone" /></SelectTrigger></FormControl>
                           <SelectContent>
-                            {zones.map(zone => <SelectItem key={zone} value={zone}>{zone}</SelectItem>)}
+                            {locations.map(loc => <SelectItem key={loc.zone} value={loc.zone}>{loc.zone}</SelectItem>)}
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -394,10 +396,10 @@ function TimesheetFormContent() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Section</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value} disabled={!selectedSupervisorId}>
+                        <Select onValueChange={field.onChange} value={field.value} disabled={!selectedZone}>
                             <FormControl><SelectTrigger><SelectValue placeholder="Select a section" /></SelectTrigger></FormControl>
                             <SelectContent>
-                                {sections.map(section => <SelectItem key={section} value={section}>{section}</SelectItem>)}
+                                {sectionsForSelectedZone.map(section => <SelectItem key={section} value={section}>{section}</SelectItem>)}
                             </SelectContent>
                         </Select>
                         <FormMessage />

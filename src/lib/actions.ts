@@ -3,7 +3,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import type { User, Activity, UnproductiveReason, CrewDocket, Timesheet, CrewDocketWithDetails, TimesheetWithDetails, CrewDocketStatus, TimesheetStatus } from './types';
+import type { User, Activity, UnproductiveReason, CrewDocket, Timesheet, CrewDocketWithDetails, TimesheetWithDetails, CrewDocketStatus, TimesheetStatus, Location } from './types';
 import { z } from 'zod';
 import fs from 'fs/promises';
 import path from 'path';
@@ -16,8 +16,7 @@ const timesheetsDbPath = path.join(process.cwd(), 'src', 'lib', 'timesheets.json
 const usersDbPath = path.join(process.cwd(), 'src', 'lib', 'users.json');
 const activitiesDbPath = path.join(process.cwd(), 'src', 'lib', 'activities.json');
 const unproductiveReasonsDbPath = path.join(process.cwd(), 'src', 'lib', 'unproductiveReasons.json');
-const zonesDbPath = path.join(process.cwd(), 'src', 'lib', 'zones.json');
-const sectionsDbPath = path.join(process.cwd(), 'src', 'lib', 'sections.json');
+const locationsDbPath = path.join(process.cwd(), 'src', 'lib', 'locations.json');
 
 
 // Data Functions
@@ -84,22 +83,13 @@ async function writeUnproductiveReasons(reasons: UnproductiveReason[]): Promise<
     await fs.writeFile(unproductiveReasonsDbPath, JSON.stringify(reasons, null, 2), 'utf-8');
 }
 
-async function readZones(): Promise<string[]> {
-    const data = await fs.readFile(zonesDbPath, 'utf-8');
+async function readLocations(): Promise<Location[]> {
+    const data = await fs.readFile(locationsDbPath, 'utf-8');
     return JSON.parse(data);
 }
 
-async function writeZones(zones: string[]): Promise<void> {
-    await fs.writeFile(zonesDbPath, JSON.stringify(zones, null, 2), 'utf-8');
-}
-
-async function readSections(): Promise<string[]> {
-    const data = await fs.readFile(sectionsDbPath, 'utf-8');
-    return JSON.parse(data);
-}
-
-async function writeSections(sections: string[]): Promise<void> {
-    await fs.writeFile(sectionsDbPath, JSON.stringify(sections, null, 2), 'utf-8');
+async function writeLocations(locations: Location[]): Promise<void> {
+    await fs.writeFile(locationsDbPath, JSON.stringify(locations, null, 2), 'utf-8');
 }
 
 
@@ -111,12 +101,22 @@ export async function getUnproductiveReasons(): Promise<UnproductiveReason[]> {
     return readUnproductiveReasons();
 }
 
+export async function getLocations(): Promise<Location[]> {
+    return readLocations();
+}
+
 export async function getZones(): Promise<string[]> {
-    return readZones();
+    const locations = await readLocations();
+    return locations.map(l => l.zone).sort((a,b) => a.localeCompare(b));
 }
 
 export async function getSections(): Promise<string[]> {
-    return readSections();
+    const locations = await readLocations();
+    const allSections = new Set<string>();
+    locations.forEach(l => {
+        l.sections.forEach(s => allSections.add(s));
+    });
+    return Array.from(allSections).sort((a,b) => a.localeCompare(b));
 }
 
 
@@ -533,50 +533,76 @@ export async function getAvailableModels() {
 
 // CONFIGURATION ACTIONS
 const locationSchema = z.object({
-  type: z.enum(['Zone', 'Section']),
-  name: z.string().min(1, 'Name is required'),
-  originalName: z.string().optional(),
+  id: z.string().optional(), // Used to identify which location is being edited
+  zone: z.string().min(1, 'Zone is required'),
+  section: z.string().min(1, 'Section is required'),
+  isNewZone: z.boolean().optional()
 });
 
 export async function saveLocation(data: z.infer<typeof locationSchema>) {
     const validation = locationSchema.safeParse(data);
     if (!validation.success) return { success: false, error: "Invalid data" };
     
-    const { type, name, originalName } = validation.data;
-    
-    const items = type === 'Zone' ? await readZones() : await readSections();
+    const { id, zone, section, isNewZone } = validation.data;
+    const locations = await readLocations();
 
-    if (items.includes(name) && name !== originalName) {
-        return { success: false, error: `${type} already exists.` };
-    }
-    
-    if (originalName) { // Editing existing
-        const index = items.findIndex(item => item === originalName);
-        if (index > -1) {
-            items[index] = name;
+    if (isNewZone) {
+         if (locations.some(l => l.zone === zone)) {
+            return { success: false, error: 'This Zone already exists.' };
         }
-    } else { // Adding new
-        items.push(name);
+        locations.push({ zone: zone, sections: [section] });
+    } else {
+        const zoneToUpdate = locations.find(l => l.zone === zone);
+        if (!zoneToUpdate) {
+            return { success: false, error: 'Zone not found.' };
+        }
+
+        if (id) { // Editing existing section
+            const originalSection = id; // The id passed is the original section name
+            if (zoneToUpdate.sections.includes(section) && section !== originalSection) {
+                 return { success: false, error: 'This Section already exists in this Zone.' };
+            }
+            const sectionIndex = zoneToUpdate.sections.findIndex(s => s === originalSection);
+            if (sectionIndex > -1) {
+                zoneToUpdate.sections[sectionIndex] = section;
+            } else {
+                 return { success: false, error: 'Original section not found for editing.' };
+            }
+        } else { // Adding new section to existing zone
+             if (zoneToUpdate.sections.includes(section)) {
+                return { success: false, error: 'This Section already exists in this Zone.' };
+            }
+            zoneToUpdate.sections.push(section);
+        }
     }
     
-    if (type === 'Zone') await writeZones(items);
-    else await writeSections(items);
-    
+    await writeLocations(locations.sort((a, b) => a.zone.localeCompare(b.zone)));
     revalidatePath('/admin/configuration');
     return { success: true };
 }
 
-export async function deleteLocation(type: 'Zone' | 'Section', name: string) {
-    const items = type === 'Zone' ? await readZones() : await readSections();
-    const newItems = items.filter(item => item !== name);
-    
-    if (items.length === newItems.length) {
-        return { success: false, error: `${type} not found.` };
+export async function deleteLocation(zone: string, section: string) {
+    const locations = await readLocations();
+    const zoneToUpdate = locations.find(l => l.zone === zone);
+
+    if (!zoneToUpdate) {
+        return { success: false, error: 'Zone not found.' };
     }
 
-    if (type === 'Zone') await writeZones(newItems);
-    else await writeSections(newItems);
+    const initialSectionCount = zoneToUpdate.sections.length;
+    zoneToUpdate.sections = zoneToUpdate.sections.filter(s => s !== section);
+    
+    if(zoneToUpdate.sections.length === 0) {
+        // If the last section is removed, remove the zone itself
+        const zoneIndex = locations.findIndex(l => l.zone === zone);
+        locations.splice(zoneIndex, 1);
+    }
 
+    if (zoneToUpdate.sections.length === initialSectionCount && locations.some(l => l.zone === zone)) {
+        return { success: false, error: 'Section not found in the specified zone.' };
+    }
+
+    await writeLocations(locations);
     revalidatePath('/admin/configuration');
     return { success: true };
 }

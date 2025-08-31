@@ -1,0 +1,108 @@
+
+[
+  {
+    "zone": "S1",
+    "sections": [
+      "M011",
+      "M01J",
+      "M020 S1",
+      "M020 S2",
+      "Central Corridor",
+      "XP1",
+      "XP2",
+      "XP3",
+      "XP4",
+      "XP5"
+    ]
+  },
+  {
+    "zone": "S2",
+    "sections": [
+      "M011",
+      "M01J",
+      "M020 S1",
+      "M020 S2",
+      "Central Corridor",
+      "XP1",
+      "XP2",
+      "XP3",
+      "XP4",
+      "XP5"
+    ]
+  },
+  {
+    "zone": "S3",
+    "sections": [
+      "M011",
+      "M01J",
+      "M020 S1",
+      "M020 S2",
+      "Central Corridor",
+      "XP1",
+      "XP2",
+      "XP3",
+      "XP4",
+      "XP5"
+    ]
+  },
+  {
+    "zone": "S4",
+    "sections": [
+      "M011",
+      "M01J",
+      "M020 S1",
+      "M020 S2",
+      "Central Corridor",
+      "XP1",
+      "XP2",
+      "XP3",
+      "XP4",
+      "XP5"
+    ]
+  },
+  {
+    "zone": "S5",
+    "sections": [
+      "M011",
+      "M01J",
+      "M020 S1",
+      "M020 S2",
+      "Central Corridor",
+      "XP1",
+      "XP2",
+      "XP3",
+      "XP4",
+      "XP5"
+    ]
+  },
+  {
+    "zone": "MAN RAMPS",
+    "sections": [
+      "M011",
+      "M01J",
+      "M020 S1",
+      "M020 S2",
+      "Central Corridor",
+      "XP1",
+      "XP2",
+      "XP3",
+      "XP4",
+      "XP5"
+    ]
+  },
+  {
+    "zone": "LPR RAMPS",
+    "sections": [
+      "M011",
+      "M01J",
+      "M020 S1",
+      "M020 S2",
+      "Central Corridor",
+      "XP1",
+      "XP2",
+      "XP3",
+      "XP4",
+      "XP5"
+    ]
+  }
+]
