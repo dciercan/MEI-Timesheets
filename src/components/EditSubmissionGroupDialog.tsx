@@ -133,14 +133,6 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, docket,
   }, [selectedAsset, selectedSubAsset]);
 
 
-  useEffect(() => {
-    if (docket) {
-        const initialActivity = activities.find(a => a.id === docket.activityId) || null;
-        setSelectedActivity(initialActivity);
-    }
-  }, [docket, form]);
-
-
   const onSubmit = async (values: FormSchemaType) => {
     const result = await updateCrewDocket(values);
 
