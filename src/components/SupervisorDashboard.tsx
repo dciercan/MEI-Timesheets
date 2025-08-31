@@ -7,13 +7,13 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import type { TimesheetSubmissionWithDetails, User } from "@/lib/types";
+import type { TimesheetSubmissionWithDetails } from "@/lib/types";
 import { deleteTimesheetGroup } from "@/lib/actions";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import EditTimesheetDialog from "./EditTimesheetDialog";
 import { useRouter } from 'next/navigation';
-import { Calendar, Users, Activity, Clock, Hash, Trash2, Copy, Edit, MoreVertical, FileText } from 'lucide-react';
+import { Calendar, Users, Activity, Clock, Hash, Trash2, Copy, Edit, FileText } from 'lucide-react';
 import InfoItem from './InfoItem';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 
@@ -45,7 +45,6 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
     setIsEditDialogOpen(false);
     setSelectedEntry(null);
     toast({ title: "Submission updated successfully" });
-    // For simplicity, we just reload the page to get fresh data.
     router.refresh();
   };
 
@@ -62,22 +61,22 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
   const groupedSubmissions = React.useMemo(() => {
     const groups: Record<string, GroupedSubmission> = {};
     submissions.forEach(s => {
-      const groupId = s.submissionGroupId || `synthetic-${s.id}`;
-      
-      if (!groups[groupId]) {
-        groups[groupId] = {
-          id: groupId,
-          entries: [],
-          representative: s
-        };
+      // Only process entries that have a group ID
+      if (s.submissionGroupId) {
+        if (!groups[s.submissionGroupId]) {
+          groups[s.submissionGroupId] = {
+            id: s.submissionGroupId,
+            entries: [],
+            representative: s
+          };
+        }
+        groups[s.submissionGroupId].entries.push(s);
       }
-      groups[groupId].entries.push(s);
     });
-    return Object.values(groups);
+    return Object.values(groups).sort((a,b) => new Date(b.representative.submittedAt).getTime() - new Date(a.representative.submittedAt).getTime());
   }, [submissions]);
 
   const handleCopy = (submission: TimesheetSubmissionWithDetails) => {
-     // Using query params to pass data to the form page
      const params = new URLSearchParams();
      params.set('date', submission.timesheetDate.toISOString());
      params.set('zone', submission.zone || '');
@@ -90,7 +89,7 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
      params.set('notes', submission.notes || '');
 
      const crewIds = groupedSubmissions
-        .find(g => g.id === (submission.submissionGroupId || `synthetic-${submission.id}`))?.entries
+        .find(g => g.id === submission.submissionGroupId)?.entries
         .map(e => e.crewMemberId)
         .filter(id => id !== submission.submittedById) || [];
 
