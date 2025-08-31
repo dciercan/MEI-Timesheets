@@ -20,11 +20,16 @@ const setCookie = (name: string, value: string, days: number) => {
     date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
     expires = "; expires=" + date.toUTCString();
   }
-  document.cookie = name + "=" + (value || "")  + expires + "; path=/";
+  if (typeof document !== 'undefined') {
+    document.cookie = name + "=" + (value || "")  + expires + "; path=/";
+  }
 };
 
 // Function to get a cookie
 const getCookie = (name: string): string | null => {
+    if (typeof document === 'undefined') {
+        return null;
+    }
     const nameEQ = name + "=";
     const ca = document.cookie.split(';');
     for(let i=0;i < ca.length;i++) {
@@ -37,7 +42,9 @@ const getCookie = (name: string): string | null => {
 
 // Function to erase a cookie
 const eraseCookie = (name: string) => {   
-    document.cookie = name+'=; Max-Age=-99999999; path=/;';  
+    if (typeof document !== 'undefined') {
+        document.cookie = name+'=; Max-Age=-99999999; path=/;';  
+    }
 };
 
 
