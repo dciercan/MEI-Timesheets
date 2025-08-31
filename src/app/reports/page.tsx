@@ -45,45 +45,67 @@ export default function ReportsPage() {
             </Card>
         )}
         
-        {/* Crew Activity Report visible to all users */}
+        {/* Crew Activity Report visible to all spark users */}
+        {isSparkUser && (
         <Card className="shadow-lg hover:shadow-xl transition-shadow">
-        <Link href="/reports/crew-activity" className="block">
-            <CardHeader>
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                <div className="p-3 bg-primary/10 rounded-full">
-                    <Users className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                    <CardTitle className="font-headline text-xl">Crew Activity Report</CardTitle>
-                    <CardDescription>A summary of all crew dockets, showing key productivity metrics.</CardDescription>
-                </div>
-                </div>
-                <ChevronRight className="h-6 w-6 text-muted-foreground" />
-            </div>
-            </CardHeader>
-        </Link>
+          <Link href="/reports/crew-activity" className="block">
+              <CardHeader>
+              <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                  <div className="p-3 bg-primary/10 rounded-full">
+                      <Users className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                      <CardTitle className="font-headline text-xl">Global Crew Activity Report</CardTitle>
+                      <CardDescription>A summary of all crew dockets, showing key productivity metrics.</CardDescription>
+                  </div>
+                  </div>
+                  <ChevronRight className="h-6 w-6 text-muted-foreground" />
+              </div>
+              </CardHeader>
+          </Link>
         </Card>
+        )}
 
         {(isSubbieAdmin || isSubbieSupervisor) && user && (
-            <Card className="shadow-lg hover:shadow-xl transition-shadow">
-            <Link href="/reports/my-company-submissions" className="block">
-                <CardHeader>
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                    <div className="p-3 bg-primary/10 rounded-full">
-                        <Building className="h-6 w-6 text-primary" />
+            <>
+              <Card className="shadow-lg hover:shadow-xl transition-shadow">
+                <Link href="/reports/my-company-submissions" className="block">
+                    <CardHeader>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                        <div className="p-3 bg-primary/10 rounded-full">
+                            <Building className="h-6 w-6 text-primary" />
+                        </div>
+                        <div>
+                            <CardTitle className="font-headline text-xl">All {user.company} Crew Dockets</CardTitle>
+                            <CardDescription>A complete log of all timesheet dockets from supervisors at your company.</CardDescription>
+                        </div>
+                        </div>
+                        <ChevronRight className="h-6 w-6 text-muted-foreground" />
                     </div>
-                    <div>
-                        <CardTitle className="font-headline text-xl">All {user.company} Crew Dockets</CardTitle>
-                        <CardDescription>A complete log of all timesheet dockets from supervisors at your company.</CardDescription>
+                    </CardHeader>
+                </Link>
+              </Card>
+               <Card className="shadow-lg hover:shadow-xl transition-shadow">
+                <Link href="/reports/my-company-activity" className="block">
+                    <CardHeader>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                        <div className="p-3 bg-primary/10 rounded-full">
+                            <Users className="h-6 w-6 text-primary" />
+                        </div>
+                        <div>
+                            <CardTitle className="font-headline text-xl">{user.company} Crew Activity Report</CardTitle>
+                            <CardDescription>A summary of your company's crew dockets, showing key productivity metrics.</CardDescription>
+                        </div>
+                        </div>
+                        <ChevronRight className="h-6 w-6 text-muted-foreground" />
                     </div>
-                    </div>
-                    <ChevronRight className="h-6 w-6 text-muted-foreground" />
-                </div>
-                </CardHeader>
-            </Link>
-            </Card>
+                    </CardHeader>
+                </Link>
+              </Card>
+            </>
         )}
         
       </div>

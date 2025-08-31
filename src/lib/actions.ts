@@ -271,11 +271,12 @@ export async function getCrewDockets(
 
     let filteredDockets: CrewDocket[];
     const isSparkUser = ['Admin', 'Read Only', 'MEI Supervisor'].includes(currentUser.appRole);
-    const isCompanyUser = ['Subcontractor Admin', 'Crew Supervisor'].includes(currentUser.appRole);
+    const isSubbieAdmin = currentUser.appRole === 'Subcontractor Admin';
+    const isSubbieSupervisor = currentUser.appRole === 'Crew Supervisor';
 
     if (isSparkUser) {
         filteredDockets = allDockets;
-    } else if (isCompanyUser) {
+    } else if (isSubbieAdmin || isSubbieSupervisor) {
         filteredDockets = allDockets.filter(s => s.company === currentUser.company);
     } else {
         // Fallback for other roles (like Crew Member) to see their own dockets if needed in future
@@ -338,7 +339,7 @@ export async function saveUser(formData: FormData) {
         if (userIndex > -1) {
             users[userIndex] = { ...users[userIndex], ...data };
         } else {
-             return { success: false, error: "User not found." };
+             return { success: false, error: "User not. found" };
         }
     } else {
         // Add new user
