@@ -328,8 +328,13 @@ export async function getCrewDockets(
         // Subcontractor Admin sees all dockets for their company
         filteredDockets = allDockets.filter(s => s.company === currentUser.company);
     } else if (currentUser.appRole === 'Crew Supervisor') {
-        // Crew Supervisor sees only dockets they have submitted
-        filteredDockets = allDockets.filter(s => s.submittedById === currentUser.id);
+         // Crew Supervisor on the "My Crew Dockets" page sees only dockets they have submitted.
+         // On the approval dashboard, MEI Supervisors need to see submitted dockets from others.
+        if (currentUser.appRole === 'MEI Supervisor') {
+             filteredDockets = allDockets.filter(d => d.status === 'Submitted');
+        } else {
+             filteredDockets = allDockets.filter(s => s.submittedById === currentUser.id);
+        }
     } else {
          // Default to no dockets if role is not recognized or just a crew member
         filteredDockets = [];

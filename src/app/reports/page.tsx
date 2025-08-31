@@ -121,7 +121,7 @@ export default function ReportsPage() {
                     </CardHeader>
                 </Link>
               </Card>
-              <Card className="shadow-lg hover:shadow-xl transition-shadow">
+              <Card className="shadow-lg hover-shadow-xl transition-shadow">
                 <Link href="/reports/my-company-timesheets" className="block">
                     <CardHeader>
                     <div className="flex items-center justify-between">
