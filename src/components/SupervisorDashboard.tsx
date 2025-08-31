@@ -233,15 +233,22 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
                         <TableRow>
                             <TableHead>Crew Member</TableHead>
                             <TableHead>Timesheet ID</TableHead>
+                            <TableHead className="text-right">Total Hours</TableHead>
                         </TableRow>
                         </TableHeader>
                         <TableBody>
-                        {group.entries.map((entry) => (
-                            <TableRow key={entry.id}>
-                            <TableCell>{entry.crewMember?.fullName}</TableCell>
-                            <TableCell className="font-mono text-xs">{entry.id}</TableCell>
-                            </TableRow>
-                        ))}
+                        {group.entries.map((entry) => {
+                            const totalUnproductiveMinutesForEntry = entry.unproductiveEntries?.reduce((total, u) => total + u.hours, 0) || 0;
+                            const totalUnproductiveHoursForEntry = totalUnproductiveMinutesForEntry / 60;
+                            const totalHours = entry.productiveHours + totalUnproductiveHoursForEntry;
+                            return (
+                                <TableRow key={entry.id}>
+                                <TableCell>{entry.crewMember?.fullName}</TableCell>
+                                <TableCell className="font-mono text-xs">{entry.id}</TableCell>
+                                <TableCell className="text-right font-medium">{totalHours.toFixed(2)}</TableCell>
+                                </TableRow>
+                            );
+                        })}
                         </TableBody>
                     </Table>
                 </div>
