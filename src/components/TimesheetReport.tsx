@@ -39,7 +39,7 @@ export default function TimesheetReport({ timesheets }: TimesheetReportProps) {
 
   const statusBadgeVariant = (status: TimesheetStatus) => {
     switch (status) {
-        case 'Submitted': return 'secondary';
+        case 'Submitted': return 'warning';
         case 'Approved': return 'default';
         case 'Rejected': return 'destructive';
         default: return 'secondary';
@@ -103,6 +103,14 @@ export default function TimesheetReport({ timesheets }: TimesheetReportProps) {
             return <Badge variant={statusBadgeVariant(status)} className={cn(status === 'Approved' && 'bg-green-600')}>{status}</Badge>;
         }
     },
+    {
+        accessorKey: 'company',
+        header: ({ column }) => (
+            <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+                Company <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
+        )
+    },
   ];
 
   const table = useReactTable({
@@ -131,6 +139,12 @@ export default function TimesheetReport({ timesheets }: TimesheetReportProps) {
                 placeholder="Filter by supervisor..."
                 value={(table.getColumn('submittedBy_fullName')?.getFilterValue() as string) ?? ''}
                 onChange={(event) => table.getColumn('submittedBy_fullName')?.setFilterValue(event.target.value)}
+                className="max-w-sm"
+            />
+             <Input
+                placeholder="Filter by company..."
+                value={(table.getColumn('company')?.getFilterValue() as string) ?? ''}
+                onChange={(event) => table.getColumn('company')?.setFilterValue(event.target.value)}
                 className="max-w-sm"
             />
         </div>

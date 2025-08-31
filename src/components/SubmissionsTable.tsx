@@ -118,7 +118,7 @@ export default function SubmissionsTable({ dockets: initialDockets }: Submission
 
   const statusBadgeVariant = (status: CrewDocketStatus) => {
     switch (status) {
-        case 'Submitted': return 'secondary';
+        case 'Submitted': return 'warning';
         case 'Approved': return 'default';
         case 'Rejected': return 'destructive';
         case 'Processed': return 'outline';
