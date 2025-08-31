@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 export default async function CrewActivityReportPage() {
     const currentUser = await getCurrentUser();
     // Pass the current user to filter submissions based on their role/company
-    const submissions = await getTimesheetSubmissions(currentUser);
+    const submissions = await getTimesheetSubmissions(currentUser, 'report');
     
     return (
         <div className="container mx-auto max-w-screen-2xl py-8 px-4 md:px-6">

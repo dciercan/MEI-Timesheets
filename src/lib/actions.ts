@@ -300,8 +300,10 @@ async function enrichSubmissions(submissions: TimesheetSubmission[]): Promise<Ti
     }));
 }
 
-
-export async function getTimesheetSubmissions(requestingUser?: User | null, context: 'my-submissions' | 'report' = 'my-submissions'): Promise<TimesheetSubmissionWithDetails[]> {
+export async function getTimesheetSubmissions(
+    requestingUser?: User | null, 
+    context: 'my-submissions' | 'report' | 'all' = 'all'
+): Promise<TimesheetSubmissionWithDetails[]> {
     const allSubmissions = await readSubmissions();
     const currentUser = requestingUser ?? await getCurrentUser();
 
@@ -314,19 +316,27 @@ export async function getTimesheetSubmissions(requestingUser?: User | null, cont
     const isSparkUser = ['Admin', 'Read Only', 'MEI Supervisor'].includes(currentUser.appRole);
 
     if (isSparkUser) {
-        // Spark users see all submissions.
-        filteredSubmissions = allSubmissions;
-    } else if (context === 'my-submissions' && currentUser.appRole === 'Crew Supervisor') {
-        // A supervisor looking at their own submissions page.
-        filteredSubmissions = allSubmissions.filter(s => s.submittedById === currentUser.id);
+        // Spark users see all submissions in any context except their own submissions page.
+        if (context === 'my-submissions') {
+             filteredSubmissions = allSubmissions.filter(s => s.submittedById === currentUser.id);
+        } else {
+            filteredSubmissions = allSubmissions;
+        }
     } else {
-        // Any other case for a non-spark user (e.g., reports for Subbie Admins or Supervisors)
-        // should be filtered to their company.
+        // Non-Spark users are always filtered by company.
         const users = await readUsers();
         const companyUserIds = new Set(
             users.filter(u => u.company === currentUser.company).map(u => u.id)
         );
-        filteredSubmissions = allSubmissions.filter(s => companyUserIds.has(s.submittedById));
+
+        if (context === 'my-submissions' && (currentUser.appRole === 'Crew Supervisor' || currentUser.appRole === 'MEI Supervisor')) {
+            // A supervisor looking at their own submissions page.
+            filteredSubmissions = allSubmissions.filter(s => s.submittedById === currentUser.id);
+        } else {
+            // Any other case for a non-spark user (e.g., reports for Subbie Admins or Supervisors)
+            // is filtered to their company.
+            filteredSubmissions = allSubmissions.filter(s => companyUserIds.has(s.submittedById));
+        }
     }
     
     const sorted = filteredSubmissions.sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());
