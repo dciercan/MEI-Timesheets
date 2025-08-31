@@ -77,14 +77,11 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
   const handleCopy = (submissionGroup: GroupedSubmission) => {
      const representative = submissionGroup.representative;
      const params = new URLSearchParams();
-     params.set('date', representative.timesheetDate.toISOString());
      params.set('zone', representative.zone || '');
      params.set('section', representative.section || '');
      params.set('asset', representative.asset);
      params.set('subAsset', representative.subAsset);
      params.set('activityId', representative.activityId);
-     params.set('productiveHours', representative.productiveHours.toString());
-     params.set('quantity', representative.quantity.toString());
      params.set('notes', representative.notes || '');
 
      const crewIds = submissionGroup.entries

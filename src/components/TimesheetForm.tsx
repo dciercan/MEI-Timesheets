@@ -91,7 +91,7 @@ function TimesheetFormContent() {
       asset: "",
       subAsset: "",
       activityId: "",
-      productiveHours: 8,
+      productiveHours: 0,
       quantity: 0,
       unproductiveEntries: [],
       notes: "",
@@ -101,14 +101,16 @@ function TimesheetFormContent() {
 
   // Effect to populate form from search params (for 'Copy' functionality)
   useEffect(() => {
-    if (searchParams.has('date')) {
-      const initialData: { [key: string]: any } = {};
+    if (searchParams.has('asset')) { // Check for a field we expect to be there
+      const initialData: { [key: string]: any } = {
+          // Set defaults for fields not being copied
+          timesheetDate: new Date(),
+          productiveHours: 0,
+          quantity: 0,
+          unproductiveEntries: [],
+      };
       searchParams.forEach((value, key) => {
-        if (key === 'date') {
-          initialData.timesheetDate = new Date(value);
-        } else if (key === 'productiveHours' || key === 'quantity') {
-            initialData[key] = parseFloat(value);
-        } else if (key === 'crewMemberIds') {
+        if (key === 'crewMemberIds') {
             try {
                 initialData[key] = JSON.parse(value);
             } catch {
@@ -129,7 +131,7 @@ function TimesheetFormContent() {
         }
       }
     }
-  }, [searchParams, form, allUsers, loggedInUser]);
+  }, [searchParams, form]);
 
 
    useEffect(() => {
@@ -203,7 +205,7 @@ function TimesheetFormContent() {
                 asset: "",
                 subAsset: "",
                 activityId: "",
-                productiveHours: 8,
+                productiveHours: 0,
                 quantity: 0,
                 unproductiveEntries: [],
                 notes: "",

@@ -1,1 +1,68 @@
-[]
+[
+  {
+    "id": "ts-1756611259234-kz7d113",
+    "submissionGroupId": "group-1756611259234-q83xjfr",
+    "submittedById": "4",
+    "timesheetDate": "2025-07-31T14:00:00.000Z",
+    "zone": "S1",
+    "section": "M011",
+    "asset": "Sensors",
+    "subAsset": "Traffic Sensor",
+    "activityId": "act-nc-13",
+    "productiveHours": 6,
+    "quantity": 25,
+    "unproductiveEntries": [
+      {
+        "reasonId": "unprod-01",
+        "hours": 30
+      }
+    ],
+    "notes": "",
+    "crewMemberId": "4",
+    "submittedAt": "2025-08-31T03:34:19.234Z"
+  },
+  {
+    "id": "ts-1756611259234-1hxmkpf",
+    "submissionGroupId": "group-1756611259234-q83xjfr",
+    "submittedById": "4",
+    "timesheetDate": "2025-07-31T14:00:00.000Z",
+    "zone": "S1",
+    "section": "M011",
+    "asset": "Sensors",
+    "subAsset": "Traffic Sensor",
+    "activityId": "act-nc-13",
+    "productiveHours": 6,
+    "quantity": 25,
+    "unproductiveEntries": [
+      {
+        "reasonId": "unprod-01",
+        "hours": 30
+      }
+    ],
+    "notes": "",
+    "crewMemberId": "9",
+    "submittedAt": "2025-08-31T03:34:19.234Z"
+  },
+  {
+    "id": "ts-1756611259234-018tffm",
+    "submissionGroupId": "group-1756611259234-q83xjfr",
+    "submittedById": "4",
+    "timesheetDate": "2025-07-31T14:00:00.000Z",
+    "zone": "S1",
+    "section": "M011",
+    "asset": "Sensors",
+    "subAsset": "Traffic Sensor",
+    "activityId": "act-nc-13",
+    "productiveHours": 6,
+    "quantity": 25,
+    "unproductiveEntries": [
+      {
+        "reasonId": "unprod-01",
+        "hours": 30
+      }
+    ],
+    "notes": "",
+    "crewMemberId": "12",
+    "submittedAt": "2025-08-31T03:34:19.234Z"
+  }
+]
