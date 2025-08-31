@@ -11,7 +11,8 @@
         "minutes": 30
       }
     ],
-    "status": "Approved"
+    "status": "Approved",
+    "company": "ConstructCo"
   },
   {
     "id": "TS-1756624205528-ak0hl0l",
@@ -25,7 +26,8 @@
         "minutes": 30
       }
     ],
-    "status": "Approved"
+    "status": "Approved",
+    "company": "ConstructCo"
   },
   {
     "id": "TS-1756624205528-t34wfo5",
@@ -39,7 +41,8 @@
         "minutes": 30
       }
     ],
-    "status": "Approved"
+    "status": "Approved",
+    "company": "ConstructCo"
   },
   {
     "id": "TS-1756631100446-ao2bj8x",
@@ -57,7 +60,8 @@
         "minutes": 30
       }
     ],
-    "status": "Submitted"
+    "status": "Submitted",
+    "company": "BuildIt"
   },
   {
     "id": "TS-1756631100446-v6wiscg",
@@ -75,7 +79,8 @@
         "minutes": 30
       }
     ],
-    "status": "Submitted"
+    "status": "Submitted",
+    "company": "BuildIt"
   },
   {
     "id": "TS-1756631100446-mjegw3m",
@@ -93,6 +98,7 @@
         "minutes": 30
       }
     ],
-    "status": "Submitted"
+    "status": "Submitted",
+    "company": "BuildIt"
   }
 ]
