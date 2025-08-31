@@ -24,8 +24,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowUpDown } from 'lucide-react';
-import type { TimesheetWithDetails } from '@/lib/types';
+import type { TimesheetWithDetails, TimesheetStatus } from '@/lib/types';
 import { format } from 'date-fns';
+import { Badge } from './ui/badge';
+import { cn } from '@/lib/utils';
 
 interface TimesheetReportProps {
   timesheets: TimesheetWithDetails[];
@@ -35,11 +37,25 @@ export default function TimesheetReport({ timesheets }: TimesheetReportProps) {
   const [sorting, setSorting] = React.useState<SortingState>([ { id: 'timesheetDate', desc: true }]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
 
+  const statusBadgeVariant = (status: TimesheetStatus) => {
+    switch (status) {
+        case 'Submitted': return 'secondary';
+        case 'Approved': return 'default';
+        case 'Rejected': return 'destructive';
+        default: return 'secondary';
+    }
+  }
+
   const columns: ColumnDef<TimesheetWithDetails>[] = [
     {
         accessorKey: 'id',
-        header: 'Timesheet ID',
+        header: 'TS ID',
         cell: ({ row }) => <span className="font-mono text-xs">{row.getValue('id')}</span>
+    },
+    {
+        accessorKey: 'crewDocketId',
+        header: 'CD ID',
+        cell: ({ row }) => <span className="font-mono text-xs">{row.getValue('crewDocketId')}</span>
     },
     {
         accessorKey: 'crewDocket.timesheetDate',
@@ -52,24 +68,20 @@ export default function TimesheetReport({ timesheets }: TimesheetReportProps) {
         cell: ({ row }) => format(new Date(row.original.crewDocket.timesheetDate), 'PPP')
     },
     {
-        accessorKey: 'company',
-        header: ({ column }) => (
-            <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-                Company <ArrowUpDown className="ml-2 h-4 w-4" />
-            </Button>
-        ),
-    },
-    {
         accessorKey: 'crewMember.fullName',
         header: 'Crew Member',
     },
     {
+        accessorKey: 'submittedBy.fullName',
+        header: 'Supervisor'
+    },
+    {
         accessorKey: 'productiveHours',
-        header: 'Productive Hours'
+        header: 'Prod Hours'
     },
     {
         id: 'unproductiveMinutes',
-        header: 'Unproductive Minutes',
+        header: 'Unprod Mins',
         cell: ({ row }) => row.original.unproductiveEntries?.reduce((acc, entry) => acc + entry.minutes, 0) || 0
     },
      {
@@ -84,14 +96,13 @@ export default function TimesheetReport({ timesheets }: TimesheetReportProps) {
         }
     },
     {
-        accessorKey: 'crewDocketId',
-        header: 'Crew Docket ID',
-        cell: ({ row }) => <span className="font-mono text-xs">{row.getValue('crewDocketId')}</span>
+        accessorKey: 'status',
+        header: 'Status',
+        cell: ({ row }) => {
+            const status = row.getValue('status') as TimesheetStatus;
+            return <Badge variant={statusBadgeVariant(status)} className={cn(status === 'Approved' && 'bg-green-600')}>{status}</Badge>;
+        }
     },
-    {
-        accessorKey: 'submittedBy.fullName',
-        header: 'Supervisor'
-    }
   ];
 
   const table = useReactTable({
