@@ -1,5 +1,12 @@
+
+"use client";
 import TimesheetForm from "@/components/TimesheetForm";
+import React from 'react';
 
 export default function TimesheetPage() {
-  return <TimesheetForm />;
+  return (
+    <React.Suspense>
+      <TimesheetForm />
+    </React.Suspense>
+  );
 }

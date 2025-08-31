@@ -95,6 +95,7 @@ export async function addTimesheet(data: z.infer<typeof addTimesheetSchema>) {
     const { crewMemberIds, ...submissionData } = validation.data;
     const allSubmissions = await readSubmissions();
     const newSubmissionIds: string[] = [];
+    const submissionGroupId = `group-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
     // The supervisor is also a crew member for the submission.
     // The crewMemberIds array from the form only contains the *other* crew members.
@@ -103,6 +104,7 @@ export async function addTimesheet(data: z.infer<typeof addTimesheetSchema>) {
     for (const crewMemberId of allCrewForSubmission) {
         const newSubmission: TimesheetSubmission = {
             id: `ts-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+            submissionGroupId,
             ...submissionData,
             crewMemberId,
             unproductiveEntries: submissionData.unproductiveEntries || [],
@@ -116,6 +118,7 @@ export async function addTimesheet(data: z.infer<typeof addTimesheetSchema>) {
 
     revalidatePath('/admin');
     revalidatePath('/timesheet/my-submissions');
+    revalidatePath('/reports/my-company-submissions');
     
     return { success: true, submissionIds: newSubmissionIds };
 }
@@ -180,6 +183,7 @@ export async function updateTimesheet(formData: FormData) {
         await writeSubmissions(allSubmissions);
         revalidatePath('/admin');
         revalidatePath('/timesheet/my-submissions');
+        revalidatePath('/reports/my-company-submissions');
         return { success: true };
     }
     return { success: false, error: "Submission not found." };
@@ -196,8 +200,25 @@ export async function deleteTimesheet(submissionId: string) {
     await writeSubmissions(filteredSubmissions);
     revalidatePath('/admin');
     revalidatePath('/timesheet/my-submissions');
+    revalidatePath('/reports/my-company-submissions');
     return { success: true };
 }
+
+export async function deleteTimesheetGroup(submissionGroupId: string) {
+    const allSubmissions = await readSubmissions();
+    const filteredSubmissions = allSubmissions.filter(s => s.submissionGroupId !== submissionGroupId);
+    
+    if (allSubmissions.length === filteredSubmissions.length) {
+         return { success: false, error: "Submission group not found." };
+    }
+
+    await writeSubmissions(filteredSubmissions);
+    revalidatePath('/admin');
+    revalidatePath('/timesheet/my-submissions');
+    revalidatePath('/reports/my-company-submissions');
+    return { success: true };
+}
+
 
 
 async function enrichSubmissions(submissions: TimesheetSubmission[]): Promise<TimesheetSubmissionWithDetails[]> {

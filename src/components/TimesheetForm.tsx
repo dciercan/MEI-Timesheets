@@ -24,6 +24,8 @@ import type { Activity, User } from "@/lib/types";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/hooks/use-auth";
+import { useSearchParams } from "next/navigation";
+
 
 const formSchema = z.object({
   timesheetDate: z.date({
@@ -50,9 +52,10 @@ const formSchema = z.object({
 const zoneOptions = ['S1', 'S2', 'S3', 'S4', 'S5', 'MAN RAMPS', 'LPR RAMPS'];
 const sectionOptions = ['M011', 'M01J', 'M020 S1', 'M020 S2', 'Central Corridor', 'XP1', 'XP2', 'XP3', 'XP4', 'XP5'];
 
-export default function TimesheetForm() {
+function TimesheetFormContent() {
   const { toast } = useToast();
   const { user: loggedInUser } = useAuth();
+  const searchParams = useSearchParams();
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [selectedSupervisorId, setSelectedSupervisorId] = useState<string>("");
@@ -95,6 +98,39 @@ export default function TimesheetForm() {
       submittedById: "",
     },
   });
+
+  // Effect to populate form from search params (for 'Copy' functionality)
+  useEffect(() => {
+    if (searchParams.has('date')) {
+      const initialData: { [key: string]: any } = {};
+      searchParams.forEach((value, key) => {
+        if (key === 'date') {
+          initialData.timesheetDate = new Date(value);
+        } else if (key === 'productiveHours' || key === 'quantity') {
+            initialData[key] = parseFloat(value);
+        } else if (key === 'crewMemberIds') {
+            try {
+                initialData[key] = JSON.parse(value);
+            } catch {
+                initialData[key] = [];
+            }
+        } 
+        else {
+          initialData[key] = value;
+        }
+      });
+      form.reset(initialData);
+
+       // Set selected activity based on ID from params
+      if (initialData.activityId) {
+        const activity = activities.find(a => a.id === initialData.activityId);
+        if (activity) {
+          setSelectedActivity(activity);
+        }
+      }
+    }
+  }, [searchParams, form]);
+
 
    useEffect(() => {
     if (selectedSupervisorId) {
@@ -588,4 +624,13 @@ export default function TimesheetForm() {
       </Form>
     </div>
   );
+}
+
+
+export default function TimesheetForm() {
+  return (
+    <React.Suspense fallback={<div>Loading...</div>}>
+      <TimesheetFormContent />
+    </React.Suspense>
+  )
 }

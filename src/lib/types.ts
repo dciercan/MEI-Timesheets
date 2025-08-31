@@ -33,6 +33,7 @@ export type UnproductiveEntry = {
 
 export type TimesheetSubmission = {
   id:string;
+  submissionGroupId: string;
   timesheetDate: Date;
   crewMemberId: string;
   zone?: string;
