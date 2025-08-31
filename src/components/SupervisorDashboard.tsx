@@ -61,16 +61,17 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
   const groupedSubmissions = React.useMemo(() => {
     const groups: Record<string, GroupedSubmission> = {};
     submissions.forEach(s => {
-      if (s.submissionGroupId) {
-        if (!groups[s.submissionGroupId]) {
-          groups[s.submissionGroupId] = {
-            id: s.submissionGroupId,
-            entries: [],
-            representative: s
-          };
-        }
-        groups[s.submissionGroupId].entries.push(s);
+      // Use submissionGroupId if it exists, otherwise use the entry's own ID as a fallback.
+      // This ensures every entry is part of a group, even if it's a group of one.
+      const groupId = s.submissionGroupId || s.id;
+      if (!groups[groupId]) {
+        groups[groupId] = {
+          id: groupId,
+          entries: [],
+          representative: s
+        };
       }
+      groups[groupId].entries.push(s);
     });
     return Object.values(groups).sort((a,b) => new Date(b.representative.submittedAt).getTime() - new Date(a.representative.submittedAt).getTime());
   }, [submissions]);
@@ -88,7 +89,7 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
      params.set('notes', submission.notes || '');
 
      const crewIds = groupedSubmissions
-        .find(g => g.id === submission.submissionGroupId)?.entries
+        .find(g => g.id === (submission.submissionGroupId || submission.id))?.entries
         .map(e => e.crewMemberId)
         .filter(id => id !== submission.submittedById) || [];
 
