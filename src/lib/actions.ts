@@ -306,24 +306,25 @@ export async function getTimesheetSubmissions(requestingUser?: User | null, cont
     
     const currentUser = requestingUser ?? await getCurrentUser();
 
-    if (currentUser) {
+    if (!currentUser) {
+        return [];
+    }
+
+    const isSparkUser = currentUser.company === 'Spark';
+    const isSparkAdmin = currentUser.appRole === 'Admin';
+    const isSparkReadOnly = currentUser.appRole === 'Read Only';
+
+    if (isSparkAdmin || isSparkReadOnly) {
         // Spark Admin and Read Only see everything
-        if (currentUser.appRole === 'Admin' || currentUser.appRole === 'Read Only') {
-            // No filtering needed
-        } 
-        // Subcontractor users (Admin or Supervisor) see only their company's data
-        else if (currentUser.company !== 'Spark') {
-            const users = await readUsers();
-            const companyUserIds = users.filter(u => u.company === currentUser.company).map(u => u.id);
-            submissions = submissions.filter(s => companyUserIds.includes(s.submittedById));
+    } else if (isSparkUser) { // MEI Supervisor
+        if (context === 'my-submissions') {
+            submissions = submissions.filter(s => s.submittedById === currentUser.id);
         }
-        // MEI Supervisor sees everything in reports, but only their own in 'my-submissions'
-        else if (currentUser.appRole === 'MEI Supervisor') {
-             if (context === 'my-submissions') {
-                submissions = submissions.filter(s => s.submittedById === currentUser.id);
-            }
-            // for 'report' context, they see all submissions (no filter)
-        }
+        // In 'report' context, MEI Supervisor also sees everything.
+    } else { // Non-Spark users
+        const users = await readUsers();
+        const companyUserIds = new Set(users.filter(u => u.company === currentUser.company).map(u => u.id));
+        submissions = submissions.filter(s => companyUserIds.has(s.submittedById));
     }
     
     const sorted = submissions.sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());
