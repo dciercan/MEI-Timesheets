@@ -28,7 +28,7 @@ export type UnproductiveReason = {
 
 export type UnproductiveEntry = {
   reasonId: string;
-  hours: number;
+  minutes: number;
 };
 
 export type TimesheetSubmission = {

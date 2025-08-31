@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -69,7 +70,7 @@ export default function CrewActivityReport({ submissions }: CrewActivityReportPr
     return Object.values(crews).map((crew): CrewSummary => {
         const { entries } = crew;
         const representative = entries[0];
-        const totalUnproductiveMinutes = representative.unproductiveEntries?.reduce((total, entry) => total + entry.hours, 0) || 0;
+        const totalUnproductiveMinutes = representative.unproductiveEntries?.reduce((total, entry) => total + entry.minutes, 0) || 0;
         const unproductiveHours = totalUnproductiveMinutes / 60;
         const totalHours = representative.productiveHours + unproductiveHours;
 

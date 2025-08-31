@@ -38,7 +38,7 @@ const formSchema = z.object({
   unproductiveEntries: z.array(
     z.object({
       reasonId: z.string().min(1, "Please select a reason."),
-      hours: z.coerce.number().min(1, "Minutes must be greater than 0."),
+      minutes: z.coerce.number().min(1, "Minutes must be greater than 0."),
     })
   ).optional(),
   notes: z.string().optional(),
@@ -383,7 +383,7 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, submiss
                                 />
                                 <FormField
                                 control={form.control}
-                                name={`unproductiveEntries.${index}.hours`}
+                                name={`unproductiveEntries.${index}.minutes`}
                                 render={({ field }) => (
                                     <FormItem>
                                     <FormLabel>Time (minutes)</FormLabel>
@@ -405,7 +405,7 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, submiss
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => append({ reasonId: "", hours: 30 })}
+                    onClick={() => append({ reasonId: "", minutes: 30 })}
                   >
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Add Unproductive Time
@@ -442,4 +442,3 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, submiss
     </Dialog>
   );
 }
-

@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -77,7 +78,7 @@ const addTimesheetSchema = z.object({
     unproductiveEntries: z.array(
       z.object({
         reasonId: z.string().min(1, "Please select a reason."),
-        hours: z.coerce.number().min(1, "Minutes must be greater than 0."),
+        minutes: z.coerce.number().min(1, "Minutes must be greater than 0."),
       })
     ).optional(),
     notes: z.string().optional(),
@@ -135,7 +136,7 @@ const timesheetSchema = z.object({
     unproductiveEntries: z.array(
         z.object({
           reasonId: z.string().min(1, "Please select a reason."),
-          hours: z.coerce.number().min(1, "Minutes must be greater than 0."),
+          minutes: z.coerce.number().min(1, "Minutes must be greater than 0."),
         })
       ).optional(),
     notes: z.string().optional(),
@@ -144,22 +145,27 @@ const timesheetSchema = z.object({
 export async function updateTimesheet(formData: FormData) {
     const rawData = Object.fromEntries(formData.entries());
 
-    // Manual parsing for array of objects
     const unproductiveEntries: any[] = [];
-    for (const key in rawData) {
-        if (key.startsWith('unproductiveEntries')) {
-            const match = key.match(/unproductiveEntries\\[(\\d+)\\]\\[(\\w+)\\]/);
-            if (match) {
-                const index = parseInt(match[1], 10);
-                const property = match[2];
-                if (!unproductiveEntries[index]) {
-                    unproductiveEntries[index] = {};
-                }
-                unproductiveEntries[index][property] = rawData[key];
+    const otherData: Record<string, any> = {};
+
+    for (const [key, value] of formData.entries()) {
+        const unproductiveMatch = key.match(/^unproductiveEntries\[(\d+)\]\[(\w+)\]$/);
+        if (unproductiveMatch) {
+            const index = parseInt(unproductiveMatch[1], 10);
+            const prop = unproductiveMatch[2];
+            if (!unproductiveEntries[index]) {
+                unproductiveEntries[index] = {};
             }
+            unproductiveEntries[index][prop] = value;
+        } else {
+            otherData[key] = value;
         }
     }
-    const finalRawData = {...rawData, unproductiveEntries: unproductiveEntries.filter(Boolean)};
+    
+    const finalRawData = {
+        ...otherData,
+        unproductiveEntries: unproductiveEntries.filter(Boolean),
+    };
 
 
     const validationResult = timesheetSchema.safeParse(finalRawData);
@@ -203,7 +209,7 @@ const timesheetCrewSchema = z.object({
   unproductiveEntries: z.array(
     z.object({
       reasonId: z.string().min(1, "Please select a reason."),
-      hours: z.coerce.number().min(1, "Minutes must be greater than 0."),
+      minutes: z.coerce.number().min(1, "Minutes must be greater than 0."),
     })
   ).optional(),
   notes: z.string().optional(),
@@ -315,19 +321,18 @@ export async function getTimesheetSubmissions(
     const isSparkUser = ['Admin', 'Read Only', 'MEI Supervisor'].includes(currentUser.appRole);
 
     if (context === 'my-submissions') {
-        // Supervisor's own submissions page
         filteredSubmissions = allSubmissions.filter(s => s.submittedById === currentUser.id);
     } else if (isSparkUser) {
-        // Spark users see everything on reports
         filteredSubmissions = allSubmissions;
     } else {
-        // Non-spark users see only their company's data on reports
         const users = await readUsers();
-        const userMap = new Map(users.map(u => [u.id, u]));
-        filteredSubmissions = allSubmissions.filter(s => {
-             const submittingUser = userMap.get(s.submittedById);
-             return submittingUser?.company === currentUser.company;
-        });
+        const companyUserIds = users
+            .filter(u => u.company === currentUser.company)
+            .map(u => u.id);
+        
+        const companyUserIdSet = new Set(companyUserIds);
+
+        filteredSubmissions = allSubmissions.filter(s => companyUserIdSet.has(s.submittedById));
     }
 
     const sorted = filteredSubmissions.sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());
@@ -353,8 +358,10 @@ export async function getCurrentUser(): Promise<User | null> {
 export async function getUsers(requestingUser?: User | null): Promise<User[]> {
     let users = await readUsers();
     
-    if (requestingUser?.appRole === 'Subcontractor Admin') {
-        users = users.filter(u => u.company === requestingUser.company);
+    const currentUser = requestingUser ?? await getCurrentUser();
+
+    if (currentUser?.appRole === 'Subcontractor Admin') {
+        users = users.filter(u => u.company === currentUser.company);
     }
     
     return users.sort((a, b) => a.fullName.localeCompare(b.fullName));

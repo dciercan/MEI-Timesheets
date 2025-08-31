@@ -1,3 +1,4 @@
+
 [
   {
     "id": "ts-1756613880305-ltjooai",
@@ -14,11 +15,11 @@
     "unproductiveEntries": [
       {
         "reasonId": "unprod-01",
-        "hours": 30
+        "minutes": 30
       },
       {
         "reasonId": "unprod-03",
-        "hours": 30
+        "minutes": 30
       }
     ],
     "notes": "",
@@ -40,11 +41,11 @@
     "unproductiveEntries": [
       {
         "reasonId": "unprod-01",
-        "hours": 30
+        "minutes": 30
       },
       {
         "reasonId": "unprod-03",
-        "hours": 30
+        "minutes": 30
       }
     ],
     "notes": "",
@@ -66,11 +67,11 @@
     "unproductiveEntries": [
       {
         "reasonId": "unprod-01",
-        "hours": 30
+        "minutes": 30
       },
       {
         "reasonId": "unprod-03",
-        "hours": 30
+        "minutes": 30
       }
     ],
     "notes": "",
@@ -92,7 +93,7 @@
     "unproductiveEntries": [
       {
         "reasonId": "unprod-01",
-        "hours": 30
+        "minutes": 30
       }
     ],
     "notes": "",
@@ -114,7 +115,7 @@
     "unproductiveEntries": [
       {
         "reasonId": "unprod-01",
-        "hours": 30
+        "minutes": 30
       }
     ],
     "notes": "",
@@ -136,7 +137,7 @@
     "unproductiveEntries": [
       {
         "reasonId": "unprod-01",
-        "hours": 30
+        "minutes": 30
       }
     ],
     "notes": "",

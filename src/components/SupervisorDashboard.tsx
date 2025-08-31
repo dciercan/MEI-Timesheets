@@ -132,7 +132,7 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
       <CardContent>
         <Accordion type="single" collapsible className="w-full space-y-4">
           {crewSubmissions.map((crew) => {
-            const totalUnproductiveMinutes = crew.representative.unproductiveEntries?.reduce((total, entry) => total + entry.hours, 0) || 0;
+            const totalUnproductiveMinutes = crew.representative.unproductiveEntries?.reduce((total, entry) => total + entry.minutes, 0) || 0;
 
             return (
             <AccordionItem value={crew.id} key={crew.id} className="border rounded-lg shadow-sm bg-background">
@@ -238,7 +238,7 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
                         </TableHeader>
                         <TableBody>
                         {crew.entries.map((entry) => {
-                            const totalUnproductiveMinutesForEntry = entry.unproductiveEntries?.reduce((total, u) => total + u.hours, 0) || 0;
+                            const totalUnproductiveMinutesForEntry = entry.unproductiveEntries?.reduce((total, u) => total + u.minutes, 0) || 0;
                             const totalUnproductiveHoursForEntry = totalUnproductiveMinutesForEntry / 60;
                             const totalHours = entry.productiveHours + totalUnproductiveHoursForEntry;
                             return (
