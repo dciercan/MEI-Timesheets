@@ -58,6 +58,25 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, docket,
   const { toast } = useToast();
   const { user: loggedInUser } = useAuth();
   const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
+
+  const form = useForm<FormSchemaType>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+        crewDocketId: '',
+        timesheetDate: new Date(),
+        crewMemberIds: [],
+        zone: '',
+        section: '',
+        asset: '',
+        subAsset: '',
+        activityId: '',
+        quantity: 0,
+        notes: '',
+        productiveHours: 0,
+        unproductiveEntries: [],
+    }
+  });
 
   useEffect(() => {
     async function loadUsers() {
@@ -69,32 +88,14 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, docket,
     loadUsers();
   }, [loggedInUser]);
 
-  const representativeTimesheet = docket.timesheets[0] || {};
-
-  const form = useForm<FormSchemaType>({
-    resolver: zodResolver(formSchema),
-    defaultValues: useMemo(() => ({
-        crewDocketId: docket.id,
-        timesheetDate: new Date(docket.timesheetDate),
-        crewMemberIds: docket.crewMemberIds.filter(id => id !== docket.submittedById),
-        zone: docket.zone,
-        section: docket.section,
-        asset: docket.asset,
-        subAsset: docket.subAsset,
-        activityId: docket.activityId,
-        quantity: docket.quantity,
-        notes: docket.notes,
-        productiveHours: representativeTimesheet.productiveHours,
-        unproductiveEntries: representativeTimesheet.unproductiveEntries,
-    }), [docket, representativeTimesheet])
-  });
-
   useEffect(() => {
     if (docket && isOpen) {
-        const repTimesheet = docket.timesheets[0] || {};
+        const representativeTimesheet = docket.timesheets[0] || {};
+        
         form.reset({
             crewDocketId: docket.id,
             timesheetDate: new Date(docket.timesheetDate),
+            // IMPORTANT: This filters out the supervisor, as they are implicitly included.
             crewMemberIds: docket.crewMemberIds.filter(id => id !== docket.submittedById),
             zone: docket.zone,
             section: docket.section,
@@ -102,10 +103,11 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, docket,
             subAsset: docket.subAsset,
             activityId: docket.activityId,
             quantity: docket.quantity,
-            notes: docket.notes,
-            productiveHours: repTimesheet.productiveHours,
-            unproductiveEntries: repTimesheet.unproductiveEntries,
+            notes: docket.notes || '',
+            productiveHours: representativeTimesheet.productiveHours || 0,
+            unproductiveEntries: representativeTimesheet.unproductiveEntries || [],
         });
+
         const initialActivity = activities.find(a => a.id === docket.activityId) || null;
         setSelectedActivity(initialActivity);
     }
@@ -117,8 +119,6 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, docket,
     name: "unproductiveEntries",
   });
   
-  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
-
   const selectedAsset = form.watch("asset");
   const selectedSubAsset = form.watch("subAsset");
 
