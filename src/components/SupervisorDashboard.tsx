@@ -132,7 +132,7 @@ export default function SupervisorDashboard({ dockets }: SupervisorDashboardProp
             const totalUnproductiveMinutes = docket.timesheets[0]?.unproductiveEntries?.reduce((total, entry) => total + entry.minutes, 0) || 0;
             const productiveHours = docket.timesheets[0]?.productiveHours || 0;
             const canApproveReject = isMeiSupervisor && docket.status === 'Submitted';
-            const canEdit = currentUser?.appRole === 'Crew Supervisor' && docket.status === 'Rejected';
+            const canEdit = currentUser?.appRole === 'Crew Supervisor' && (docket.status === 'Rejected' || docket.status === 'Submitted');
             
             return (
             <AccordionItem value={docket.id} key={docket.id} className="border rounded-lg shadow-sm bg-background">
@@ -177,7 +177,7 @@ export default function SupervisorDashboard({ dockets }: SupervisorDashboardProp
                     <div className="flex items-center gap-3">
                         <ShieldCheck className="h-5 w-5 text-primary"/>
                         <div>
-                             <Badge variant={statusBadgeVariant(docket.status)} className={cn(docket.status === 'Approved' && 'bg-green-600')}>{docket.status}</Badge>
+                             <Badge variant={statusBadgeVariant(docket.status)} className={cn('text-sm', docket.status === 'Approved' && 'bg-green-600')}>{docket.status}</Badge>
                             <p className="text-xs text-muted-foreground mt-1">Status</p>
                         </div>
                     </div>
@@ -244,7 +244,7 @@ export default function SupervisorDashboard({ dockets }: SupervisorDashboardProp
                             </Button>
                         </TooltipTrigger>
                         <TooltipContent>
-                        <p>{canEdit ? 'Edit Rejected Docket' : 'Edit (Disabled)'}</p>
+                        <p>{canEdit ? 'Edit Docket' : 'Edit (Disabled)'}</p>
                         </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
