@@ -7,7 +7,7 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { cn } from "@/lib/utils";
-import { addTimesheet, getUsers } from "@/lib/actions";
+import { addCrewDocket, getUsers } from "@/lib/actions";
 import { activities, unproductiveReasons } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
@@ -28,16 +28,14 @@ import { useSearchParams } from "next/navigation";
 
 
 const formSchema = z.object({
-  timesheetDate: z.date({
-    required_error: "A timesheet date is required.",
-  }),
-  crewMemberIds: z.array(z.string()).min(1, "Please select at least one crew member."),
+  timesheetDate: z.date({ required_error: "A timesheet date is required." }),
+  crewMemberIds: z.array(z.string()),
   zone: z.string().min(1, "Zone is required."),
   section: z.string().min(1, "Section is required."),
   asset: z.string().min(1, "Please select an asset."),
   subAsset: z.string().min(1, "Please select a sub-asset."),
   activityId: z.string().min(1, "Please select an activity."),
-  productiveHours: z.coerce.number().min(0.1, "Productive hours must be greater than 0."),
+  productiveHours: z.coerce.number().min(0, "Productive hours must be a positive number."),
   quantity: z.coerce.number().min(0, "Quantity is required."),
   unproductiveEntries: z.array(
     z.object({
@@ -73,11 +71,9 @@ function TimesheetFormContent() {
   const isSubbieAdmin = loggedInUser?.appRole === 'Subcontractor Admin';
   const isSupervisor = loggedInUser?.appRole === 'Crew Supervisor' || loggedInUser?.appRole === 'MEI Supervisor';
 
-
   const companies = useMemo(() => {
     return [...new Set(allUsers.filter(u => u.appRole === 'Crew Supervisor' || u.appRole === 'MEI Supervisor').map(u => u.company))].sort();
   }, [allUsers]);
-
 
   const supervisors = useMemo(() => {
     if (!loggedInUser) return [];
@@ -94,16 +90,13 @@ function TimesheetFormContent() {
   }, [allUsers, loggedInUser, canSelectCompany, isSubbieAdmin, selectedCompany]);
 
   useEffect(() => {
-    // If user is not an admin type, set them as the supervisor
     if (loggedInUser && (loggedInUser.appRole === 'Crew Supervisor' || loggedInUser.appRole === 'MEI Supervisor')) {
       setSelectedSupervisorId(loggedInUser.id);
     }
-     // If user is a subbie admin, their company is fixed
     if (isSubbieAdmin) {
       setSelectedCompany(loggedInUser.company);
     }
   }, [loggedInUser, isSubbieAdmin]);
-
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -115,7 +108,7 @@ function TimesheetFormContent() {
       asset: "",
       subAsset: "",
       activityId: "",
-      productiveHours: 0,
+      productiveHours: 8,
       quantity: 0,
       unproductiveEntries: [],
       notes: "",
@@ -123,40 +116,28 @@ function TimesheetFormContent() {
     },
   });
 
-  // Effect to populate form from search params (for 'Copy' functionality)
   useEffect(() => {
-    if (searchParams.has('asset')) { // Check for a field we expect to be there
+    if (searchParams.has('asset')) {
       const initialData: { [key: string]: any } = {
-          // Set defaults for fields not being copied
           timesheetDate: new Date(),
-          productiveHours: 0,
-          quantity: 0,
-          unproductiveEntries: [],
       };
       searchParams.forEach((value, key) => {
-        if (key === 'crewMemberIds') {
-            try {
-                initialData[key] = JSON.parse(value);
-            } catch {
-                initialData[key] = [];
-            }
-        } 
-        else {
+        if (key === 'crewMemberIds' || key === 'unproductiveEntries') {
+            try { initialData[key] = JSON.parse(value); } catch { /* ignore parse error */ }
+        } else if (key === 'productiveHours' || key === 'quantity') {
+            initialData[key] = parseFloat(value) || 0;
+        } else {
           initialData[key] = value;
         }
       });
       form.reset(initialData);
 
-       // Set selected activity based on ID from params
       if (initialData.activityId) {
         const activity = activities.find(a => a.id === initialData.activityId);
-        if (activity) {
-          setSelectedActivity(activity);
-        }
+        if (activity) setSelectedActivity(activity);
       }
     }
   }, [searchParams, form]);
-
 
    useEffect(() => {
     if (selectedSupervisorId) {
@@ -183,43 +164,18 @@ function TimesheetFormContent() {
   }, [selectedAsset, selectedSubAsset]);
 
 
-  useEffect(() => {
-    if (subAssets.length === 1) {
-      form.setValue("subAsset", subAssets[0], { shouldValidate: true });
-    }
-  }, [subAssets, form]);
-
-  useEffect(() => {
-    if (filteredActivities.length === 1) {
-      const activity = filteredActivities[0];
-      form.setValue("activityId", activity.id, { shouldValidate: true });
-      setSelectedActivity(activity);
-    }
-  }, [filteredActivities, form]);
-
-
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!loggedInUser) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "You must be logged in to submit a timesheet.",
-        });
+        toast({ variant: "destructive", title: "Error", description: "You must be logged in." });
         return;
     }
     try {
-        // Automatically include the supervisor in the list of crew members for submission
-        const finalValues = {
-            ...values,
-            crewMemberIds: [...new Set([...values.crewMemberIds, values.submittedById])]
-        };
+        const result = await addCrewDocket(values);
 
-        const result = await addTimesheet(finalValues);
-
-        if (result.success && result.submissionIds) {
+        if (result.success && result.docketId) {
              toast({
-                title: "Timesheet Submitted!",
-                description: `Created submissions for crew members.`,
+                title: "Crew Docket Submitted!",
+                description: `Created docket ${result.docketId}.`,
             });
             form.reset({
                 timesheetDate: new Date(),
@@ -229,33 +185,25 @@ function TimesheetFormContent() {
                 asset: "",
                 subAsset: "",
                 activityId: "",
-                productiveHours: 0,
+                productiveHours: 8,
                 quantity: 0,
                 unproductiveEntries: [],
                 notes: "",
                 submittedById: (isSubbieAdmin || canSelectCompany) ? "" : selectedSupervisorId,
             });
-            if (isSubbieAdmin || canSelectCompany) {
-              setSelectedSupervisorId("");
-            }
-            if (canSelectCompany) {
-              setSelectedCompany("");
-            }
+            if (isSubbieAdmin || canSelectCompany) setSelectedSupervisorId("");
+            if (canSelectCompany) setSelectedCompany("");
             setSelectedActivity(null);
         } else {
              toast({
                 variant: "destructive",
                 title: "Submission Failed",
-                description: result.error || "There was an error submitting the timesheet.",
+                description: result.error || "An unknown error occurred.",
              });
         }
     } catch (error) {
       console.error("Submission failed:", error);
-      toast({
-        variant: "destructive",
-        title: "Submission Failed",
-        description: "There was an error submitting the timesheet.",
-      });
+      toast({ variant: "destructive", title: "Submission Failed", description: "An unknown error occurred." });
     }
   };
 
@@ -269,13 +217,9 @@ function TimesheetFormContent() {
       .filter(u => 
         u.company === selectedSupervisor.company && 
         (u.appRole === 'Crew Member' || u.appRole === 'Crew Supervisor') &&
-        u.id !== selectedSupervisor.id // Exclude the selected supervisor
+        u.id !== selectedSupervisor.id
       )
-      .sort((a, b) => {
-        if (a.appRole === 'Crew Supervisor' && b.appRole !== 'Crew Supervisor') return -1;
-        if (a.appRole !== 'Crew Supervisor' && b.appRole === 'Crew Supervisor') return 1;
-        return a.fullName.localeCompare(b.fullName);
-      });
+      .sort((a, b) => a.fullName.localeCompare(b.fullName));
   }, [allUsers, selectedSupervisor]);
 
 
@@ -285,7 +229,7 @@ function TimesheetFormContent() {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle className="font-headline text-3xl">New Timesheet</CardTitle>
+              <CardTitle className="font-headline text-3xl">New Crew Docket</CardTitle>
               <CardDescription>
                 Timesheet for: <span className="font-semibold">{selectedSupervisor?.fullName} ({selectedSupervisor?.company})</span>
               </CardDescription>
@@ -304,9 +248,7 @@ function TimesheetFormContent() {
                       }}
                       value={selectedCompany}
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a company" />
-                      </SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder="Select a company" /></SelectTrigger>
                       <SelectContent>
                         {companies.map(company => (
                           <SelectItem key={company} value={company}>{company}</SelectItem>
@@ -324,18 +266,14 @@ function TimesheetFormContent() {
                         <FormLabel>Crew Supervisor</FormLabel>
                         <Select 
                           onValueChange={(value) => {
-                              field.onChange(value)
+                              field.onChange(value);
                               setSelectedSupervisorId(value);
                               form.setValue("crewMemberIds", []);
                           }} 
                           value={field.value}
                           disabled={!selectedCompany}
                         >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a supervisor" />
-                            </SelectTrigger>
-                          </FormControl>
+                          <FormControl><SelectTrigger><SelectValue placeholder="Select a supervisor" /></SelectTrigger></FormControl>
                           <SelectContent>
                             {supervisors.map(sup => (
                               <SelectItem key={sup.id} value={sup.id}>{sup.fullName}</SelectItem>
@@ -358,27 +296,14 @@ function TimesheetFormContent() {
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
-                            <Button
-                              variant={"outline"}
-                              className={cn(
-                                "w-full pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
-                              disabled={!selectedSupervisorId}
-                            >
+                            <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal",!field.value && "text-muted-foreground")} disabled={!selectedSupervisorId}>
                               {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
                               <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                             </Button>
                           </FormControl>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            disabled={(date) => date > new Date() || date < new Date("2000-01-01")}
-                            initialFocus
-                          />
+                          <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(date) => date > new Date() || date < new Date("2000-01-01")} initialFocus />
                         </PopoverContent>
                       </Popover>
                       <FormMessage />
@@ -398,33 +323,22 @@ function TimesheetFormContent() {
                                 key={user.id}
                                 control={form.control}
                                 name="crewMemberIds"
-                                render={({ field }) => {
-                                    return (
-                                    <FormItem
-                                        key={user.id}
-                                        className="flex flex-row items-start space-x-3 space-y-0"
-                                    >
+                                render={({ field }) => (
+                                    <FormItem key={user.id} className="flex flex-row items-start space-x-3 space-y-0">
                                         <FormControl>
                                         <Checkbox
                                             checked={field.value?.includes(user.id)}
                                             onCheckedChange={(checked) => {
                                             return checked
                                                 ? field.onChange([...(field.value || []), user.id])
-                                                : field.onChange(
-                                                    field.value?.filter(
-                                                    (value) => value !== user.id
-                                                    )
-                                                )
+                                                : field.onChange(field.value?.filter((value) => value !== user.id))
                                             }}
                                             disabled={!selectedSupervisorId}
                                         />
                                         </FormControl>
-                                        <FormLabel className="font-normal">
-                                        {user.fullName} ({user.company})
-                                        </FormLabel>
+                                        <FormLabel className="font-normal">{user.fullName} ({user.company})</FormLabel>
                                     </FormItem>
-                                    )
-                                }}
+                                )}
                                 />
                             ))}
                             </div>
@@ -445,11 +359,7 @@ function TimesheetFormContent() {
                       <FormItem>
                         <FormLabel>Zone</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value} disabled={!selectedSupervisorId}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a zone" />
-                            </SelectTrigger>
-                          </FormControl>
+                          <FormControl><SelectTrigger><SelectValue placeholder="Select a zone" /></SelectTrigger></FormControl>
                           <SelectContent>
                             {zoneOptions.map(zone => <SelectItem key={zone} value={zone}>{zone}</SelectItem>)}
                           </SelectContent>
@@ -465,11 +375,7 @@ function TimesheetFormContent() {
                       <FormItem>
                         <FormLabel>Section</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value} disabled={!selectedSupervisorId}>
-                            <FormControl>
-                                <SelectTrigger>
-                                <SelectValue placeholder="Select a section" />
-                                </SelectTrigger>
-                            </FormControl>
+                            <FormControl><SelectTrigger><SelectValue placeholder="Select a section" /></SelectTrigger></FormControl>
                             <SelectContent>
                                 {sectionOptions.map(section => <SelectItem key={section} value={section}>{section}</SelectItem>)}
                             </SelectContent>
@@ -482,7 +388,7 @@ function TimesheetFormContent() {
               </div>
 
               <div className="space-y-2">
-                <h3 className="text-lg font-medium font-headline">Activity</h3>
+                <h3 className="text-lg font-medium font-headline">Work Details</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end pt-4">
                   <FormField
                     control={form.control}
@@ -490,20 +396,9 @@ function TimesheetFormContent() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Asset</FormLabel>
-                        <Select onValueChange={(value) => {
-                          field.onChange(value);
-                          form.setValue("subAsset", "");
-                          form.setValue("activityId", "");
-                          setSelectedActivity(null);
-                        }} value={field.value} disabled={!selectedSupervisorId}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select an asset" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {assets.map(asset => <SelectItem key={asset} value={asset}>{asset}</SelectItem>)}
-                          </SelectContent>
+                        <Select onValueChange={(value) => { field.onChange(value); form.setValue("subAsset", ""); form.setValue("activityId", ""); setSelectedActivity(null); }} value={field.value} disabled={!selectedSupervisorId}>
+                          <FormControl><SelectTrigger><SelectValue placeholder="Select an asset" /></SelectTrigger></FormControl>
+                          <SelectContent>{assets.map(asset => <SelectItem key={asset} value={asset}>{asset}</SelectItem>)}</SelectContent>
                         </Select>
                         <FormMessage />
                       </FormItem>
@@ -515,19 +410,9 @@ function TimesheetFormContent() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Sub Asset</FormLabel>
-                        <Select onValueChange={(value) => {
-                          field.onChange(value);
-                          form.setValue("activityId", "");
-                          setSelectedActivity(null);
-                        }} value={field.value} disabled={!selectedAsset || !selectedSupervisorId}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a sub-asset" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {subAssets.map(subAsset => <SelectItem key={subAsset} value={subAsset}>{subAsset}</SelectItem>)}
-                          </SelectContent>
+                        <Select onValueChange={(value) => { field.onChange(value); form.setValue("activityId", ""); setSelectedActivity(null); }} value={field.value} disabled={!selectedAsset || !selectedSupervisorId}>
+                          <FormControl><SelectTrigger><SelectValue placeholder="Select a sub-asset" /></SelectTrigger></FormControl>
+                          <SelectContent>{subAssets.map(subAsset => <SelectItem key={subAsset} value={subAsset}>{subAsset}</SelectItem>)}</SelectContent>
                         </Select>
                         <FormMessage />
                       </FormItem>
@@ -538,25 +423,10 @@ function TimesheetFormContent() {
                     name="activityId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Activity Selection</FormLabel>
-                        <Select
-                          onValueChange={(value) => {
-                            field.onChange(value);
-                            setSelectedActivity(activities.find(a => a.id === value) || null);
-                          }}
-                          value={field.value}
-                          disabled={!selectedSubAsset || !selectedSupervisorId}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select an activity" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {filteredActivities.map(act => (
-                              <SelectItem key={act.id} value={act.id}>{act.activity}</SelectItem>
-                            ))}
-                          </SelectContent>
+                        <FormLabel>Activity</FormLabel>
+                        <Select onValueChange={(value) => { field.onChange(value); setSelectedActivity(activities.find(a => a.id === value) || null); }} value={field.value} disabled={!selectedSubAsset || !selectedSupervisorId}>
+                          <FormControl><SelectTrigger><SelectValue placeholder="Select an activity" /></SelectTrigger></FormControl>
+                          <SelectContent>{filteredActivities.map(act => (<SelectItem key={act.id} value={act.id}>{act.activity}</SelectItem>))}</SelectContent>
                         </Select>
                         <FormMessage />
                       </FormItem>
@@ -569,10 +439,8 @@ function TimesheetFormContent() {
                     name="productiveHours"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Productive Hours</FormLabel>
-                        <FormControl>
-                          <Input type="number" step="0.1" placeholder="e.g., 8" {...field} disabled={!selectedSupervisorId}/>
-                        </FormControl>
+                        <FormLabel>Productive Hours (per person)</FormLabel>
+                        <FormControl><Input type="number" step="0.1" placeholder="e.g., 8" {...field} disabled={!selectedSupervisorId}/></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -583,9 +451,7 @@ function TimesheetFormContent() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Quantity {selectedActivity ? `(${selectedActivity.activityUom})` : ''}</FormLabel>
-                        <FormControl>
-                          <Input type="number" step="0.1" placeholder="e.g., 25" {...field} disabled={!selectedSupervisorId}/>
-                        </FormControl>
+                        <FormControl><Input type="number" step="0.1" placeholder="e.g., 25" {...field} disabled={!selectedSupervisorId}/></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -594,7 +460,7 @@ function TimesheetFormContent() {
               </div>
 
               <div className="space-y-2">
-                <h3 className="text-lg font-medium font-headline">Unproductive Time (Optional)</h3>
+                <h3 className="text-lg font-medium font-headline">Unproductive Time (per person)</h3>
                 <div className="space-y-4">
                   {fields.map((item, index) => (
                     <div key={item.id} className="flex items-end gap-4 p-4 border rounded-lg bg-muted/50">
@@ -606,16 +472,8 @@ function TimesheetFormContent() {
                                     <FormItem>
                                     <FormLabel>Reason</FormLabel>
                                     <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select a reason" />
-                                        </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                        {unproductiveReasons.map(reason => (
-                                            <SelectItem key={reason.id} value={reason.id}>{reason.reason}</SelectItem>
-                                        ))}
-                                        </SelectContent>
+                                        <FormControl><SelectTrigger><SelectValue placeholder="Select a reason" /></SelectTrigger></FormControl>
+                                        <SelectContent>{unproductiveReasons.map(reason => (<SelectItem key={reason.id} value={reason.id}>{reason.reason}</SelectItem>))}</SelectContent>
                                     </Select>
                                     <FormMessage />
                                     </FormItem>
@@ -627,28 +485,17 @@ function TimesheetFormContent() {
                                 render={({ field }) => (
                                     <FormItem>
                                     <FormLabel>Time (minutes)</FormLabel>
-                                    <FormControl>
-                                        <Input type="number" step="1" placeholder="e.g., 30" {...field} />
-                                    </FormControl>
+                                    <FormControl><Input type="number" step="1" placeholder="e.g., 30" {...field} /></FormControl>
                                     <FormMessage />
                                     </FormItem>
                                 )}
                                 />
                         </div>
-                      <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)}>
-                        <Trash2 className="h-4 w-4" />
-                        <span className="sr-only">Remove</span>
-                      </Button>
+                      <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)}><Trash2 className="h-4 w-4" /><span className="sr-only">Remove</span></Button>
                     </div>
                   ))}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => append({ reasonId: "", minutes: 30 })}
-                    disabled={!selectedSupervisorId}
-                  >
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Add Unproductive Time
+                  <Button type="button" variant="outline" onClick={() => append({ reasonId: "", minutes: 30 })} disabled={!selectedSupervisorId}>
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add Unproductive Time
                   </Button>
                 </div>
               </div>
@@ -659,9 +506,7 @@ function TimesheetFormContent() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Notes</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="Add any relevant notes..." {...field} disabled={!selectedSupervisorId}/>
-                    </FormControl>
+                    <FormControl><Textarea placeholder="Add any relevant notes..." {...field} disabled={!selectedSupervisorId}/></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -671,7 +516,7 @@ function TimesheetFormContent() {
             <CardFooter>
               <Button type="submit" size="lg" disabled={form.formState.isSubmitting || !selectedSupervisorId}>
                 {form.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Send className="mr-2 h-4 w-4" />}
-                Submit Timesheet
+                Submit Crew Docket
               </Button>
             </CardFooter>
           </Card>
@@ -680,7 +525,6 @@ function TimesheetFormContent() {
     </div>
   );
 }
-
 
 export default function TimesheetForm() {
   return (

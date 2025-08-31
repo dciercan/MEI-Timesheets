@@ -1,18 +1,18 @@
 
+
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ListTodo } from "lucide-react";
-import type { TimesheetSubmissionWithDetails } from "@/lib/types";
+import type { CrewDocketWithDetails } from "@/lib/types";
 import SubmissionsTable from "./SubmissionsTable";
 
 interface AdminDashboardProps {
-  submissions: TimesheetSubmissionWithDetails[];
+  dockets: CrewDocketWithDetails[];
 }
 
-export default function AdminDashboard({ submissions }: AdminDashboardProps) {
+export default function AdminDashboard({ dockets }: AdminDashboardProps) {
 
-  if (submissions.length === 0) {
+  if (dockets.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-[50vh] text-center">
         <ListTodo className="h-16 w-16 text-muted-foreground" />
@@ -23,6 +23,6 @@ export default function AdminDashboard({ submissions }: AdminDashboardProps) {
   }
 
   return (
-    <SubmissionsTable submissions={submissions} view="admin" />
+    <SubmissionsTable dockets={dockets} />
   );
 }

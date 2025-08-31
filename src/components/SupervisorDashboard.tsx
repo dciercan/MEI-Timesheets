@@ -6,54 +6,30 @@ import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import type { TimesheetSubmissionWithDetails } from "@/lib/types";
-import { deleteTimesheetCrew } from "@/lib/actions";
+import type { CrewDocketWithDetails } from "@/lib/types";
+import { deleteCrewDocket } from "@/lib/actions";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import EditTimesheetDialog from "./EditTimesheetDialog";
 import { useRouter } from 'next/navigation';
 import { Calendar, Users, Activity, Clock, Hash, Trash2, Copy, Edit, FileText, ListTodo, MapPin, Watch } from 'lucide-react';
 import InfoItem from './InfoItem';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
-import EditSubmissionCrewDialog from './EditSubmissionGroupDialog';
-
+import EditSubmissionGroupDialog from './EditSubmissionGroupDialog';
 
 interface SupervisorDashboardProps {
-  submissions: TimesheetSubmissionWithDetails[];
+  dockets: CrewDocketWithDetails[];
 }
 
-type CrewSubmission = {
-  id: string;
-  entries: TimesheetSubmissionWithDetails[];
-  representative: TimesheetSubmissionWithDetails;
-}
-
-export default function SupervisorDashboard({ submissions: initialSubmissions }: SupervisorDashboardProps) {
-  const [submissions, setSubmissions] = React.useState(initialSubmissions);
+export default function SupervisorDashboard({ dockets }: SupervisorDashboardProps) {
   const { toast } = useToast();
   const router = useRouter();
 
-  const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
-  const [selectedEntry, setSelectedEntry] = React.useState<TimesheetSubmissionWithDetails | null>(null);
-
   const [isCrewEditDialogOpen, setIsCrewEditDialogOpen] = React.useState(false);
-  const [selectedCrew, setSelectedCrew] = React.useState<CrewSubmission | null>(null);
+  const [selectedCrew, setSelectedCrew] = React.useState<CrewDocketWithDetails | null>(null);
 
-  const handleEdit = (entry: TimesheetSubmissionWithDetails) => {
-    setSelectedEntry(entry);
-    setIsEditDialogOpen(true);
-  };
-  
-  const handleSubmissionUpdated = () => {
-    setIsEditDialogOpen(false);
-    setSelectedEntry(null);
-    toast({ title: "Submission updated successfully" });
-    router.refresh();
-  };
-
-  const handleCrewEdit = (crew: CrewSubmission) => {
+  const handleCrewEdit = (crew: CrewDocketWithDetails) => {
     setSelectedCrew(crew);
     setIsCrewEditDialogOpen(true);
   }
@@ -61,50 +37,40 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
   const handleCrewSubmissionUpdated = () => {
     setIsCrewEditDialogOpen(false);
     setSelectedCrew(null);
-    toast({ title: "Submission crew updated successfully" });
+    toast({ title: "Crew Docket updated successfully" });
     router.refresh();
   };
 
   const handleDeleteCrew = async (crewId: string) => {
-    const result = await deleteTimesheetCrew(crewId);
+    const result = await deleteCrewDocket(crewId);
     if (result.success) {
-      setSubmissions(submissions.filter(s => s.submissionCrewId !== crewId));
-      toast({ title: "Submission crew deleted." });
+      toast({ title: "Crew Docket deleted." });
+      router.refresh();
     } else {
       toast({ variant: "destructive", title: "Error", description: result.error });
     }
   };
 
-  const crewSubmissions = React.useMemo(() => {
-    if (!initialSubmissions) return [];
-    
-    const crews: Record<string, CrewSubmission> = {};
-    
-    initialSubmissions.forEach(s => {
-      const crewId = s.submissionCrewId || `single-${s.id}`;
-      if (!crews[crewId]) {
-        crews[crewId] = { id: crewId, entries: [], representative: s };
-      }
-      crews[crewId].entries.push(s);
-    });
-
-    return Object.values(crews).sort((a,b) => new Date(b.representative.submittedAt).getTime() - new Date(a.representative.submittedAt).getTime());
-  }, [initialSubmissions]);
-
-  const handleCopy = (crewSubmission: CrewSubmission) => {
-     const representative = crewSubmission.representative;
+  const handleCopy = (crewDocket: CrewDocketWithDetails) => {
      const params = new URLSearchParams();
-     params.set('zone', representative.zone || '');
-     params.set('section', representative.section || '');
-     params.set('asset', representative.asset);
-     params.set('subAsset', representative.subAsset);
-     params.set('activityId', representative.activityId);
-     params.set('notes', representative.notes || '');
+     params.set('zone', crewDocket.zone || '');
+     params.set('section', crewDocket.section || '');
+     params.set('asset', crewDocket.asset);
+     params.set('subAsset', crewDocket.subAsset);
+     params.set('activityId', crewDocket.activityId);
+     params.set('notes', crewDocket.notes || '');
+     params.set('quantity', crewDocket.quantity.toString());
 
-     const crewIds = crewSubmission.entries
-        .map(e => e.crewMemberId)
-        .filter(id => id !== representative.submittedById) || [];
-
+     // Assuming timesheets array is not empty and all have same hours/unproductive
+     if (crewDocket.timesheets.length > 0) {
+        const representativeTimesheet = crewDocket.timesheets[0];
+        params.set('productiveHours', representativeTimesheet.productiveHours.toString());
+        if (representativeTimesheet.unproductiveEntries) {
+            params.set('unproductiveEntries', JSON.stringify(representativeTimesheet.unproductiveEntries));
+        }
+     }
+     
+     const crewIds = crewDocket.crewMemberIds.filter(id => id !== crewDocket.submittedById) || [];
      if (crewIds.length > 0) {
         params.set('crewMemberIds', JSON.stringify(crewIds));
      }
@@ -112,7 +78,7 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
      router.push(`/timesheet?${params.toString()}`);
   }
 
-  if (crewSubmissions.length === 0) {
+  if (dockets.length === 0) {
     return (
         <div className="flex flex-col items-center justify-center h-[50vh] text-center">
             <ListTodo className="h-16 w-16 text-muted-foreground" />
@@ -122,41 +88,41 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
     );
   }
 
-
   return (
     <Card className="shadow-lg">
       <CardHeader>
-        <CardTitle className="font-headline text-3xl">My Timesheet Submissions</CardTitle>
-        <CardDescription>A record of all timesheets you have submitted, grouped by submission.</CardDescription>
+        <CardTitle className="font-headline text-3xl">My Crew Dockets</CardTitle>
+        <CardDescription>A record of all crew dockets you have submitted.</CardDescription>
       </CardHeader>
       <CardContent>
         <Accordion type="single" collapsible className="w-full space-y-4">
-          {crewSubmissions.map((crew) => {
-            const totalUnproductiveMinutes = crew.representative.unproductiveEntries?.reduce((total, entry) => total + entry.minutes, 0) || 0;
-
+          {dockets.map((docket) => {
+            const totalUnproductiveMinutes = docket.timesheets[0]?.unproductiveEntries?.reduce((total, entry) => total + entry.minutes, 0) || 0;
+            const productiveHours = docket.timesheets[0]?.productiveHours || 0;
+            
             return (
-            <AccordionItem value={crew.id} key={crew.id} className="border rounded-lg shadow-sm bg-background">
+            <AccordionItem value={docket.id} key={docket.id} className="border rounded-lg shadow-sm bg-background">
               <div className="flex items-center justify-between pl-6 pr-2 py-2">
                 <AccordionTrigger className="flex-grow py-2 hover:no-underline">
                   <div className="flex-grow grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
                     <div className="flex items-center gap-3">
                         <Calendar className="h-5 w-5 text-primary"/>
                         <div>
-                            <p className="font-semibold">{format(new Date(crew.representative.timesheetDate), 'PPP')}</p>
+                            <p className="font-semibold">{format(new Date(docket.timesheetDate), 'PPP')}</p>
                             <p className="text-xs text-muted-foreground">Date</p>
                         </div>
                     </div>
                      <div className="flex items-center gap-3">
                         <MapPin className="h-5 w-5 text-primary"/>
                         <div>
-                            <p className="font-semibold">{crew.representative.zone} / {crew.representative.section}</p>
+                            <p className="font-semibold">{docket.zone} / {docket.section}</p>
                             <p className="text-xs text-muted-foreground">Location</p>
                         </div>
                     </div>
                      <div className="flex items-center gap-3">
                         <Activity className="h-5 w-5 text-primary"/>
                         <div>
-                            <p className="font-semibold">{crew.representative.activity?.activity}</p>
+                            <p className="font-semibold">{docket.activity?.activity}</p>
                             <p className="text-xs text-muted-foreground">Activity</p>
                         </div>
                     </div>
@@ -168,12 +134,12 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
                        <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Button variant="outline" size="icon" className="h-9 w-9" disabled={!crew.representative.submissionCrewId}>
+                              <Button variant="outline" size="icon" className="h-9 w-9">
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </TooltipTrigger>
                              <TooltipContent>
-                              <p>Delete Submission Crew</p>
+                              <p>Delete Crew Docket</p>
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
@@ -182,19 +148,19 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
                       <AlertDialogHeader>
                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete this submission crew and all its entries.
+                          This action cannot be undone. This will permanently delete this crew docket and all associated timesheets.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleDeleteCrew(crew.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                        <AlertDialogAction onClick={() => handleDeleteCrew(docket.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
                    <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                             <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => handleCrewEdit(crew)}>
+                             <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => handleCrewEdit(docket)}>
                                 <Edit className="h-4 w-4" />
                             </Button>
                         </TooltipTrigger>
@@ -206,7 +172,7 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
                   <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => handleCopy(crew)}>
+                            <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => handleCopy(docket)}>
                                 <Copy className="h-4 w-4" />
                             </Button>
                         </TooltipTrigger>
@@ -219,12 +185,12 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
               </div>
               <AccordionContent className="px-6 pb-4">
                  <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6 pt-4 border-t">
-                    <InfoItem icon={Hash} label="Crew ID" value={crew.id} />
-                    <InfoItem icon={Users} label="Crew Members" value={crew.entries.length} />
-                    <InfoItem icon={FileText} label="Asset / Sub-Asset" value={`${crew.representative.asset} / ${crew.representative.subAsset}`} />
-                    <InfoItem icon={Clock} label="Productive Hours" value={crew.representative.productiveHours} />
-                    <InfoItem icon={Hash} label="Quantity" value={crew.representative.quantity} badge={crew.representative.activity?.activityUom} />
-                    <InfoItem icon={Watch} label="Unproductive Time" value={totalUnproductiveMinutes} badge="minutes" />
+                    <InfoItem icon={Hash} label="Docket ID" value={docket.id} />
+                    <InfoItem icon={Users} label="Crew Members" value={docket.crewMembers.length} />
+                    <InfoItem icon={FileText} label="Asset / Sub-Asset" value={`${docket.asset} / ${docket.subAsset}`} />
+                    <InfoItem icon={Clock} label="Productive Hours" value={productiveHours} />
+                    <InfoItem icon={Hash} label="Quantity" value={docket.quantity} badge={docket.activity?.activityUom} />
+                    <InfoItem icon={Watch} label="Unproductive Time" value={totalUnproductiveMinutes} badge="minutes per person" />
                  </div>
                 
                  <div className="border rounded-md">
@@ -237,13 +203,14 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
                         </TableRow>
                         </TableHeader>
                         <TableBody>
-                        {crew.entries.map((entry) => {
+                        {docket.timesheets.map((entry) => {
                             const totalUnproductiveMinutesForEntry = entry.unproductiveEntries?.reduce((total, u) => total + u.minutes, 0) || 0;
                             const totalUnproductiveHoursForEntry = totalUnproductiveMinutesForEntry / 60;
                             const totalHours = entry.productiveHours + totalUnproductiveHoursForEntry;
+                            const crewMember = docket.crewMembers.find(cm => cm.id === entry.crewMemberId);
                             return (
                                 <TableRow key={entry.id}>
-                                <TableCell>{entry.crewMember?.fullName}</TableCell>
+                                <TableCell>{crewMember?.fullName || 'Unknown'}</TableCell>
                                 <TableCell className="font-mono text-xs">{entry.id}</TableCell>
                                 <TableCell className="text-right font-medium">{totalHours.toFixed(2)}</TableCell>
                                 </TableRow>
@@ -258,19 +225,11 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
           })}
         </Accordion>
 
-        {selectedEntry && (
-          <EditTimesheetDialog
-            isOpen={isEditDialogOpen}
-            onOpenChange={setIsEditDialogOpen}
-            submission={selectedEntry}
-            onSubmissionUpdated={handleSubmissionUpdated}
-          />
-        )}
         {selectedCrew && (
-            <EditSubmissionCrewDialog
+            <EditSubmissionGroupDialog
                 isOpen={isCrewEditDialogOpen}
                 onOpenChange={setIsCrewEditDialogOpen}
-                submissionCrew={selectedCrew}
+                docket={selectedCrew}
                 onSubmissionUpdated={handleCrewSubmissionUpdated}
             />
         )}

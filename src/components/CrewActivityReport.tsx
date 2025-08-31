@@ -25,11 +25,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowUpDown } from 'lucide-react';
-import type { TimesheetSubmissionWithDetails } from '@/lib/types';
+import type { CrewDocketWithDetails } from '@/lib/types';
 import { format } from 'date-fns';
 
 type CrewSummary = {
-    submissionCrewId: string;
+    docketId: string;
     timesheetDate: Date;
     zone: string;
     section: string;
@@ -47,69 +47,52 @@ type CrewSummary = {
 }
 
 interface CrewActivityReportProps {
-  submissions: TimesheetSubmissionWithDetails[];
+  dockets: CrewDocketWithDetails[];
 }
 
-export default function CrewActivityReport({ submissions }: CrewActivityReportProps) {
+export default function CrewActivityReport({ dockets }: CrewActivityReportProps) {
   const [sorting, setSorting] = React.useState<SortingState>([ { id: 'timesheetDate', desc: true }]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
 
   const crewSummaries = React.useMemo(() => {
-    const crews: Record<string, {
-        entries: TimesheetSubmissionWithDetails[],
-        representative: TimesheetSubmissionWithDetails | null,
-    }> = {};
-
-    submissions.forEach(s => {
-      const crewId = s.submissionCrewId || `individual-${s.id}`;
-      if (!crews[crewId]) {
-        crews[crewId] = { entries: [], representative: s };
-      }
-      crews[crewId].entries.push(s);
-    });
-    
-    return Object.entries(crews).map(([crewId, crew]): CrewSummary => {
-        const representative = crew.representative!;
-        const totalUnproductiveMinutes = representative.unproductiveEntries?.reduce((total, entry) => total + entry.minutes, 0) || 0;
+    return dockets.map((docket): CrewSummary => {
+        const representativeTimesheet = docket.timesheets[0] || { productiveHours: 0, unproductiveEntries: [] };
+        const totalUnproductiveMinutes = representativeTimesheet.unproductiveEntries?.reduce((total, entry) => total + entry.minutes, 0) || 0;
         const unproductiveHours = totalUnproductiveMinutes / 60;
-        const totalHours = representative.productiveHours + unproductiveHours;
+        const totalHours = representativeTimesheet.productiveHours + unproductiveHours;
 
         return {
-            submissionCrewId: crewId,
-            timesheetDate: representative.timesheetDate,
-            zone: representative.zone || 'N/A',
-            section: representative.section || 'N/A',
-            asset: representative.asset,
-            subAsset: representative.subAsset,
-            activity: representative.activity?.activity || 'N/A',
-            company: representative.submittedBy?.company || 'N/A',
-            supervisor: representative.submittedBy?.fullName || 'N/A',
-            crewSize: crew.entries.length,
-            productiveHours: representative.productiveHours,
-            quantity: representative.quantity,
-            quantityUom: representative.activity?.activityUom || '',
+            docketId: docket.id,
+            timesheetDate: docket.timesheetDate,
+            zone: docket.zone || 'N/A',
+            section: docket.section || 'N/A',
+            asset: docket.asset,
+            subAsset: docket.subAsset,
+            activity: docket.activity?.activity || 'N/A',
+            company: docket.company,
+            supervisor: docket.submittedBy?.fullName || 'N/A',
+            crewSize: docket.crewMembers.length,
+            productiveHours: representativeTimesheet.productiveHours,
+            quantity: docket.quantity,
+            quantityUom: docket.activity?.activityUom || '',
             unproductiveHours: unproductiveHours,
             totalHours: totalHours
         }
     })
-  }, [submissions]);
+  }, [dockets]);
 
 
   const columns: ColumnDef<CrewSummary>[] = [
     {
-        accessorKey: 'submissionCrewId',
-        header: 'Crew ID',
-        cell: ({ row }) => <span className="font-mono text-xs">{row.getValue('submissionCrewId')}</span>
+        accessorKey: 'docketId',
+        header: 'Docket ID',
+        cell: ({ row }) => <span className="font-mono text-xs">{row.getValue('docketId')}</span>
     },
     {
         accessorKey: 'timesheetDate',
         header: ({ column }) => (
-            <Button
-                variant="ghost"
-                onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            >
-                Date
-                <ArrowUpDown className="ml-2 h-4 w-4" />
+            <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+                Date <ArrowUpDown className="ml-2 h-4 w-4" />
             </Button>
         ),
         cell: ({ row }) => format(new Date(row.getValue('timesheetDate')), 'PPP')
@@ -122,19 +105,12 @@ export default function CrewActivityReport({ submissions }: CrewActivityReportPr
     { 
         accessorKey: 'company', 
         header: ({ column }) => (
-            <Button
-                variant="ghost"
-                onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            >
-                Company
-                <ArrowUpDown className="ml-2 h-4 w-4" />
+            <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+                Company <ArrowUpDown className="ml-2 h-4 w-4" />
             </Button>
         ),
     },
-    { 
-        accessorKey: 'supervisor', 
-        header: 'Supervisor'
-    },
+    { accessorKey: 'supervisor', header: 'Supervisor' },
     { accessorKey: 'crewSize', header: 'Crew Size' },
     { accessorKey: 'productiveHours', header: 'Productive Hours' },
     {
@@ -142,7 +118,6 @@ export default function CrewActivityReport({ submissions }: CrewActivityReportPr
         header: 'Quantity',
         cell: ({ row }) => `${row.original.quantity} ${row.original.quantityUom}`.trim()
     },
-    { accessorKey: 'quantityUom', header: 'UoM' },
     { 
         accessorKey: 'unproductiveHours', 
         header: 'Unproductive Hours',
@@ -164,14 +139,8 @@ export default function CrewActivityReport({ submissions }: CrewActivityReportPr
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
-    initialState: {
-        pagination: { pageSize: 20 },
-        columnVisibility: { quantityUom: false } // Hide UoM by default as it's in Quantity
-    },
-    state: {
-      sorting,
-      columnFilters,
-    },
+    initialState: { pagination: { pageSize: 20 } },
+    state: { sorting, columnFilters },
   });
 
   return (
@@ -180,25 +149,19 @@ export default function CrewActivityReport({ submissions }: CrewActivityReportPr
             <Input
                 placeholder="Filter by supervisor..."
                 value={(table.getColumn('supervisor')?.getFilterValue() as string) ?? ''}
-                onChange={(event) =>
-                    table.getColumn('supervisor')?.setFilterValue(event.target.value)
-                }
+                onChange={(event) => table.getColumn('supervisor')?.setFilterValue(event.target.value)}
                 className="max-w-sm"
             />
              <Input
                 placeholder="Filter by activity..."
                 value={(table.getColumn('activity')?.getFilterValue() as string) ?? ''}
-                onChange={(event) =>
-                    table.getColumn('activity')?.setFilterValue(event.target.value)
-                }
+                onChange={(event) => table.getColumn('activity')?.setFilterValue(event.target.value)}
                 className="max-w-sm"
             />
               <Input
                 placeholder="Filter by company..."
                 value={(table.getColumn('company')?.getFilterValue() as string) ?? ''}
-                onChange={(event) =>
-                    table.getColumn('company')?.setFilterValue(event.target.value)
-                }
+                onChange={(event) => table.getColumn('company')?.setFilterValue(event.target.value)}
                 className="max-w-sm"
             />
         </div>
@@ -207,32 +170,20 @@ export default function CrewActivityReport({ submissions }: CrewActivityReportPr
             <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => {
-                    return (
+                    {headerGroup.headers.map((header) => (
                         <TableHead key={header.id}>
-                        {header.isPlaceholder
-                            ? null
-                            : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext()
-                            )}
+                        {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                         </TableHead>
-                    );
-                    })}
+                    ))}
                 </TableRow>
                 ))}
             </TableHeader>
             <TableBody>
                 {table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
-                    <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && 'selected'}
-                    >
+                    <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
                     {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id}>
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </TableCell>
+                        <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
                     ))}
                     </TableRow>
                 ))
@@ -247,20 +198,10 @@ export default function CrewActivityReport({ submissions }: CrewActivityReportPr
             </Table>
         </div>
         <div className="flex items-center justify-end space-x-2 py-4">
-            <Button
-                variant="outline"
-                size="sm"
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
-            >
+            <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
                 Previous
             </Button>
-            <Button
-                variant="outline"
-                size="sm"
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
-            >
+            <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
                 Next
             </Button>
         </div>

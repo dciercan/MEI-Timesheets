@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useForm, useFieldArray } from "react-hook-form";
@@ -9,8 +10,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { updateTimesheetCrew, getUsers } from "@/lib/actions";
-import type { TimesheetSubmissionWithDetails, Activity, User } from "@/lib/types";
+import { updateCrewDocket, getUsers } from "@/lib/actions";
+import type { CrewDocketWithDetails, Activity, User } from "@/lib/types";
 import { activities, unproductiveReasons } from "@/lib/data";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -25,15 +26,15 @@ import { ScrollArea } from "./ui/scroll-area";
 import { useAuth } from "@/hooks/use-auth";
 
 const formSchema = z.object({
-  submissionCrewId: z.string(),
+  crewDocketId: z.string(),
   timesheetDate: z.date(),
-  crewMemberIds: z.array(z.string()).min(1, "Please select at least one crew member."),
+  crewMemberIds: z.array(z.string()),
   zone: z.string().min(1, "Zone is required."),
   section: z.string().min(1, "Section is required."),
   asset: z.string().min(1, "Asset is required."),
   subAsset: z.string().min(1, "Sub-asset is required."),
   activityId: z.string().min(1, "Activity is required."),
-  productiveHours: z.coerce.number().min(0.1, "Productive hours must be greater than 0."),
+  productiveHours: z.coerce.number().min(0, "Productive hours must be a positive number."),
   quantity: z.coerce.number().min(0, "Quantity is required."),
   unproductiveEntries: z.array(
     z.object({
@@ -45,23 +46,18 @@ const formSchema = z.object({
 });
 
 type FormSchemaType = z.infer<typeof formSchema>;
-type CrewSubmission = {
-    id: string;
-    entries: TimesheetSubmissionWithDetails[];
-    representative: TimesheetSubmissionWithDetails;
-}
+
 interface EditSubmissionCrewDialogProps {
     isOpen: boolean;
     onOpenChange: (isOpen: boolean) => void;
-    submissionCrew: CrewSubmission;
+    docket: CrewDocketWithDetails;
     onSubmissionUpdated: () => void;
 }
 
-export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, submissionCrew, onSubmissionUpdated }: EditSubmissionCrewDialogProps) {
+export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, docket, onSubmissionUpdated }: EditSubmissionCrewDialogProps) {
   const { toast } = useToast();
   const { user: loggedInUser } = useAuth();
   const [allUsers, setAllUsers] = useState<User[]>([]);
-  const representative = submissionCrew.representative;
 
   useEffect(() => {
     async function loadUsers() {
@@ -71,21 +67,23 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, submiss
     loadUsers();
   }, [loggedInUser]);
 
+  const representativeTimesheet = docket.timesheets[0] || {};
+
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-        submissionCrewId: representative.submissionCrewId,
-        timesheetDate: new Date(representative.timesheetDate),
-        crewMemberIds: submissionCrew.entries.map(e => e.crewMemberId).filter(id => id !== representative.submittedById),
-        zone: representative.zone,
-        section: representative.section,
-        asset: representative.asset,
-        subAsset: representative.subAsset,
-        activityId: representative.activityId,
-        productiveHours: representative.productiveHours,
-        quantity: representative.quantity,
-        unproductiveEntries: representative.unproductiveEntries,
-        notes: representative.notes
+        crewDocketId: docket.id,
+        timesheetDate: new Date(docket.timesheetDate),
+        crewMemberIds: docket.crewMemberIds.filter(id => id !== docket.submittedById),
+        zone: docket.zone,
+        section: docket.section,
+        asset: docket.asset,
+        subAsset: docket.subAsset,
+        activityId: docket.activityId,
+        quantity: docket.quantity,
+        notes: docket.notes,
+        productiveHours: representativeTimesheet.productiveHours,
+        unproductiveEntries: representativeTimesheet.unproductiveEntries,
     }
   });
 
@@ -111,15 +109,15 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, submiss
 
 
   useEffect(() => {
-    if (representative) {
-        const initialActivity = activities.find(a => a.id === representative.activityId) || null;
+    if (docket) {
+        const initialActivity = activities.find(a => a.id === docket.activityId) || null;
         setSelectedActivity(initialActivity);
     }
-  }, [representative, form]);
+  }, [docket, form]);
 
 
   const onSubmit = async (values: FormSchemaType) => {
-    const result = await updateTimesheetCrew(values);
+    const result = await updateCrewDocket(values);
 
     if (result.success) {
         onSubmissionUpdated();
@@ -128,7 +126,7 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, submiss
         toast({
             variant: "destructive",
             title: "Update Failed",
-            description: "There was an error updating the submission crew.",
+            description: "There was an error updating the crew docket.",
         });
     }
   };
@@ -141,19 +139,15 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, submiss
         (u.appRole === 'Crew Member' || u.appRole === 'Crew Supervisor') &&
         u.id !== loggedInUser.id // Exclude the logged in supervisor
       )
-      .sort((a, b) => {
-        if (a.appRole === 'Crew Supervisor' && b.appRole !== 'Crew Supervisor') return -1;
-        if (a.appRole !== 'Crew Supervisor' && b.appRole === 'Crew Supervisor') return 1;
-        return a.fullName.localeCompare(b.fullName);
-      });
+      .sort((a, b) => a.fullName.localeCompare(b.fullName));
   }, [allUsers, loggedInUser]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Edit Timesheet Crew Submission</DialogTitle>
-          <DialogDescription>Update the details for the entire submission crew. This will affect all crew members in this entry.</DialogDescription>
+          <DialogTitle>Edit Crew Docket</DialogTitle>
+          <DialogDescription>Update the details for the entire crew docket. This will affect all crew members in this entry.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 max-h-[70vh] overflow-y-auto pr-6 pl-1">
@@ -168,26 +162,14 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, submiss
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
-                            <Button
-                              variant={"outline"}
-                              className={cn(
-                                "w-full pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
+                            <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
                               {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
                               <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                             </Button>
                           </FormControl>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            disabled={(date) => date > new Date() || date < new Date("2000-01-01")}
-                            initialFocus
-                          />
+                          <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(date) => date > new Date() || date < new Date("2000-01-01")} initialFocus />
                         </PopoverContent>
                       </Popover>
                       <FormMessage />
@@ -209,27 +191,16 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, submiss
                                 name="crewMemberIds"
                                 render={({ field }) => {
                                     return (
-                                    <FormItem
-                                        key={user.id}
-                                        className="flex flex-row items-start space-x-3 space-y-0"
-                                    >
+                                    <FormItem key={user.id} className="flex flex-row items-start space-x-3 space-y-0">
                                         <FormControl>
                                         <Checkbox
                                             checked={field.value?.includes(user.id)}
                                             onCheckedChange={(checked) => {
-                                            return checked
-                                                ? field.onChange([...(field.value || []), user.id])
-                                                : field.onChange(
-                                                    field.value?.filter(
-                                                    (value) => value !== user.id
-                                                    )
-                                                )
+                                            return checked ? field.onChange([...(field.value || []), user.id]) : field.onChange(field.value?.filter((value) => value !== user.id))
                                             }}
                                         />
                                         </FormControl>
-                                        <FormLabel className="font-normal">
-                                        {user.fullName} ({user.company})
-                                        </FormLabel>
+                                        <FormLabel className="font-normal">{user.fullName} ({user.company})</FormLabel>
                                     </FormItem>
                                     )
                                 }}
@@ -250,20 +221,9 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, submiss
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Asset</FormLabel>
-                    <Select onValueChange={(value) => {
-                        field.onChange(value);
-                        form.setValue("subAsset", "");
-                        form.setValue("activityId", "");
-                        setSelectedActivity(null);
-                    }} value={field.value}>
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select an asset" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                        {assets.map(asset => <SelectItem key={asset} value={asset}>{asset}</SelectItem>)}
-                        </SelectContent>
+                    <Select onValueChange={(value) => { field.onChange(value); form.setValue("subAsset", ""); form.setValue("activityId", ""); setSelectedActivity(null); }} value={field.value}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Select an asset" /></SelectTrigger></FormControl>
+                        <SelectContent>{assets.map(asset => <SelectItem key={asset} value={asset}>{asset}</SelectItem>)}</SelectContent>
                     </Select>
                     <FormMessage />
                     </FormItem>
@@ -275,19 +235,9 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, submiss
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Sub Asset</FormLabel>
-                    <Select onValueChange={(value) => {
-                        field.onChange(value);
-                        form.setValue("activityId", "");
-                        setSelectedActivity(null);
-                    }} value={field.value} disabled={!selectedAsset}>
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select a sub-asset" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                        {subAssets.map(subAsset => <SelectItem key={subAsset} value={subAsset}>{subAsset}</SelectItem>)}
-                        </SelectContent>
+                    <Select onValueChange={(value) => { field.onChange(value); form.setValue("activityId", ""); setSelectedActivity(null); }} value={field.value} disabled={!selectedAsset}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Select a sub-asset" /></SelectTrigger></FormControl>
+                        <SelectContent>{subAssets.map(subAsset => <SelectItem key={subAsset} value={subAsset}>{subAsset}</SelectItem>)}</SelectContent>
                     </Select>
                     <FormMessage />
                     </FormItem>
@@ -299,24 +249,9 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, submiss
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Activity</FormLabel>
-                    <Select
-                        onValueChange={(value) => {
-                        field.onChange(value);
-                        setSelectedActivity(activities.find(a => a.id === value) || null);
-                        }}
-                        value={field.value}
-                        disabled={!selectedSubAsset}
-                    >
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select an activity" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                        {filteredActivities.map(act => (
-                            <SelectItem key={act.id} value={act.id}>{act.activity}</SelectItem>
-                        ))}
-                        </SelectContent>
+                    <Select onValueChange={(value) => { field.onChange(value); setSelectedActivity(activities.find(a => a.id === value) || null); }} value={field.value} disabled={!selectedSubAsset}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Select an activity" /></SelectTrigger></FormControl>
+                        <SelectContent>{filteredActivities.map(act => (<SelectItem key={act.id} value={act.id}>{act.activity}</SelectItem>))}</SelectContent>
                     </Select>
                     <FormMessage />
                     </FormItem>
@@ -330,10 +265,8 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, submiss
                 name="productiveHours"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Productive Hours</FormLabel>
-                    <FormControl>
-                        <Input type="number" step="0.1" {...field} />
-                    </FormControl>
+                    <FormLabel>Productive Hours (per person)</FormLabel>
+                    <FormControl><Input type="number" step="0.1" {...field} /></FormControl>
                     <FormMessage />
                     </FormItem>
                 )}
@@ -344,9 +277,7 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, submiss
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Quantity {selectedActivity ? `(${selectedActivity.activityUom})` : ''}</FormLabel>
-                    <FormControl>
-                        <Input type="number" step="0.1" {...field} />
-                    </FormControl>
+                    <FormControl><Input type="number" step="0.1" {...field} /></FormControl>
                     <FormMessage />
                     </FormItem>
                 )}
@@ -354,7 +285,7 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, submiss
             </div>
 
             <div className="space-y-2">
-                <h3 className="text-base font-medium">Unproductive Time (Optional)</h3>
+                <h3 className="text-base font-medium">Unproductive Time (per person, optional)</h3>
                 <div className="space-y-4">
                   {fields.map((item, index) => (
                     <div key={item.id} className="flex items-end gap-4 p-4 border rounded-lg bg-muted/50">
@@ -366,16 +297,8 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, submiss
                                     <FormItem>
                                     <FormLabel>Reason</FormLabel>
                                     <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select a reason" />
-                                        </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                        {unproductiveReasons.map(reason => (
-                                            <SelectItem key={reason.id} value={reason.id}>{reason.reason}</SelectItem>
-                                        ))}
-                                        </SelectContent>
+                                        <FormControl><SelectTrigger><SelectValue placeholder="Select a reason" /></SelectTrigger></FormControl>
+                                        <SelectContent>{unproductiveReasons.map(reason => (<SelectItem key={reason.id} value={reason.id}>{reason.reason}</SelectItem>))}</SelectContent>
                                     </Select>
                                     <FormMessage />
                                     </FormItem>
@@ -387,9 +310,7 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, submiss
                                 render={({ field }) => (
                                     <FormItem>
                                     <FormLabel>Time (minutes)</FormLabel>
-                                    <FormControl>
-                                        <Input type="number" step="1" placeholder="e.g., 30" {...field} />
-                                    </FormControl>
+                                    <FormControl><Input type="number" step="1" placeholder="e.g., 30" {...field} /></FormControl>
                                     <FormMessage />
                                     </FormItem>
                                 )}
@@ -401,14 +322,8 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, submiss
                       </Button>
                     </div>
                   ))}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => append({ reasonId: "", minutes: 30 })}
-                  >
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Add Unproductive Time
+                  <Button type="button" variant="outline" size="sm" onClick={() => append({ reasonId: "", minutes: 30 })}>
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add Unproductive Time
                   </Button>
                 </div>
             </div>
@@ -419,18 +334,14 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, submiss
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Notes</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="Add any relevant notes..." {...field} />
-                    </FormControl>
+                    <FormControl><Textarea placeholder="Add any relevant notes..." {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
             <DialogFooter className="pt-4">
-                <DialogClose asChild>
-                    <Button type="button" variant="secondary">Cancel</Button>
-                </DialogClose>
+                <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
                 <Button type="submit" disabled={form.formState.isSubmitting}>
                     {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Save Changes

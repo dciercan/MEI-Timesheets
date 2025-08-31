@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -42,117 +43,86 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { MoreHorizontal, ArrowUpDown, Trash2, Edit } from 'lucide-react';
-import type { TimesheetSubmissionWithDetails } from '@/lib/types';
-import { deleteTimesheet } from '@/lib/actions';
+import type { CrewDocketWithDetails } from '@/lib/types';
+import { deleteCrewDocket } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
-import EditTimesheetDialog from './EditTimesheetDialog';
+import EditSubmissionGroupDialog from './EditSubmissionGroupDialog';
 import { useAuth } from '@/hooks/use-auth';
+import { useRouter } from 'next/navigation';
 
 interface SubmissionsTableProps {
-    submissions: TimesheetSubmissionWithDetails[];
-    view: 'admin' | 'supervisor';
+    dockets: CrewDocketWithDetails[];
 }
 
-export default function SubmissionsTable({ submissions: initialSubmissions, view }: SubmissionsTableProps) {
-  const [submissions, setSubmissions] = React.useState(initialSubmissions);
+export default function SubmissionsTable({ dockets: initialDockets }: SubmissionsTableProps) {
+  const [dockets, setDockets] = React.useState(initialDockets);
   const [sorting, setSorting] = React.useState<SortingState>([ { id: 'timesheetDate', desc: true }]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const { user: currentUser } = useAuth();
+  const router = useRouter();
 
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = React.useState(false);
-  const [selectedSubmission, setSelectedSubmission] = React.useState<TimesheetSubmissionWithDetails | null>(null);
+  const [selectedDocket, setSelectedDocket] = React.useState<CrewDocketWithDetails | null>(null);
   const { toast } = useToast();
 
-
-  const handleEdit = (submission: TimesheetSubmissionWithDetails) => {
-    setSelectedSubmission(submission);
+  const handleEdit = (docket: CrewDocketWithDetails) => {
+    setSelectedDocket(docket);
     setIsEditDialogOpen(true);
   };
 
-  const handleDelete = (submission: TimesheetSubmissionWithDetails) => {
-    setSelectedSubmission(submission);
+  const handleDelete = (docket: CrewDocketWithDetails) => {
+    setSelectedDocket(docket);
     setIsDeleteAlertOpen(true);
   };
 
   const confirmDelete = async () => {
-    if (selectedSubmission) {
-      const result = await deleteTimesheet(selectedSubmission.id);
+    if (selectedDocket) {
+      const result = await deleteCrewDocket(selectedDocket.id);
       if (result.success) {
-        setSubmissions(submissions.filter(s => s.id !== selectedSubmission.id));
-        toast({ title: 'Submission deleted successfully.' });
+        setDockets(dockets.filter(s => s.id !== selectedDocket.id));
+        toast({ title: 'Crew Docket deleted successfully.' });
       } else {
-        toast({ variant: 'destructive', title: 'Error deleting submission.' });
+        toast({ variant: 'destructive', title: 'Error deleting docket.' });
       }
       setIsDeleteAlertOpen(false);
-      setSelectedSubmission(null);
+      setSelectedDocket(null);
     }
   };
   
   const handleSubmissionUpdated = () => {
     setIsEditDialogOpen(false);
-    setSelectedSubmission(null);
-    toast({ title: "Submission updated successfully" });
-    // For simplicity, we just reload the page to get fresh data.
-    // A more sophisticated approach would be to refetch or update the state.
-    window.location.reload();
+    setSelectedDocket(null);
+    toast({ title: "Crew Docket updated successfully" });
+    router.refresh();
   };
 
-
-  const columns: ColumnDef<TimesheetSubmissionWithDetails>[] = [
+  const columns: ColumnDef<CrewDocketWithDetails>[] = [
     {
         accessorKey: 'timesheetDate',
         header: ({ column }) => (
-            <Button
-                variant="ghost"
-                onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            >
-                Date
-                <ArrowUpDown className="ml-2 h-4 w-4" />
+            <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+                Date <ArrowUpDown className="ml-2 h-4 w-4" />
             </Button>
         ),
         cell: ({ row }) => format(new Date(row.getValue('timesheetDate')), 'PPP')
     },
     {
-        accessorKey: 'crewMember.company',
-        header: ({ column }) => {
-          return (
-            <Button
-              variant="ghost"
-              onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            >
-              Company
-              <ArrowUpDown className="ml-2 h-4 w-4" />
+        accessorKey: 'company',
+        header: ({ column }) => (
+            <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+                Company <ArrowUpDown className="ml-2 h-4 w-4" />
             </Button>
-          );
-        },
-        cell: ({ row }) => row.original.crewMember?.company || 'N/A'
-      },
-    {
-      accessorKey: 'crewMember.fullName',
-      header: ({ column }) => {
-        return (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          >
-            Crew Member
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-        );
-      },
-       cell: ({ row }) => row.original.crewMember?.fullName || 'N/A'
+        )
     },
     {
-        accessorKey: 'asset',
-        header: 'Asset',
+      accessorKey: 'crewMembers',
+      header: 'Crew Size',
+      cell: ({ row }) => row.original.crewMembers.length,
     },
-    {
-        accessorKey: 'subAsset',
-        header: 'Sub-Asset',
-    },
+    { accessorKey: 'asset', header: 'Asset' },
+    { accessorKey: 'subAsset', header: 'Sub-Asset' },
     {
        accessorKey: 'activity.activity',
        header: 'Activity',
@@ -161,46 +131,27 @@ export default function SubmissionsTable({ submissions: initialSubmissions, view
     {
         accessorKey: 'productiveHours',
         header: 'Hours',
+        cell: ({ row }) => row.original.timesheets[0]?.productiveHours || 0,
     },
     {
         accessorKey: 'quantity',
         header: 'Quantity',
         cell: ({ row }) => `${row.original.quantity} ${row.original.activity?.activityUom || ''}`.trim()
     },
-    {
-        accessorKey: 'zone',
-        header: 'Zone',
-    },
-    {
-        accessorKey: 'section',
-        header: 'Section',
-    },
-    {
-        accessorKey: 'notes',
-        header: 'Notes',
-    },
+    { accessorKey: 'zone', header: 'Zone' },
+    { accessorKey: 'section', header: 'Section' },
+    { accessorKey: 'notes', header: 'Notes' },
     {
         accessorKey: 'submittedBy.fullName',
         header: 'Submitted By',
         cell: ({ row }) => row.original.submittedBy?.fullName || 'N/A'
     },
     {
-        accessorKey: 'submittedAt',
-        header: ({ column }) => (
-            <Button
-                variant="ghost"
-                onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            >
-                Submitted At
-                <ArrowUpDown className="ml-2 h-4 w-4" />
-            </Button>
-        ),
-        cell: ({ row }) => format(new Date(row.getValue('submittedAt')), 'Pp')
-    },
-    {
       id: 'actions',
       cell: ({ row }) => {
-        const submission = row.original;
+        const docket = row.original;
+        if (currentUser?.appRole === 'Read Only') return null;
+        
         return (
           <div className='text-right'>
             <DropdownMenu>
@@ -212,8 +163,8 @@ export default function SubmissionsTable({ submissions: initialSubmissions, view
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                    <DropdownMenuItem onClick={() => handleEdit(submission)}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleDelete(submission)} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleEdit(docket)}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDelete(docket)} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -223,7 +174,7 @@ export default function SubmissionsTable({ submissions: initialSubmissions, view
   ];
 
   const table = useReactTable({
-    data: submissions,
+    data: dockets,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -231,51 +182,26 @@ export default function SubmissionsTable({ submissions: initialSubmissions, view
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
     initialState: {
-        pagination: {
-            pageSize: 20,
-        },
+        pagination: { pageSize: 20 },
     },
     state: {
       sorting,
       columnFilters,
-      columnVisibility,
     },
   });
-
-  React.useEffect(() => {
-    let visibility: VisibilityState = {};
-     if (view === 'supervisor') {
-        visibility = {
-            ...visibility,
-            notes: false,
-            submittedBy_fullName: false,
-            submittedAt: false,
-            'crewMember_company': false,
-        }
-    }
-    if (currentUser?.appRole === 'Read Only') {
-        visibility = {
-            ...visibility,
-            actions: false,
-        }
-    }
-    table.setColumnVisibility(visibility);
-
-  }, [table, view, currentUser]);
 
 
   return (
     <>
         <div className="flex items-center gap-4 py-4">
             <Input
-            placeholder="Filter by crew member..."
-            value={(table.getColumn('crewMember_fullName')?.getFilterValue() as string) ?? ''}
-            onChange={(event) =>
-                table.getColumn('crewMember_fullName')?.setFilterValue(event.target.value)
-            }
-            className="max-w-sm"
+              placeholder="Filter by company..."
+              value={(table.getColumn('company')?.getFilterValue() as string) ?? ''}
+              onChange={(event) =>
+                  table.getColumn('company')?.setFilterValue(event.target.value)
+              }
+              className="max-w-sm"
             />
              <Input
             placeholder="Filter by activity..."
@@ -331,20 +257,10 @@ export default function SubmissionsTable({ submissions: initialSubmissions, view
             </Table>
         </div>
         <div className="flex items-center justify-end space-x-2 py-4">
-            <Button
-                variant="outline"
-                size="sm"
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
-            >
+            <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
                 Previous
             </Button>
-            <Button
-                variant="outline"
-                size="sm"
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
-            >
+            <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
                 Next
             </Button>
         </div>
@@ -355,7 +271,7 @@ export default function SubmissionsTable({ submissions: initialSubmissions, view
             <AlertDialogHeader>
                 <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                 <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete the selected timesheet submission.
+                This action cannot be undone. This will permanently delete the selected crew docket and all associated timesheets.
                 </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -365,11 +281,11 @@ export default function SubmissionsTable({ submissions: initialSubmissions, view
             </AlertDialogContent>
         </AlertDialog>
 
-        {selectedSubmission && (
-            <EditTimesheetDialog
+        {selectedDocket && (
+            <EditSubmissionGroupDialog
                 isOpen={isEditDialogOpen}
                 onOpenChange={setIsEditDialogOpen}
-                submission={selectedSubmission}
+                docket={selectedDocket}
                 onSubmissionUpdated={handleSubmissionUpdated}
             />
         )}

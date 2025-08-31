@@ -3,28 +3,27 @@
 
 import { useState, useEffect } from 'react';
 import SupervisorDashboard from "@/components/SupervisorDashboard";
-import { getTimesheetSubmissions } from "@/lib/actions";
+import { getCrewDockets } from "@/lib/actions";
 import { useAuth } from '@/hooks/use-auth';
-import type { TimesheetSubmissionWithDetails } from '@/lib/types';
+import type { CrewDocketWithDetails } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function SupervisorSubmissionsPage() {
     const { user, isLoading: isAuthLoading } = useAuth();
-    const [submissions, setSubmissions] = useState<TimesheetSubmissionWithDetails[]>([]);
+    const [dockets, setDockets] = useState<CrewDocketWithDetails[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         if (user) {
             setIsLoading(true);
-            getTimesheetSubmissions(user)
+            getCrewDockets(user)
                 .then(data => {
-                    setSubmissions(data);
+                    setDockets(data);
                 })
                 .finally(() => {
                     setIsLoading(false);
                 });
         } else if (!isAuthLoading) {
-            // If there's no user and auth is done loading, we can stop loading the page data.
             setIsLoading(false);
         }
     }, [user, isAuthLoading]);
@@ -47,7 +46,7 @@ export default function SupervisorSubmissionsPage() {
     
     return (
         <div className="container mx-auto py-8 px-4 md:px-6">
-            <SupervisorDashboard submissions={submissions} />
+            <SupervisorDashboard dockets={dockets} />
         </div>
     );
 }

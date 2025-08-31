@@ -3,7 +3,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import type { TimesheetSubmission, User, Activity, UnproductiveReason, TimesheetSubmissionWithDetails } from './types';
+import type { User, Activity, UnproductiveReason, CrewDocket, Timesheet, CrewDocketWithDetails, TimesheetWithDetails } from './types';
 import { z } from 'zod';
 import fs from 'fs/promises';
 import path from 'path';
@@ -11,32 +11,41 @@ import { cookies } from 'next/headers';
 import { listModels } from 'genkit';
 
 // In a real app, you would use a proper database.
-// For this demo, we'll use a JSON file for persistence.
-const submissionsDbPath = path.join(process.cwd(), 'src', 'lib', 'submissions.json');
+const crewDocketsDbPath = path.join(process.cwd(), 'src', 'lib', 'crew-dockets.json');
+const timesheetsDbPath = path.join(process.cwd(), 'src', 'lib', 'timesheets.json');
 const usersDbPath = path.join(process.cwd(), 'src', 'lib', 'users.json');
 
-// Submissions Data Functions
-async function readSubmissions(): Promise<TimesheetSubmission[]> {
+// Data Functions
+async function readCrewDockets(): Promise<CrewDocket[]> {
     try {
-        await fs.access(submissionsDbPath);
-        const data = await fs.readFile(submissionsDbPath, 'utf-8');
+        await fs.access(crewDocketsDbPath);
+        const data = await fs.readFile(crewDocketsDbPath, 'utf-8');
         if (data.trim() === '') return [];
-        const submissions = JSON.parse(data);
-        return submissions.map((s: any) => ({
-            ...s,
-            timesheetDate: new Date(s.timesheetDate),
-            submittedAt: new Date(s.submittedAt),
-        }));
+        return JSON.parse(data).map((d: any) => ({ ...d, timesheetDate: new Date(d.timesheetDate), submittedAt: new Date(d.submittedAt) }));
     } catch (error) {
         return [];
     }
 }
 
-async function writeSubmissions(submissions: TimesheetSubmission[]): Promise<void> {
-    await fs.writeFile(submissionsDbPath, JSON.stringify(submissions, null, 2), 'utf-8');
+async function writeCrewDockets(dockets: CrewDocket[]): Promise<void> {
+    await fs.writeFile(crewDocketsDbPath, JSON.stringify(dockets, null, 2), 'utf-8');
 }
 
-// Users Data Functions
+async function readTimesheets(): Promise<Timesheet[]> {
+    try {
+        await fs.access(timesheetsDbPath);
+        const data = await fs.readFile(timesheetsDbPath, 'utf-8');
+        if (data.trim() === '') return [];
+        return JSON.parse(data);
+    } catch (error) {
+        return [];
+    }
+}
+
+async function writeTimesheets(timesheets: Timesheet[]): Promise<void> {
+    await fs.writeFile(timesheetsDbPath, JSON.stringify(timesheets, null, 2), 'utf-8');
+}
+
 async function readUsers(): Promise<User[]> {
      try {
         await fs.access(usersDbPath);
@@ -52,28 +61,22 @@ async function writeUsers(users: User[]): Promise<void> {
      await fs.writeFile(usersDbPath, JSON.stringify(users, null, 2), 'utf-8');
 }
 
-// Read-only data functions
 async function readActivities(): Promise<Activity[]> {
     const data = await fs.readFile(path.join(process.cwd(), 'src', 'lib', 'activities.json'), 'utf-8');
     return JSON.parse(data);
 }
 
-async function readUnproductiveReasons(): Promise<UnproductiveReason[]> {
-    const data = await fs.readFile(path.join(process.cwd(), 'src', 'lib', 'unproductiveReasons.json'), 'utf-8');
-    return JSON.parse(data);
-}
-
-
-const addTimesheetSchema = z.object({
+// Schema for the main timesheet form
+const addCrewDocketSchema = z.object({
     submittedById: z.string().min(1, "Supervisor is required."),
     timesheetDate: z.coerce.date(),
-    crewMemberIds: z.array(z.string()).min(1, "Please select at least one crew member."),
+    crewMemberIds: z.array(z.string()), // Can be empty if supervisor is only crew member
     zone: z.string().min(1, "Zone is required."),
     section: z.string().min(1, "Section is required."),
     asset: z.string().min(1, "Please select an asset."),
     subAsset: z.string().min(1, "Please select a sub-asset."),
     activityId: z.string().min(1, "Please select an activity."),
-    productiveHours: z.coerce.number().min(0.1, "Productive hours must be greater than 0."),
+    productiveHours: z.coerce.number().min(0, "Productive hours must be a positive number."),
     quantity: z.coerce.number().min(0, "Quantity is required."),
     unproductiveEntries: z.array(
       z.object({
@@ -84,135 +87,69 @@ const addTimesheetSchema = z.object({
     notes: z.string().optional(),
   });
 
-
-export async function addTimesheet(data: z.infer<typeof addTimesheetSchema>) {
-    const validation = addTimesheetSchema.safeParse(data);
+export async function addCrewDocket(data: z.infer<typeof addCrewDocketSchema>) {
+    const validation = addCrewDocketSchema.safeParse(data);
 
     if (!validation.success) {
-        console.error("Add timesheet validation failed:", validation.error.flatten());
+        console.error("Add crew docket validation failed:", validation.error.flatten());
         return { success: false, error: "Invalid data submitted." };
     }
 
-    const { crewMemberIds, ...submissionData } = validation.data;
+    const { productiveHours, unproductiveEntries, ...docketData } = validation.data;
     
     const users = await readUsers();
-    const supervisor = users.find(u => u.id === submissionData.submittedById);
+    const supervisor = users.find(u => u.id === docketData.submittedById);
     if (!supervisor) {
         return { success: false, error: "Supervisor not found." };
     }
 
-    const allSubmissions = await readSubmissions();
-    const newSubmissionIds: string[] = [];
-    const submissionCrewId = `C-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-
-    const allCrewForSubmission = [...new Set([...crewMemberIds, submissionData.submittedById])];
-
-    for (const crewMemberId of allCrewForSubmission) {
-        const newSubmission: TimesheetSubmission = {
-            id: `ts-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-            submissionCrewId,
-            ...submissionData,
-            company: supervisor.company, // Add company to the record
-            crewMemberId,
-            unproductiveEntries: submissionData.unproductiveEntries || [],
-            submittedAt: new Date(),
-        };
-        allSubmissions.unshift(newSubmission);
-        newSubmissionIds.push(newSubmission.id);
-    }
+    const allDockets = await readCrewDockets();
+    const allTimesheets = await readTimesheets();
     
-    await writeSubmissions(allSubmissions);
+    const allCrewForSubmission = [...new Set([...docketData.crewMemberIds, docketData.submittedById])];
 
-    revalidatePath('/admin');
-    revalidatePath('/timesheet/my-submissions');
-    revalidatePath('/reports/my-company-submissions');
-    revalidatePath('/reports/crew-activity');
-    
-    return { success: true, submissionIds: newSubmissionIds };
-}
-
-const timesheetSchema = z.object({
-    id: z.string(),
-    timesheetDate: z.coerce.date(),
-    crewMemberId: z.string().min(1, "Crew member is required."),
-    asset: z.string().min(1, "Asset is required."),
-    subAsset: z.string().min(1, "Sub-asset is required."),
-    activityId: z.string().min(1, "Activity is required."),
-    productiveHours: z.coerce.number().min(0.1, "Productive hours must be greater than 0."),
-    quantity: z.coerce.number().min(0, "Quantity is required."),
-    unproductiveEntries: z.array(
-        z.object({
-          reasonId: z.string().min(1, "Please select a reason."),
-          minutes: z.coerce.number().min(1, "Minutes must be greater than 0."),
-        })
-      ).optional(),
-    notes: z.string().optional(),
-  });
-
-export async function updateTimesheet(formData: FormData) {
-    const rawData = Object.fromEntries(formData.entries());
-
-    const unproductiveEntries: any[] = [];
-    const otherData: Record<string, any> = {};
-
-    for (const [key, value] of formData.entries()) {
-        const unproductiveMatch = key.match(/^unproductiveEntries\[(\d+)\]\[(\w+)\]$/);
-        if (unproductiveMatch) {
-            const index = parseInt(unproductiveMatch[1], 10);
-            const prop = unproductiveMatch[2];
-            if (!unproductiveEntries[index]) {
-                unproductiveEntries[index] = {};
-            }
-            unproductiveEntries[index][prop] = value;
-        } else {
-            otherData[key] = value;
-        }
-    }
-    
-    const finalRawData = {
-        ...otherData,
-        unproductiveEntries: unproductiveEntries.filter(Boolean),
+    const newDocket: CrewDocket = {
+        id: `DOCKET-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+        ...docketData,
+        company: supervisor.company,
+        crewMemberIds: allCrewForSubmission,
+        submittedAt: new Date(),
     };
 
+    allDockets.unshift(newDocket);
 
-    const validationResult = timesheetSchema.safeParse(finalRawData);
-
-    if (!validationResult.success) {
-        console.error("Update validation error:", validationResult.error.flatten());
-        return { success: false, error: validationResult.error.flatten() };
-    }
-
-    const { id, ...data } = validationResult.data;
-    const allSubmissions = await readSubmissions();
-    const submissionIndex = allSubmissions.findIndex(s => s.id === id);
-
-    if (submissionIndex > -1) {
-        allSubmissions[submissionIndex] = {
-            ...allSubmissions[submissionIndex],
-            ...data,
-            timesheetDate: new Date(data.timesheetDate),
-            unproductiveEntries: data.unproductiveEntries || [],
+    for (const crewMemberId of allCrewForSubmission) {
+        const newTimesheet: Timesheet = {
+            id: `TS-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+            crewDocketId: newDocket.id,
+            crewMemberId: crewMemberId,
+            productiveHours: productiveHours,
+            unproductiveEntries: unproductiveEntries || [],
         };
-        await writeSubmissions(allSubmissions);
-        revalidatePath('/admin');
-        revalidatePath('/timesheet/my-submissions');
-        revalidatePath('/reports/my-company-submissions');
-        revalidatePath('/reports/crew-activity');
-        return { success: true };
+        allTimesheets.unshift(newTimesheet);
     }
-    return { success: false, error: "Submission not found." };
+    
+    await writeCrewDockets(allDockets);
+    await writeTimesheets(allTimesheets);
+
+    revalidatePath('/admin', 'layout');
+    revalidatePath('/timesheet', 'layout');
+    revalidatePath('/reports', 'layout');
+    
+    return { success: true, docketId: newDocket.id };
 }
 
-const timesheetCrewSchema = z.object({
-  submissionCrewId: z.string(),
+
+const updateCrewDocketSchema = z.object({
+  crewDocketId: z.string(),
   timesheetDate: z.coerce.date(),
-  crewMemberIds: z.array(z.string()).min(1, "Please select at least one crew member."),
+  crewMemberIds: z.array(z.string()),
   zone: z.string().min(1, "Zone is required."),
   section: z.string().min(1, "Section is required."),
   asset: z.string().min(1, "Asset is required."),
   subAsset: z.string().min(1, "Sub-asset is required."),
   activityId: z.string().min(1, "Activity is required."),
-  productiveHours: z.coerce.number().min(0.1, "Productive hours must be greater than 0."),
+  productiveHours: z.coerce.number().min(0, "Productive hours must be positive."),
   quantity: z.coerce.number().min(0, "Quantity is required."),
   unproductiveEntries: z.array(
     z.object({
@@ -223,126 +160,128 @@ const timesheetCrewSchema = z.object({
   notes: z.string().optional(),
 });
 
-export async function updateTimesheetCrew(data: z.infer<typeof timesheetCrewSchema>) {
-    const validationResult = timesheetCrewSchema.safeParse(data);
+
+export async function updateCrewDocket(data: z.infer<typeof updateCrewDocketSchema>) {
+    const validationResult = updateCrewDocketSchema.safeParse(data);
     if (!validationResult.success) {
-        console.error("Update crew validation error:", validationResult.error.flatten());
+        console.error("Update crew docket validation error:", validationResult.error.flatten());
         return { success: false, error: validationResult.error.flatten() };
     }
     
-    const { submissionCrewId, crewMemberIds, ...updateData } = validationResult.data;
+    const { crewDocketId, productiveHours, unproductiveEntries, ...docketUpdates } = validationResult.data;
     
-    const allSubmissions = await readSubmissions();
-    const crewEntries = allSubmissions.filter(s => s.submissionCrewId === submissionCrewId);
+    const allDockets = await readCrewDockets();
+    const allTimesheets = await readTimesheets();
 
-    if (crewEntries.length === 0) {
-        return { success: false, error: "Submission crew not found." };
+    const docketIndex = allDockets.findIndex(d => d.id === crewDocketId);
+    if (docketIndex === -1) {
+        return { success: false, error: "Crew docket not found." };
     }
-    
-    const submittedById = crewEntries[0].submittedById;
-    const company = crewEntries[0].company; // Get company from existing entry
 
-    // Delete existing entries in the crew
-    const otherSubmissions = allSubmissions.filter(s => s.submissionCrewId !== submissionCrewId);
+    const originalDocket = allDockets[docketIndex];
+    const allCrewForSubmission = [...new Set([...docketUpdates.crewMemberIds, originalDocket.submittedById])];
     
-    const allCrewForSubmission = [...new Set([...crewMemberIds, submittedById])];
+    // Update the docket
+    allDockets[docketIndex] = {
+        ...originalDocket,
+        ...docketUpdates,
+        crewMemberIds: allCrewForSubmission,
+    };
     
-    // Create new entries for the crew
-    const newEntries: TimesheetSubmission[] = allCrewForSubmission.map(crewMemberId => ({
-        id: `ts-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-        submissionCrewId,
-        ...updateData,
-        company, // Keep original company
-        submittedById,
-        crewMemberId,
-        submittedAt: new Date(),
-        unproductiveEntries: updateData.unproductiveEntries || [],
+    // Remove old timesheets for this docket
+    const otherTimesheets = allTimesheets.filter(t => t.crewDocketId !== crewDocketId);
+
+    // Create new timesheets for the updated crew
+    const newTimesheets: Timesheet[] = allCrewForSubmission.map(crewMemberId => ({
+        id: `TS-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+        crewDocketId: crewDocketId,
+        crewMemberId: crewMemberId,
+        productiveHours: productiveHours,
+        unproductiveEntries: unproductiveEntries || [],
     }));
 
-    const finalSubmissions = [...otherSubmissions, ...newEntries];
-    await writeSubmissions(finalSubmissions);
+    const finalTimesheets = [...otherTimesheets, ...newTimesheets];
+
+    await writeCrewDockets(allDockets);
+    await writeTimesheets(finalTimesheets);
     
-    revalidatePath('/admin');
-    revalidatePath('/timesheet/my-submissions');
-    revalidatePath('/reports/my-company-submissions');
-    revalidatePath('/reports/crew-activity');
+    revalidatePath('/admin', 'layout');
+    revalidatePath('/timesheet', 'layout');
+    revalidatePath('/reports', 'layout');
     return { success: true };
 }
 
 
-export async function deleteTimesheet(submissionId: string) {
-    const allSubmissions = await readSubmissions();
-    const filteredSubmissions = allSubmissions.filter(s => s.id !== submissionId);
+export async function deleteCrewDocket(crewDocketId: string) {
+    const allDockets = await readCrewDockets();
+    const allTimesheets = await readTimesheets();
+
+    const filteredDockets = allDockets.filter(d => d.id !== crewDocketId);
+    const filteredTimesheets = allTimesheets.filter(t => t.crewDocketId !== crewDocketId);
     
-    if (allSubmissions.length === filteredSubmissions.length) {
-         return { success: false, error: "Submission not found." };
+    if (allDockets.length === filteredDockets.length) {
+         return { success: false, error: "Crew docket not found." };
     }
 
-    await writeSubmissions(filteredSubmissions);
-    revalidatePath('/admin');
-    revalidatePath('/timesheet/my-submissions');
-    revalidatePath('/reports/my-company-submissions');
-    revalidatePath('/reports/crew-activity');
+    await writeCrewDockets(filteredDockets);
+    await writeTimesheets(filteredTimesheets);
+    
+    revalidatePath('/admin', 'layout');
+    revalidatePath('/timesheet', 'layout');
+    revalidatePath('/reports', 'layout');
     return { success: true };
 }
 
-export async function deleteTimesheetCrew(submissionCrewId: string) {
-    const allSubmissions = await readSubmissions();
-    const filteredSubmissions = allSubmissions.filter(s => s.submissionCrewId !== submissionCrewId);
-    
-    if (allSubmissions.length === filteredSubmissions.length) {
-         return { success: false, error: "Submission crew not found." };
+async function enrichCrewDockets(dockets: CrewDocket[]): Promise<CrewDocketWithDetails[]> {
+    const allUsers = await readUsers();
+    const allActivities = await readActivities();
+    const allTimesheets = await readTimesheets();
+
+    const userMap = new Map(allUsers.map(u => [u.id, u]));
+    const activityMap = new Map(allActivities.map(a => [a.id, a]));
+    const timesheetMap = new Map<string, Timesheet[]>();
+
+    for(const timesheet of allTimesheets) {
+        if(!timesheetMap.has(timesheet.crewDocketId)) {
+            timesheetMap.set(timesheet.crewDocketId, []);
+        }
+        timesheetMap.get(timesheet.crewDocketId)!.push(timesheet);
     }
 
-    await writeSubmissions(filteredSubmissions);
-    revalidatePath('/admin');
-    revalidatePath('/timesheet/my-submissions');
-    revalidatePath('/reports/my-company-submissions');
-    revalidatePath('/reports/crew-activity');
-    return { success: true };
-}
 
-
-
-async function enrichSubmissions(submissions: TimesheetSubmission[]): Promise<TimesheetSubmissionWithDetails[]> {
-    const users = await readUsers();
-    const activities = await readActivities();
-
-    const userMap = new Map(users.map(u => [u.id, u]));
-    const activityMap = new Map(activities.map(a => [a.id, a]));
-
-    return submissions.map(submission => ({
-        ...submission,
-        crewMember: userMap.get(submission.crewMemberId) ?? null,
-        activity: activityMap.get(submission.activityId) ?? null,
-        submittedBy: userMap.get(submission.submittedById) ?? null,
+    return dockets.map(docket => ({
+        ...docket,
+        timesheets: timesheetMap.get(docket.id) || [],
+        activity: activityMap.get(docket.activityId) ?? null,
+        submittedBy: userMap.get(docket.submittedById) ?? null,
+        crewMembers: docket.crewMemberIds.map(id => userMap.get(id)).filter(Boolean) as User[],
     }));
 }
 
-export async function getTimesheetSubmissions(
-    requestingUser?: User | null,
-    context?: 'my-submissions' | 'report'
-): Promise<TimesheetSubmissionWithDetails[]> {
-    const allSubmissions = await readSubmissions();
+
+export async function getCrewDockets(
+    requestingUser?: User | null
+): Promise<CrewDocketWithDetails[]> {
+    const allDockets = await readCrewDockets();
     const currentUser = requestingUser ?? await getCurrentUser();
 
     if (!currentUser) {
         return [];
     }
 
-    let filteredSubmissions: TimesheetSubmission[];
+    let filteredDockets: CrewDocket[];
     const isSparkUser = ['Admin', 'Read Only', 'MEI Supervisor'].includes(currentUser.appRole);
 
-    if (isSparkUser && context !== 'my-submissions') {
-        filteredSubmissions = allSubmissions;
-    } else if (context === 'my-submissions') {
-         filteredSubmissions = allSubmissions.filter(s => s.submittedById === currentUser.id);
-    } else {
-        filteredSubmissions = allSubmissions.filter(s => s.company === currentUser.company);
+    if (isSparkUser) {
+        filteredDockets = allDockets;
+    } else if (currentUser.appRole === 'Crew Supervisor') {
+         filteredDockets = allDockets.filter(s => s.submittedById === currentUser.id);
+    } else { // Subcontractor Admin
+        filteredDockets = allDockets.filter(s => s.company === currentUser.company);
     }
 
-    const sorted = filteredSubmissions.sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());
-    return enrichSubmissions(sorted);
+    const sorted = filteredDockets.sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());
+    return enrichCrewDockets(sorted);
 }
 
 
@@ -428,23 +367,8 @@ export async function deleteUser(userId: string) {
     return { success: false, error: "User not found." };
 }
 
-export async function findUserById(userId: string): Promise<User | undefined> {
-    const users = await readUsers();
-    return users.find(u => u.id === userId);
-}
-
-export async function findActivityById(activityId: string): Promise<Activity | undefined> {
-    const allActivities = await readActivities();
-    return allActivities.find(a => a.id === activityId);
-}
-
-export async function findUnproductiveReasonById(reasonId: string): Promise<any | undefined> {
-    const reasons = await readUnproductiveReasons();
-    return reasons.find(r => r.id === reasonId);
-}
 
 export async function getAvailableModels() {
     const models = await listModels();
     return models;
 }
-

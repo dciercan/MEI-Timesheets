@@ -31,27 +31,41 @@ export type UnproductiveEntry = {
   minutes: number;
 };
 
-export type TimesheetSubmission = {
-  id:string;
-  submissionCrewId: string;
-  timesheetDate: Date;
-  company: string; // <-- Added company field
+// New data model for individual timesheets
+export type Timesheet = {
+  id: string;
+  crewDocketId: string;
   crewMemberId: string;
+  productiveHours: number;
+  unproductiveEntries: UnproductiveEntry[];
+};
+
+// New data model for crew-level work dockets
+export type CrewDocket = {
+  id: string;
+  timesheetDate: Date;
+  company: string;
   zone?: string;
   section?: string;
   asset: string;
   subAsset: string;
   activityId: string;
-  productiveHours: number;
   quantity: number;
-  unproductiveEntries: UnproductiveEntry[];
   notes?: string;
   submittedAt: Date;
   submittedById: string;
+  crewMemberIds: string[];
 };
 
-export type TimesheetSubmissionWithDetails = TimesheetSubmission & {
+// Enriched type for displaying data in the UI
+export type TimesheetWithDetails = Timesheet & {
+  crewDocket: CrewDocket;
   crewMember: User | null;
+};
+
+export type CrewDocketWithDetails = CrewDocket & {
+  timesheets: Timesheet[];
   activity: Activity | null;
   submittedBy: User | null;
+  crewMembers: User[];
 };
