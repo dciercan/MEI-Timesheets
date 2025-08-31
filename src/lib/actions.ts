@@ -94,12 +94,17 @@ export async function addTimesheet(data: z.infer<typeof addTimesheetSchema>) {
     }
 
     const { crewMemberIds, ...submissionData } = validation.data;
+    
+    const users = await readUsers();
+    const supervisor = users.find(u => u.id === submissionData.submittedById);
+    if (!supervisor) {
+        return { success: false, error: "Supervisor not found." };
+    }
+
     const allSubmissions = await readSubmissions();
     const newSubmissionIds: string[] = [];
     const submissionCrewId = `C-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
-    // The supervisor is also a crew member for the submission.
-    // The crewMemberIds array from the form only contains the *other* crew members.
     const allCrewForSubmission = [...new Set([...crewMemberIds, submissionData.submittedById])];
 
     for (const crewMemberId of allCrewForSubmission) {
@@ -107,6 +112,7 @@ export async function addTimesheet(data: z.infer<typeof addTimesheetSchema>) {
             id: `ts-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
             submissionCrewId,
             ...submissionData,
+            company: supervisor.company, // Add company to the record
             crewMemberId,
             unproductiveEntries: submissionData.unproductiveEntries || [],
             submittedAt: new Date(),
@@ -120,6 +126,7 @@ export async function addTimesheet(data: z.infer<typeof addTimesheetSchema>) {
     revalidatePath('/admin');
     revalidatePath('/timesheet/my-submissions');
     revalidatePath('/reports/my-company-submissions');
+    revalidatePath('/reports/crew-activity');
     
     return { success: true, submissionIds: newSubmissionIds };
 }
@@ -190,6 +197,7 @@ export async function updateTimesheet(formData: FormData) {
         revalidatePath('/admin');
         revalidatePath('/timesheet/my-submissions');
         revalidatePath('/reports/my-company-submissions');
+        revalidatePath('/reports/crew-activity');
         return { success: true };
     }
     return { success: false, error: "Submission not found." };
@@ -232,6 +240,7 @@ export async function updateTimesheetCrew(data: z.infer<typeof timesheetCrewSche
     }
     
     const submittedById = crewEntries[0].submittedById;
+    const company = crewEntries[0].company; // Get company from existing entry
 
     // Delete existing entries in the crew
     const otherSubmissions = allSubmissions.filter(s => s.submissionCrewId !== submissionCrewId);
@@ -243,6 +252,7 @@ export async function updateTimesheetCrew(data: z.infer<typeof timesheetCrewSche
         id: `ts-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
         submissionCrewId,
         ...updateData,
+        company, // Keep original company
         submittedById,
         crewMemberId,
         submittedAt: new Date(),
@@ -255,6 +265,7 @@ export async function updateTimesheetCrew(data: z.infer<typeof timesheetCrewSche
     revalidatePath('/admin');
     revalidatePath('/timesheet/my-submissions');
     revalidatePath('/reports/my-company-submissions');
+    revalidatePath('/reports/crew-activity');
     return { success: true };
 }
 
@@ -271,6 +282,7 @@ export async function deleteTimesheet(submissionId: string) {
     revalidatePath('/admin');
     revalidatePath('/timesheet/my-submissions');
     revalidatePath('/reports/my-company-submissions');
+    revalidatePath('/reports/crew-activity');
     return { success: true };
 }
 
@@ -286,6 +298,7 @@ export async function deleteTimesheetCrew(submissionCrewId: string) {
     revalidatePath('/admin');
     revalidatePath('/timesheet/my-submissions');
     revalidatePath('/reports/my-company-submissions');
+    revalidatePath('/reports/crew-activity');
     return { success: true };
 }
 
@@ -320,19 +333,12 @@ export async function getTimesheetSubmissions(
     let filteredSubmissions: TimesheetSubmission[];
     const isSparkUser = ['Admin', 'Read Only', 'MEI Supervisor'].includes(currentUser.appRole);
 
-    if (context === 'my-submissions') {
-        filteredSubmissions = allSubmissions.filter(s => s.submittedById === currentUser.id);
-    } else if (isSparkUser) {
+    if (isSparkUser && context !== 'my-submissions') {
         filteredSubmissions = allSubmissions;
+    } else if (context === 'my-submissions') {
+         filteredSubmissions = allSubmissions.filter(s => s.submittedById === currentUser.id);
     } else {
-        const users = await readUsers();
-        const companyUserIds = users
-            .filter(u => u.company === currentUser.company)
-            .map(u => u.id);
-        
-        const companyUserIdSet = new Set(companyUserIds);
-
-        filteredSubmissions = allSubmissions.filter(s => companyUserIdSet.has(s.submittedById));
+        filteredSubmissions = allSubmissions.filter(s => s.company === currentUser.company);
     }
 
     const sorted = filteredSubmissions.sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());
@@ -442,4 +448,3 @@ export async function getAvailableModels() {
     return models;
 }
 
-    

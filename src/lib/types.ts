@@ -35,6 +35,7 @@ export type TimesheetSubmission = {
   id:string;
   submissionCrewId: string;
   timesheetDate: Date;
+  company: string; // <-- Added company field
   crewMemberId: string;
   zone?: string;
   section?: string;
