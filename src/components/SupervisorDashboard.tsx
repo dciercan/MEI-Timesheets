@@ -216,6 +216,7 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
               </div>
               <AccordionContent className="px-6 pb-4">
                  <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6 pt-4 border-t">
+                    <InfoItem icon={Hash} label="Submission ID" value={group.id} />
                     <InfoItem icon={Users} label="Crew Members" value={group.entries.length} />
                     <InfoItem icon={FileText} label="Asset / Sub-Asset" value={`${group.representative.asset} / ${group.representative.subAsset}`} />
                     <InfoItem icon={Clock} label="Productive Hours" value={group.representative.productiveHours} />
@@ -263,4 +264,3 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
     </Card>
   );
 }
-
