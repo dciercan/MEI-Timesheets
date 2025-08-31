@@ -302,29 +302,34 @@ async function enrichSubmissions(submissions: TimesheetSubmission[]): Promise<Ti
 
 
 export async function getTimesheetSubmissions(requestingUser?: User | null, context: 'my-submissions' | 'report' = 'my-submissions'): Promise<TimesheetSubmissionWithDetails[]> {
-    let submissions = await readSubmissions();
-    
+    const allSubmissions = await readSubmissions();
     const currentUser = requestingUser ?? await getCurrentUser();
 
     if (!currentUser) {
         return [];
     }
 
+    let filteredSubmissions: TimesheetSubmission[];
+
     const isSparkUser = ['Admin', 'Read Only', 'MEI Supervisor'].includes(currentUser.appRole);
 
-    if (context === 'my-submissions' && (currentUser.appRole === 'Crew Supervisor' || currentUser.appRole === 'MEI Supervisor')) {
-        submissions = submissions.filter(s => s.submittedById === currentUser.id);
-    } else if (!isSparkUser) {
-        // For any non-spark user, filter to their company.
-        // This applies to 'my-submissions' for sub-admins, and all reports for non-spark users.
+    if (isSparkUser) {
+        // Spark users see all submissions.
+        filteredSubmissions = allSubmissions;
+    } else if (context === 'my-submissions' && currentUser.appRole === 'Crew Supervisor') {
+        // A supervisor looking at their own submissions page.
+        filteredSubmissions = allSubmissions.filter(s => s.submittedById === currentUser.id);
+    } else {
+        // Any other case for a non-spark user (e.g., reports for Subbie Admins or Supervisors)
+        // should be filtered to their company.
         const users = await readUsers();
         const companyUserIds = new Set(
             users.filter(u => u.company === currentUser.company).map(u => u.id)
         );
-        submissions = submissions.filter(s => companyUserIds.has(s.submittedById));
+        filteredSubmissions = allSubmissions.filter(s => companyUserIds.has(s.submittedById));
     }
     
-    const sorted = submissions.sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());
+    const sorted = filteredSubmissions.sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());
     return enrichSubmissions(sorted);
 }
 
@@ -428,3 +433,5 @@ export async function getAvailableModels() {
     const models = await listModels();
     return models;
 }
+
+    
