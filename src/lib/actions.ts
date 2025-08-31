@@ -310,20 +310,21 @@ export async function getTimesheetSubmissions(requestingUser?: User | null, cont
         return [];
     }
 
-    const isSparkUser = currentUser.company === 'Spark';
-    const isSparkAdmin = currentUser.appRole === 'Admin';
-    const isSparkReadOnly = currentUser.appRole === 'Read Only';
+    // Admins, Read Only, and MEI Supervisors can see all data.
+    const canSeeAllData = ['Admin', 'Read Only', 'MEI Supervisor'].includes(currentUser.appRole);
 
-    if (isSparkAdmin || isSparkReadOnly) {
-        // Spark Admin and Read Only see everything
-    } else if (isSparkUser) { // MEI Supervisor
-        if (context === 'my-submissions') {
-            submissions = submissions.filter(s => s.submittedById === currentUser.id);
-        }
-        // In 'report' context, MEI Supervisor also sees everything.
-    } else { // Non-Spark users
+    if (canSeeAllData) {
+        // No filtering needed, they see all submissions.
+    } else if (context === 'my-submissions') {
+         // Supervisors viewing their own submissions
+        submissions = submissions.filter(s => s.submittedById === currentUser.id);
+    } else {
+        // Subcontractor users (Admin or Supervisor) viewing a report
+        // They should see all submissions from their company
         const users = await readUsers();
-        const companyUserIds = new Set(users.filter(u => u.company === currentUser.company).map(u => u.id));
+        const companyUserIds = new Set(
+            users.filter(u => u.company === currentUser.company).map(u => u.id)
+        );
         submissions = submissions.filter(s => companyUserIds.has(s.submittedById));
     }
     
