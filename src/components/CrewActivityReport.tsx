@@ -28,24 +28,6 @@ import { ArrowUpDown } from 'lucide-react';
 import type { CrewDocketWithDetails } from '@/lib/types';
 import { format } from 'date-fns';
 
-type CrewSummary = {
-    docketId: string;
-    timesheetDate: Date;
-    zone: string;
-    section: string;
-    asset: string;
-    subAsset: string;
-    activity: string;
-    company: string;
-    supervisor: string;
-    crewSize: number;
-    productiveHours: number;
-    quantity: number;
-    quantityUom: string;
-    unproductiveHours: number;
-    totalHours: number;
-}
-
 interface CrewActivityReportProps {
   dockets: CrewDocketWithDetails[];
 }
@@ -54,39 +36,11 @@ export default function CrewActivityReport({ dockets }: CrewActivityReportProps)
   const [sorting, setSorting] = React.useState<SortingState>([ { id: 'timesheetDate', desc: true }]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
 
-  const crewSummaries = React.useMemo(() => {
-    return dockets.map((docket): CrewSummary => {
-        const representativeTimesheet = docket.timesheets[0] || { productiveHours: 0, unproductiveEntries: [] };
-        const totalUnproductiveMinutes = representativeTimesheet.unproductiveEntries?.reduce((total, entry) => total + entry.minutes, 0) || 0;
-        const unproductiveHours = totalUnproductiveMinutes / 60;
-        const totalHours = representativeTimesheet.productiveHours + unproductiveHours;
-
-        return {
-            docketId: docket.id,
-            timesheetDate: docket.timesheetDate,
-            zone: docket.zone || 'N/A',
-            section: docket.section || 'N/A',
-            asset: docket.asset,
-            subAsset: docket.subAsset,
-            activity: docket.activity?.activity || 'N/A',
-            company: docket.company,
-            supervisor: docket.submittedBy?.fullName || 'N/A',
-            crewSize: docket.crewMembers.length,
-            productiveHours: representativeTimesheet.productiveHours,
-            quantity: docket.quantity,
-            quantityUom: docket.activity?.activityUom || '',
-            unproductiveHours: unproductiveHours,
-            totalHours: totalHours
-        }
-    })
-  }, [dockets]);
-
-
-  const columns: ColumnDef<CrewSummary>[] = [
+  const columns: ColumnDef<CrewDocketWithDetails>[] = [
     {
-        accessorKey: 'docketId',
+        accessorKey: 'id',
         header: 'Docket ID',
-        cell: ({ row }) => <span className="font-mono text-xs">{row.getValue('docketId')}</span>
+        cell: ({ row }) => <span className="font-mono text-xs">{row.getValue('id')}</span>
     },
     {
         accessorKey: 'timesheetDate',
@@ -101,7 +55,11 @@ export default function CrewActivityReport({ dockets }: CrewActivityReportProps)
     { accessorKey: 'section', header: 'Section' },
     { accessorKey: 'asset', header: 'Asset' },
     { accessorKey: 'subAsset', header: 'Sub-Asset' },
-    { accessorKey: 'activity', header: 'Activity' },
+    { 
+        accessorKey: 'activity.activity', 
+        header: 'Activity',
+        cell: ({ row }) => row.original.activity?.activity || 'N/A'
+    },
     { 
         accessorKey: 'company', 
         header: ({ column }) => (
@@ -110,28 +68,50 @@ export default function CrewActivityReport({ dockets }: CrewActivityReportProps)
             </Button>
         ),
     },
-    { accessorKey: 'supervisor', header: 'Supervisor' },
-    { accessorKey: 'crewSize', header: 'Crew Size' },
-    { accessorKey: 'productiveHours', header: 'Productive Hours' },
+    { 
+        accessorKey: 'submittedBy.fullName', 
+        header: 'Supervisor',
+        cell: ({ row }) => row.original.submittedBy?.fullName || 'N/A'
+    },
+    { 
+        accessorKey: 'crewMembers', 
+        header: 'Crew Size',
+        cell: ({ row }) => row.original.crewMembers.length
+    },
+    { 
+        accessorKey: 'productiveHours', 
+        header: 'Productive Hours',
+        cell: ({ row }) => row.original.timesheets[0]?.productiveHours || 0
+    },
     {
         accessorKey: 'quantity',
         header: 'Quantity',
-        cell: ({ row }) => `${row.original.quantity} ${row.original.quantityUom}`.trim()
+        cell: ({ row }) => `${row.original.quantity} ${row.original.activity?.activityUom || ''}`.trim()
     },
     { 
-        accessorKey: 'unproductiveHours', 
+        id: 'unproductiveHours',
         header: 'Unproductive Hours',
-        cell: ({ row }) => row.original.unproductiveHours.toFixed(2)
+        cell: ({ row }) => {
+            const totalUnproductiveMinutes = row.original.timesheets[0]?.unproductiveEntries?.reduce((total, entry) => total + entry.minutes, 0) || 0;
+            const unproductiveHours = totalUnproductiveMinutes / 60;
+            return unproductiveHours.toFixed(2);
+        }
     },
     { 
-        accessorKey: 'totalHours', 
+        id: 'totalHours', 
         header: 'Total Hours',
-        cell: ({ row }) => row.original.totalHours.toFixed(2)
+        cell: ({ row }) => {
+            const productiveHours = row.original.timesheets[0]?.productiveHours || 0;
+            const totalUnproductiveMinutes = row.original.timesheets[0]?.unproductiveEntries?.reduce((total, entry) => total + entry.minutes, 0) || 0;
+            const unproductiveHours = totalUnproductiveMinutes / 60;
+            const totalHours = productiveHours + unproductiveHours;
+            return totalHours.toFixed(2);
+        }
     },
   ];
 
   const table = useReactTable({
-    data: crewSummaries,
+    data: dockets,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -148,14 +128,14 @@ export default function CrewActivityReport({ dockets }: CrewActivityReportProps)
         <div className="flex items-center gap-4 py-4">
             <Input
                 placeholder="Filter by supervisor..."
-                value={(table.getColumn('supervisor')?.getFilterValue() as string) ?? ''}
-                onChange={(event) => table.getColumn('supervisor')?.setFilterValue(event.target.value)}
+                value={(table.getColumn('submittedBy_fullName')?.getFilterValue() as string) ?? ''}
+                onChange={(event) => table.getColumn('submittedBy_fullName')?.setFilterValue(event.target.value)}
                 className="max-w-sm"
             />
              <Input
                 placeholder="Filter by activity..."
-                value={(table.getColumn('activity')?.getFilterValue() as string) ?? ''}
-                onChange={(event) => table.getColumn('activity')?.setFilterValue(event.target.value)}
+                value={(table.getColumn('activity_activity')?.getFilterValue() as string) ?? ''}
+                onChange={(event) => table.getColumn('activity_activity')?.setFilterValue(event.target.value)}
                 className="max-w-sm"
             />
               <Input
