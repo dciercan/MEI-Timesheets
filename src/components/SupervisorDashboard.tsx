@@ -17,7 +17,7 @@ import { useRouter } from 'next/navigation';
 import { Calendar, Users, Activity, Clock, Hash, Trash2, Copy, Edit, FileText, ListTodo, MapPin, Watch } from 'lucide-react';
 import InfoItem from './InfoItem';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
-import EditSubmissionCrewDialog from './EditSubmissionCrewDialog';
+import EditSubmissionCrewDialog from './EditSubmissionGroupDialog';
 
 
 interface SupervisorDashboardProps {
