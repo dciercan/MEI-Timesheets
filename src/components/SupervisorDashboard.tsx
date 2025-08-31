@@ -83,9 +83,9 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
 
   const groupedSubmissions = React.useMemo(() => {
     const groups: Record<string, GroupedSubmission> = {};
-    submissions.forEach(s => {
-      if (!s.submissionGroupId) return; // Guard against entries without a group ID
-      const groupId = s.submissionGroupId;
+    submissions.forEach((s, index) => {
+      // Fallback for older data that might not have a submissionGroupId
+      const groupId = s.submissionGroupId || `no-group-${s.id}-${index}`;
       if (!groups[groupId]) {
         groups[groupId] = {
           id: groupId,
@@ -123,7 +123,7 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
                   <div className="flex items-center gap-2 pr-4">
                      <AlertDialog>
                         <AlertDialogTrigger asChild>
-                            <Button variant="outline" size="icon" className="h-9 w-9">
+                            <Button variant="outline" size="icon" className="h-9 w-9" disabled={!representative.submissionGroupId}>
                                 <Trash2 className="h-4 w-4" />
                             </Button>
                         </AlertDialogTrigger>
