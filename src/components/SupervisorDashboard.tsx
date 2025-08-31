@@ -61,18 +61,16 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
 
   const groupedSubmissions = React.useMemo(() => {
     const groups: Record<string, GroupedSubmission> = {};
+    if (!initialSubmissions) return [];
+
     initialSubmissions.forEach(s => {
-      let groupId = s.submissionGroupId;
-      if (!groupId) {
-        // Create a fallback group ID for older data
-        groupId = `${s.submittedById}-${s.timesheetDate.toISOString()}-${s.activityId}-${s.asset}-${s.subAsset}`;
-      }
-      
+      const groupId = s.submissionGroupId || s.id; // Fallback for older data
       if (!groups[groupId]) {
-          groups[groupId] = { id: groupId, entries: [], representative: s };
+        groups[groupId] = { id: groupId, entries: [], representative: s };
       }
       groups[groupId].entries.push(s);
     });
+
     return Object.values(groups).sort((a,b) => new Date(b.representative.submittedAt).getTime() - new Date(a.representative.submittedAt).getTime());
   }, [initialSubmissions]);
 
