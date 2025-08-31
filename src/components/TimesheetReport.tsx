@@ -64,6 +64,17 @@ export default function TimesheetReport({ timesheets }: TimesheetReportProps) {
         header: 'Unproductive Minutes',
         cell: ({ row }) => row.original.unproductiveEntries?.reduce((acc, entry) => acc + entry.minutes, 0) || 0
     },
+     {
+        id: 'totalHours',
+        header: 'Total Hours',
+        cell: ({ row }) => {
+            const productiveHours = row.original.productiveHours || 0;
+            const unproductiveMinutes = row.original.unproductiveEntries?.reduce((acc, entry) => acc + entry.minutes, 0) || 0;
+            const unproductiveHours = unproductiveMinutes / 60;
+            const totalHours = productiveHours + unproductiveHours;
+            return totalHours.toFixed(2);
+        }
+    },
     {
         accessorKey: 'crewDocketId',
         header: 'Crew Docket ID',
