@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { BarChart, ChevronRight, Building, Users, FileSignature, Book } from "lucide-react";
+import { BarChart, ChevronRight, Building, Users, FileSignature, Book, FileClock } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
 export default function ReportsPage() {
@@ -37,6 +37,24 @@ export default function ReportsPage() {
                         <div>
                             <CardTitle className="font-headline text-xl">All Crew Dockets</CardTitle>
                             <CardDescription>A complete log of all individual timesheet dockets from all supervisors.</CardDescription>
+                        </div>
+                        </div>
+                        <ChevronRight className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    </CardHeader>
+                </Link>
+            </Card>
+             <Card className="shadow-lg hover:shadow-xl transition-shadow">
+                <Link href="/reports/all-timesheets" className="block">
+                    <CardHeader>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                        <div className="p-3 bg-primary/10 rounded-full">
+                            <FileClock className="h-6 w-6 text-primary" />
+                        </div>
+                        <div>
+                            <CardTitle className="font-headline text-xl">Global Timesheets Report</CardTitle>
+                            <CardDescription>A log of all individual timesheets from all companies.</CardDescription>
                         </div>
                         </div>
                         <ChevronRight className="h-6 w-6 text-muted-foreground" />
