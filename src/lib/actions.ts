@@ -1,8 +1,9 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import type { User, Activity, UnproductiveReason, CrewDocket, Timesheet, CrewDocketWithDetails, TimesheetWithDetails, CrewDocketStatus } from './types';
+import type { User, Activity, UnproductiveReason, CrewDocket, Timesheet, CrewDocketWithDetails, TimesheetWithDetails, CrewDocketStatus, TimesheetStatus } from './types';
 import { z } from 'zod';
 import fs from 'fs/promises';
 import path from 'path';
@@ -263,7 +264,7 @@ export async function updateDocketStatus(crewDocketId: string, newStatus: 'Appro
     const allTimesheets = await readTimesheets();
     const updatedTimesheets = allTimesheets.map(ts => {
         if (ts.crewDocketId === crewDocketId) {
-            return { ...ts, status: newStatus };
+            return { ...ts, status: newStatus as TimesheetStatus };
         }
         return ts;
     });
@@ -320,11 +321,13 @@ export async function getCrewDockets(
 
     if (isSparkUser) {
         filteredDockets = allDockets;
-    } else if (['Subcontractor Admin', 'Crew Supervisor'].includes(currentUser.appRole)) {
+    } else if (currentUser.appRole === 'Subcontractor Admin') {
         filteredDockets = allDockets.filter(s => s.company === currentUser.company);
-    } else {
-         // Default to only seeing your own if no specific role matches above
+    } else if (currentUser.appRole === 'Crew Supervisor') {
         filteredDockets = allDockets.filter(s => s.submittedById === currentUser.id);
+    } else {
+         // Default to no dockets if role is not recognized
+        filteredDockets = [];
     }
     
 

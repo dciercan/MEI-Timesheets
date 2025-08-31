@@ -70,6 +70,10 @@ export default function SubmissionsTable({ dockets: initialDockets }: Submission
   const [selectedDocket, setSelectedDocket] = React.useState<CrewDocketWithDetails | null>(null);
   const { toast } = useToast();
 
+  React.useEffect(() => {
+    setDockets(initialDockets);
+  }, [initialDockets]);
+
   const handleEdit = (docket: CrewDocketWithDetails) => {
     setSelectedDocket(docket);
     setIsEditDialogOpen(true);
@@ -210,12 +214,17 @@ export default function SubmissionsTable({ dockets: initialDockets }: Submission
                         </>
                     )}
 
-                    <DropdownMenuItem onClick={() => handleEdit(docket)} disabled={!canEdit && currentUser?.appRole !== 'Admin'}>
-                        <Edit className="mr-2 h-4 w-4" /> Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleDelete(docket)} className="text-destructive">
-                        <Trash2 className="mr-2 h-4 w-4" /> Delete
-                    </DropdownMenuItem>
+                    {(currentUser?.appRole === 'Admin' || canEdit) && (
+                         <DropdownMenuItem onClick={() => handleEdit(docket)} disabled={!canEdit && currentUser?.appRole !== 'Admin'}>
+                            <Edit className="mr-2 h-4 w-4" /> Edit
+                        </DropdownMenuItem>
+                    )}
+
+                    {currentUser?.appRole === 'Admin' && (
+                        <DropdownMenuItem onClick={() => handleDelete(docket)} className="text-destructive">
+                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+                        </DropdownMenuItem>
+                    )}
                 </DropdownMenuContent>
             </DropdownMenu>
           </div>
