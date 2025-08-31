@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { BarChart, ChevronRight, Building } from "lucide-react";
+import { BarChart, ChevronRight, Building, Users } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
 export default function ReportsPage() {
@@ -24,6 +24,7 @@ export default function ReportsPage() {
         </header>
 
         {isSparkUser && (
+            <>
             <Card className="shadow-lg hover:shadow-xl transition-shadow">
             <Link href="/reports/all-submissions" className="block">
                 <CardHeader>
@@ -34,7 +35,7 @@ export default function ReportsPage() {
                     </div>
                     <div>
                         <CardTitle className="font-headline text-xl">All Submissions</CardTitle>
-                        <CardDescription>A complete log of all timesheet submissions from all supervisors.</CardDescription>
+                        <CardDescription>A complete log of all individual timesheet submissions from all supervisors.</CardDescription>
                     </div>
                     </div>
                     <ChevronRight className="h-6 w-6 text-muted-foreground" />
@@ -42,6 +43,25 @@ export default function ReportsPage() {
                 </CardHeader>
             </Link>
             </Card>
+             <Card className="shadow-lg hover:shadow-xl transition-shadow">
+            <Link href="/reports/crew-activity" className="block">
+                <CardHeader>
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                    <div className="p-3 bg-primary/10 rounded-full">
+                        <Users className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                        <CardTitle className="font-headline text-xl">Crew Activity Report</CardTitle>
+                        <CardDescription>A summary of all crew submissions, showing key productivity metrics.</CardDescription>
+                    </div>
+                    </div>
+                    <ChevronRight className="h-6 w-6 text-muted-foreground" />
+                </div>
+                </CardHeader>
+            </Link>
+            </Card>
+            </>
         )}
 
         {(isSubbieAdmin || isSubbieSupervisor) && user && (
