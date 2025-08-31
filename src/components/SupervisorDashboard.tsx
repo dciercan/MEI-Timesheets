@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { TimesheetSubmissionWithDetails } from "@/lib/types";
-import { deleteTimesheetGroup } from "@/lib/actions";
+import { deleteTimesheetCrew } from "@/lib/actions";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import EditTimesheetDialog from "./EditTimesheetDialog";
@@ -17,14 +17,14 @@ import { useRouter } from 'next/navigation';
 import { Calendar, Users, Activity, Clock, Hash, Trash2, Copy, Edit, FileText, ListTodo, MapPin, Watch } from 'lucide-react';
 import InfoItem from './InfoItem';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
-import EditSubmissionGroupDialog from './EditSubmissionGroupDialog';
+import EditSubmissionCrewDialog from './EditSubmissionCrewDialog';
 
 
 interface SupervisorDashboardProps {
   submissions: TimesheetSubmissionWithDetails[];
 }
 
-type GroupedSubmission = {
+type CrewSubmission = {
   id: string;
   entries: TimesheetSubmissionWithDetails[];
   representative: TimesheetSubmissionWithDetails;
@@ -38,8 +38,8 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
   const [selectedEntry, setSelectedEntry] = React.useState<TimesheetSubmissionWithDetails | null>(null);
 
-  const [isGroupEditDialogOpen, setIsGroupEditDialogOpen] = React.useState(false);
-  const [selectedGroup, setSelectedGroup] = React.useState<GroupedSubmission | null>(null);
+  const [isCrewEditDialogOpen, setIsCrewEditDialogOpen] = React.useState(false);
+  const [selectedCrew, setSelectedCrew] = React.useState<CrewSubmission | null>(null);
 
   const handleEdit = (entry: TimesheetSubmissionWithDetails) => {
     setSelectedEntry(entry);
@@ -53,46 +53,46 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
     router.refresh();
   };
 
-  const handleGroupEdit = (group: GroupedSubmission) => {
-    setSelectedGroup(group);
-    setIsGroupEditDialogOpen(true);
+  const handleCrewEdit = (crew: CrewSubmission) => {
+    setSelectedCrew(crew);
+    setIsCrewEditDialogOpen(true);
   }
 
-  const handleGroupSubmissionUpdated = () => {
-    setIsGroupEditDialogOpen(false);
-    setSelectedGroup(null);
-    toast({ title: "Submission group updated successfully" });
+  const handleCrewSubmissionUpdated = () => {
+    setIsCrewEditDialogOpen(false);
+    setSelectedCrew(null);
+    toast({ title: "Submission crew updated successfully" });
     router.refresh();
   };
 
-  const handleDeleteGroup = async (groupId: string) => {
-    const result = await deleteTimesheetGroup(groupId);
+  const handleDeleteCrew = async (crewId: string) => {
+    const result = await deleteTimesheetCrew(crewId);
     if (result.success) {
-      setSubmissions(submissions.filter(s => s.submissionGroupId !== groupId));
-      toast({ title: "Submission group deleted." });
+      setSubmissions(submissions.filter(s => s.submissionCrewId !== crewId));
+      toast({ title: "Submission crew deleted." });
     } else {
       toast({ variant: "destructive", title: "Error", description: result.error });
     }
   };
 
-  const groupedSubmissions = React.useMemo(() => {
+  const crewSubmissions = React.useMemo(() => {
     if (!initialSubmissions) return [];
     
-    const groups: Record<string, GroupedSubmission> = {};
+    const crews: Record<string, CrewSubmission> = {};
     
     initialSubmissions.forEach(s => {
-      const groupId = s.submissionGroupId || `single-${s.id}`;
-      if (!groups[groupId]) {
-        groups[groupId] = { id: groupId, entries: [], representative: s };
+      const crewId = s.submissionCrewId || `single-${s.id}`;
+      if (!crews[crewId]) {
+        crews[crewId] = { id: crewId, entries: [], representative: s };
       }
-      groups[groupId].entries.push(s);
+      crews[crewId].entries.push(s);
     });
 
-    return Object.values(groups).sort((a,b) => new Date(b.representative.submittedAt).getTime() - new Date(a.representative.submittedAt).getTime());
+    return Object.values(crews).sort((a,b) => new Date(b.representative.submittedAt).getTime() - new Date(a.representative.submittedAt).getTime());
   }, [initialSubmissions]);
 
-  const handleCopy = (submissionGroup: GroupedSubmission) => {
-     const representative = submissionGroup.representative;
+  const handleCopy = (crewSubmission: CrewSubmission) => {
+     const representative = crewSubmission.representative;
      const params = new URLSearchParams();
      params.set('zone', representative.zone || '');
      params.set('section', representative.section || '');
@@ -101,7 +101,7 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
      params.set('activityId', representative.activityId);
      params.set('notes', representative.notes || '');
 
-     const crewIds = submissionGroup.entries
+     const crewIds = crewSubmission.entries
         .map(e => e.crewMemberId)
         .filter(id => id !== representative.submittedById) || [];
 
@@ -112,7 +112,7 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
      router.push(`/timesheet?${params.toString()}`);
   }
 
-  if (groupedSubmissions.length === 0) {
+  if (crewSubmissions.length === 0) {
     return (
         <div className="flex flex-col items-center justify-center h-[50vh] text-center">
             <ListTodo className="h-16 w-16 text-muted-foreground" />
@@ -131,32 +131,32 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
       </CardHeader>
       <CardContent>
         <Accordion type="single" collapsible className="w-full space-y-4">
-          {groupedSubmissions.map((group) => {
-            const totalUnproductiveMinutes = group.representative.unproductiveEntries?.reduce((total, entry) => total + entry.hours, 0) || 0;
+          {crewSubmissions.map((crew) => {
+            const totalUnproductiveMinutes = crew.representative.unproductiveEntries?.reduce((total, entry) => total + entry.hours, 0) || 0;
 
             return (
-            <AccordionItem value={group.id} key={group.id} className="border rounded-lg shadow-sm bg-background">
+            <AccordionItem value={crew.id} key={crew.id} className="border rounded-lg shadow-sm bg-background">
               <div className="flex items-center justify-between pl-6 pr-2 py-2">
                 <AccordionTrigger className="flex-grow py-2 hover:no-underline">
                   <div className="flex-grow grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
                     <div className="flex items-center gap-3">
                         <Calendar className="h-5 w-5 text-primary"/>
                         <div>
-                            <p className="font-semibold">{format(new Date(group.representative.timesheetDate), 'PPP')}</p>
+                            <p className="font-semibold">{format(new Date(crew.representative.timesheetDate), 'PPP')}</p>
                             <p className="text-xs text-muted-foreground">Date</p>
                         </div>
                     </div>
                      <div className="flex items-center gap-3">
                         <MapPin className="h-5 w-5 text-primary"/>
                         <div>
-                            <p className="font-semibold">{group.representative.zone} / {group.representative.section}</p>
+                            <p className="font-semibold">{crew.representative.zone} / {crew.representative.section}</p>
                             <p className="text-xs text-muted-foreground">Location</p>
                         </div>
                     </div>
                      <div className="flex items-center gap-3">
                         <Activity className="h-5 w-5 text-primary"/>
                         <div>
-                            <p className="font-semibold">{group.representative.activity?.activity}</p>
+                            <p className="font-semibold">{crew.representative.activity?.activity}</p>
                             <p className="text-xs text-muted-foreground">Activity</p>
                         </div>
                     </div>
@@ -168,12 +168,12 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
                        <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Button variant="outline" size="icon" className="h-9 w-9" disabled={!group.representative.submissionGroupId}>
+                              <Button variant="outline" size="icon" className="h-9 w-9" disabled={!crew.representative.submissionCrewId}>
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </TooltipTrigger>
                              <TooltipContent>
-                              <p>Delete Submission Group</p>
+                              <p>Delete Submission Crew</p>
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
@@ -182,19 +182,19 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
                       <AlertDialogHeader>
                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete this submission group and all its entries.
+                          This action cannot be undone. This will permanently delete this submission crew and all its entries.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleDeleteGroup(group.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                        <AlertDialogAction onClick={() => handleDeleteCrew(crew.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
                    <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                             <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => handleGroupEdit(group)}>
+                             <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => handleCrewEdit(crew)}>
                                 <Edit className="h-4 w-4" />
                             </Button>
                         </TooltipTrigger>
@@ -206,7 +206,7 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
                   <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => handleCopy(group)}>
+                            <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => handleCopy(crew)}>
                                 <Copy className="h-4 w-4" />
                             </Button>
                         </TooltipTrigger>
@@ -219,11 +219,11 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
               </div>
               <AccordionContent className="px-6 pb-4">
                  <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6 pt-4 border-t">
-                    <InfoItem icon={Hash} label="Submission Group ID" value={group.id} />
-                    <InfoItem icon={Users} label="Crew Members" value={group.entries.length} />
-                    <InfoItem icon={FileText} label="Asset / Sub-Asset" value={`${group.representative.asset} / ${group.representative.subAsset}`} />
-                    <InfoItem icon={Clock} label="Productive Hours" value={group.representative.productiveHours} />
-                    <InfoItem icon={Hash} label="Quantity" value={group.representative.quantity} badge={group.representative.activity?.activityUom} />
+                    <InfoItem icon={Hash} label="Crew ID" value={crew.id} />
+                    <InfoItem icon={Users} label="Crew Members" value={crew.entries.length} />
+                    <InfoItem icon={FileText} label="Asset / Sub-Asset" value={`${crew.representative.asset} / ${crew.representative.subAsset}`} />
+                    <InfoItem icon={Clock} label="Productive Hours" value={crew.representative.productiveHours} />
+                    <InfoItem icon={Hash} label="Quantity" value={crew.representative.quantity} badge={crew.representative.activity?.activityUom} />
                     <InfoItem icon={Watch} label="Unproductive Time" value={totalUnproductiveMinutes} badge="minutes" />
                  </div>
                 
@@ -237,7 +237,7 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
                         </TableRow>
                         </TableHeader>
                         <TableBody>
-                        {group.entries.map((entry) => {
+                        {crew.entries.map((entry) => {
                             const totalUnproductiveMinutesForEntry = entry.unproductiveEntries?.reduce((total, u) => total + u.hours, 0) || 0;
                             const totalUnproductiveHoursForEntry = totalUnproductiveMinutesForEntry / 60;
                             const totalHours = entry.productiveHours + totalUnproductiveHoursForEntry;
@@ -266,12 +266,12 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
             onSubmissionUpdated={handleSubmissionUpdated}
           />
         )}
-        {selectedGroup && (
-            <EditSubmissionGroupDialog
-                isOpen={isGroupEditDialogOpen}
-                onOpenChange={setIsGroupEditDialogOpen}
-                submissionGroup={selectedGroup}
-                onSubmissionUpdated={handleGroupSubmissionUpdated}
+        {selectedCrew && (
+            <EditSubmissionCrewDialog
+                isOpen={isCrewEditDialogOpen}
+                onOpenChange={setIsCrewEditDialogOpen}
+                submissionCrew={selectedCrew}
+                onSubmissionUpdated={handleCrewSubmissionUpdated}
             />
         )}
       </CardContent>

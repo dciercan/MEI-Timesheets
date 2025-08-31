@@ -95,7 +95,7 @@ export async function addTimesheet(data: z.infer<typeof addTimesheetSchema>) {
     const { crewMemberIds, ...submissionData } = validation.data;
     const allSubmissions = await readSubmissions();
     const newSubmissionIds: string[] = [];
-    const submissionGroupId = `group-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    const submissionCrewId = `C-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
     // The supervisor is also a crew member for the submission.
     // The crewMemberIds array from the form only contains the *other* crew members.
@@ -104,7 +104,7 @@ export async function addTimesheet(data: z.infer<typeof addTimesheetSchema>) {
     for (const crewMemberId of allCrewForSubmission) {
         const newSubmission: TimesheetSubmission = {
             id: `ts-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-            submissionGroupId,
+            submissionCrewId,
             ...submissionData,
             crewMemberId,
             unproductiveEntries: submissionData.unproductiveEntries || [],
@@ -189,8 +189,8 @@ export async function updateTimesheet(formData: FormData) {
     return { success: false, error: "Submission not found." };
 }
 
-const timesheetGroupSchema = z.object({
-  submissionGroupId: z.string(),
+const timesheetCrewSchema = z.object({
+  submissionCrewId: z.string(),
   timesheetDate: z.coerce.date(),
   crewMemberIds: z.array(z.string()).min(1, "Please select at least one crew member."),
   zone: z.string().min(1, "Zone is required."),
@@ -209,33 +209,33 @@ const timesheetGroupSchema = z.object({
   notes: z.string().optional(),
 });
 
-export async function updateTimesheetGroup(data: z.infer<typeof timesheetGroupSchema>) {
-    const validationResult = timesheetGroupSchema.safeParse(data);
+export async function updateTimesheetCrew(data: z.infer<typeof timesheetCrewSchema>) {
+    const validationResult = timesheetCrewSchema.safeParse(data);
     if (!validationResult.success) {
-        console.error("Update group validation error:", validationResult.error.flatten());
+        console.error("Update crew validation error:", validationResult.error.flatten());
         return { success: false, error: validationResult.error.flatten() };
     }
     
-    const { submissionGroupId, crewMemberIds, ...updateData } = validationResult.data;
+    const { submissionCrewId, crewMemberIds, ...updateData } = validationResult.data;
     
     const allSubmissions = await readSubmissions();
-    const groupEntries = allSubmissions.filter(s => s.submissionGroupId === submissionGroupId);
+    const crewEntries = allSubmissions.filter(s => s.submissionCrewId === submissionCrewId);
 
-    if (groupEntries.length === 0) {
-        return { success: false, error: "Submission group not found." };
+    if (crewEntries.length === 0) {
+        return { success: false, error: "Submission crew not found." };
     }
     
-    const submittedById = groupEntries[0].submittedById;
+    const submittedById = crewEntries[0].submittedById;
 
-    // Delete existing entries in the group
-    const otherSubmissions = allSubmissions.filter(s => s.submissionGroupId !== submissionGroupId);
+    // Delete existing entries in the crew
+    const otherSubmissions = allSubmissions.filter(s => s.submissionCrewId !== submissionCrewId);
     
     const allCrewForSubmission = [...new Set([...crewMemberIds, submittedById])];
     
-    // Create new entries for the group
+    // Create new entries for the crew
     const newEntries: TimesheetSubmission[] = allCrewForSubmission.map(crewMemberId => ({
         id: `ts-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-        submissionGroupId,
+        submissionCrewId,
         ...updateData,
         submittedById,
         crewMemberId,
@@ -268,12 +268,12 @@ export async function deleteTimesheet(submissionId: string) {
     return { success: true };
 }
 
-export async function deleteTimesheetGroup(submissionGroupId: string) {
+export async function deleteTimesheetCrew(submissionCrewId: string) {
     const allSubmissions = await readSubmissions();
-    const filteredSubmissions = allSubmissions.filter(s => s.submissionGroupId !== submissionGroupId);
+    const filteredSubmissions = allSubmissions.filter(s => s.submissionCrewId !== submissionCrewId);
     
     if (allSubmissions.length === filteredSubmissions.length) {
-         return { success: false, error: "Submission group not found." };
+         return { success: false, error: "Submission crew not found." };
     }
 
     await writeSubmissions(filteredSubmissions);

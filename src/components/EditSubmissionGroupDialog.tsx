@@ -9,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { updateTimesheetGroup, getUsers } from "@/lib/actions";
+import { updateTimesheetCrew, getUsers } from "@/lib/actions";
 import type { TimesheetSubmissionWithDetails, Activity, User } from "@/lib/types";
 import { activities, unproductiveReasons } from "@/lib/data";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -25,7 +25,7 @@ import { ScrollArea } from "./ui/scroll-area";
 import { useAuth } from "@/hooks/use-auth";
 
 const formSchema = z.object({
-  submissionGroupId: z.string(),
+  submissionCrewId: z.string(),
   timesheetDate: z.date(),
   crewMemberIds: z.array(z.string()).min(1, "Please select at least one crew member."),
   zone: z.string().min(1, "Zone is required."),
@@ -45,23 +45,23 @@ const formSchema = z.object({
 });
 
 type FormSchemaType = z.infer<typeof formSchema>;
-type GroupedSubmission = {
+type CrewSubmission = {
     id: string;
     entries: TimesheetSubmissionWithDetails[];
     representative: TimesheetSubmissionWithDetails;
 }
-interface EditSubmissionGroupDialogProps {
+interface EditSubmissionCrewDialogProps {
     isOpen: boolean;
     onOpenChange: (isOpen: boolean) => void;
-    submissionGroup: GroupedSubmission;
+    submissionCrew: CrewSubmission;
     onSubmissionUpdated: () => void;
 }
 
-export default function EditSubmissionGroupDialog({ isOpen, onOpenChange, submissionGroup, onSubmissionUpdated }: EditSubmissionGroupDialogProps) {
+export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, submissionCrew, onSubmissionUpdated }: EditSubmissionCrewDialogProps) {
   const { toast } = useToast();
   const { user: loggedInUser } = useAuth();
   const [allUsers, setAllUsers] = useState<User[]>([]);
-  const representative = submissionGroup.representative;
+  const representative = submissionCrew.representative;
 
   useEffect(() => {
     async function loadUsers() {
@@ -74,9 +74,9 @@ export default function EditSubmissionGroupDialog({ isOpen, onOpenChange, submis
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-        submissionGroupId: representative.submissionGroupId,
+        submissionCrewId: representative.submissionCrewId,
         timesheetDate: new Date(representative.timesheetDate),
-        crewMemberIds: submissionGroup.entries.map(e => e.crewMemberId).filter(id => id !== representative.submittedById),
+        crewMemberIds: submissionCrew.entries.map(e => e.crewMemberId).filter(id => id !== representative.submittedById),
         zone: representative.zone,
         section: representative.section,
         asset: representative.asset,
@@ -119,7 +119,7 @@ export default function EditSubmissionGroupDialog({ isOpen, onOpenChange, submis
 
 
   const onSubmit = async (values: FormSchemaType) => {
-    const result = await updateTimesheetGroup(values);
+    const result = await updateTimesheetCrew(values);
 
     if (result.success) {
         onSubmissionUpdated();
@@ -128,7 +128,7 @@ export default function EditSubmissionGroupDialog({ isOpen, onOpenChange, submis
         toast({
             variant: "destructive",
             title: "Update Failed",
-            description: "There was an error updating the submission group.",
+            description: "There was an error updating the submission crew.",
         });
     }
   };
@@ -152,8 +152,8 @@ export default function EditSubmissionGroupDialog({ isOpen, onOpenChange, submis
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Edit Timesheet Submission Group</DialogTitle>
-          <DialogDescription>Update the details for the entire submission group. This will affect all crew members in this entry.</DialogDescription>
+          <DialogTitle>Edit Timesheet Crew Submission</DialogTitle>
+          <DialogDescription>Update the details for the entire submission crew. This will affect all crew members in this entry.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 max-h-[70vh] overflow-y-auto pr-6 pl-1">
