@@ -1,2 +1,21 @@
-
-[]
+[
+  {
+    "id": "DOCKET-1756624012031-a3udx2f",
+    "submittedById": "4",
+    "timesheetDate": "2025-07-31T14:00:00.000Z",
+    "crewMemberIds": [
+      "8",
+      "3",
+      "4"
+    ],
+    "zone": "S1",
+    "section": "M011",
+    "asset": "Signs",
+    "subAsset": "Lane Usage Sign",
+    "activityId": "act-nc-05",
+    "quantity": 11,
+    "notes": "",
+    "company": "BuildIt",
+    "submittedAt": "2025-08-31T07:06:52.032Z"
+  }
+]

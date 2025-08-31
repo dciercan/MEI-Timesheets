@@ -1,2 +1,38 @@
-
-[]
+[
+  {
+    "id": "TS-1756624012032-mvmbog8",
+    "crewDocketId": "DOCKET-1756624012031-a3udx2f",
+    "crewMemberId": "4",
+    "productiveHours": 7,
+    "unproductiveEntries": [
+      {
+        "reasonId": "unprod-02",
+        "minutes": 30
+      }
+    ]
+  },
+  {
+    "id": "TS-1756624012032-k7d89eb",
+    "crewDocketId": "DOCKET-1756624012031-a3udx2f",
+    "crewMemberId": "3",
+    "productiveHours": 7,
+    "unproductiveEntries": [
+      {
+        "reasonId": "unprod-02",
+        "minutes": 30
+      }
+    ]
+  },
+  {
+    "id": "TS-1756624012032-yfur4hm",
+    "crewDocketId": "DOCKET-1756624012031-a3udx2f",
+    "crewMemberId": "8",
+    "productiveHours": 7,
+    "unproductiveEntries": [
+      {
+        "reasonId": "unprod-02",
+        "minutes": 30
+      }
+    ]
+  }
+]
