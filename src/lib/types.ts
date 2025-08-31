@@ -62,6 +62,7 @@ export type CrewDocket = {
 export type TimesheetWithDetails = Timesheet & {
   crewDocket: CrewDocket;
   crewMember: User | null;
+  submittedBy: User | null;
 };
 
 export type CrewDocketWithDetails = CrewDocket & {

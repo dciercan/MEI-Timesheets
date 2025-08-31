@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -278,9 +277,12 @@ export async function getCrewDockets(
 
     if (isSparkUser) {
         filteredDockets = allDockets;
-    } else {
+    } else if (['Subcontractor Admin', 'Crew Supervisor'].includes(currentUser.appRole)) {
         filteredDockets = allDockets.filter(s => s.company === currentUser.company);
+    } else {
+        filteredDockets = allDockets.filter(s => s.submittedById === currentUser.id);
     }
+    
 
     const sorted = filteredDockets.sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());
     return enrichCrewDockets(sorted);
@@ -367,6 +369,42 @@ export async function deleteUser(userId: string) {
         return { success: true };
     }
     return { success: false, error: "User not found." };
+}
+
+export async function getTimesheets(requestingUser?: User | null): Promise<TimesheetWithDetails[]> {
+    const allTimesheets = await readTimesheets();
+    const allUsers = await readUsers();
+    const allDockets = await readCrewDockets();
+
+    const currentUser = requestingUser ?? await getCurrentUser();
+
+    if (!currentUser) {
+        return [];
+    }
+    
+    // First, find all dockets for the current user's company
+    const companyDockets = allDockets.filter(d => d.company === currentUser.company);
+    const companyDocketIds = new Set(companyDockets.map(d => d.id));
+
+    // Then, filter timesheets that belong to those dockets
+    const companyTimesheets = allTimesheets.filter(t => companyDocketIds.has(t.crewDocketId));
+
+    const userMap = new Map(allUsers.map(u => [u.id, u]));
+    const docketMap = new Map(allDockets.map(d => [d.id, d]));
+
+    const enrichedTimesheets: TimesheetWithDetails[] = companyTimesheets.map(ts => {
+        const docket = docketMap.get(ts.crewDocketId);
+        if (!docket) return null; // Should not happen if data is consistent
+
+        return {
+            ...ts,
+            crewMember: userMap.get(ts.crewMemberId) ?? null,
+            submittedBy: userMap.get(ts.submittedById) ?? null,
+            crewDocket: docket
+        }
+    }).filter((ts): ts is TimesheetWithDetails => ts !== null); // Type guard to filter out nulls
+
+    return enrichedTimesheets.sort((a,b) => b.crewDocket.timesheetDate.getTime() - a.crewDocket.timesheetDate.getTime());
 }
 
 
