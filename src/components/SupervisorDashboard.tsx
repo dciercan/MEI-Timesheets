@@ -142,28 +142,28 @@ export default function SupervisorDashboard({ dockets }: SupervisorDashboardProp
                     <div className="flex items-center gap-3">
                         <Calendar className="h-5 w-5 text-primary"/>
                         <div>
-                            <p className="font-semibold">{format(new Date(docket.timesheetDate), 'PPP')}</p>
+                            <p className="font-semibold text-sm">{format(new Date(docket.timesheetDate), 'PPP')}</p>
                             <p className="text-xs text-muted-foreground">Date</p>
                         </div>
                     </div>
                      <div className="flex items-center gap-3">
                         <Building className="h-5 w-5 text-primary"/>
                         <div>
-                            <p className="font-semibold">{docket.company}</p>
+                            <p className="font-semibold text-sm">{docket.company}</p>
                             <p className="text-xs text-muted-foreground">Company</p>
                         </div>
                     </div>
                      <div className="flex items-center gap-3">
                         <MapPin className="h-5 w-5 text-primary"/>
                         <div>
-                            <p className="font-semibold">{docket.zone} / {docket.section}</p>
+                            <p className="font-semibold text-sm">{docket.zone} / {docket.section}</p>
                             <p className="text-xs text-muted-foreground">Location</p>
                         </div>
                     </div>
                      <div className="flex items-center gap-3">
                         <Activity className="h-5 w-5 text-primary"/>
                         <div>
-                            <p className="font-semibold">{docket.activity?.activity}</p>
+                            <p className="font-semibold text-sm">{docket.activity?.activity}</p>
                             <p className="text-xs text-muted-foreground">Activity</p>
                         </div>
                     </div>
