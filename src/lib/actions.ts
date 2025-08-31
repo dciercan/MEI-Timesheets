@@ -305,8 +305,6 @@ export async function getTimesheetSubmissions(
     context?: 'my-submissions' | 'report'
 ): Promise<TimesheetSubmissionWithDetails[]> {
     const allSubmissions = await readSubmissions();
-    const allUsers = await readUsers();
-    const userMap = new Map(allUsers.map(u => [u.id, u]));
     const currentUser = requestingUser ?? await getCurrentUser();
 
     if (!currentUser) {
@@ -316,14 +314,19 @@ export async function getTimesheetSubmissions(
     let filteredSubmissions: TimesheetSubmission[];
     const isSparkUser = ['Admin', 'Read Only', 'MEI Supervisor'].includes(currentUser.appRole);
 
-    if (isSparkUser) {
-        filteredSubmissions = allSubmissions;
-    } else if (context === 'my-submissions' && currentUser.appRole === 'Crew Supervisor') {
+    if (context === 'my-submissions') {
+        // Supervisor's own submissions page
         filteredSubmissions = allSubmissions.filter(s => s.submittedById === currentUser.id);
+    } else if (isSparkUser) {
+        // Spark users see everything on reports
+        filteredSubmissions = allSubmissions;
     } else {
+        // Non-spark users see only their company's data on reports
+        const users = await readUsers();
+        const userMap = new Map(users.map(u => [u.id, u]));
         filteredSubmissions = allSubmissions.filter(s => {
-            const submittingUser = userMap.get(s.submittedById);
-            return submittingUser?.company === currentUser.company;
+             const submittingUser = userMap.get(s.submittedById);
+             return submittingUser?.company === currentUser.company;
         });
     }
 
@@ -431,3 +434,5 @@ export async function getAvailableModels() {
     const models = await listModels();
     return models;
 }
+
+    
