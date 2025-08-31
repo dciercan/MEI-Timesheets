@@ -429,10 +429,11 @@ export async function getUsers(requestingUser?: User | null): Promise<User[]> {
 }
 
 const userSchema = z.object({
-    id: z.string().optional(),
-    fullName: z.string().min(1, "Full name is required."),
-    company: z.string().min(1, "Company is required."),
-    appRole: z.enum(['Crew Member', 'Crew Supervisor', 'Admin', 'Subcontractor Admin', 'MEI Supervisor', 'Read Only']),
+  id: z.string().optional(),
+  fullName: z.string().min(1, "Full name is required."),
+  company: z.string().min(1, "Company is required."),
+  appRole: z.enum(['Crew Member', 'Crew Supervisor', 'Admin', 'Subcontractor Admin', 'MEI Supervisor', 'Read Only']),
+  DAMid: z.coerce.number().min(10000, "DAMid must be a 5-digit number.").max(99999, "DAMid must be a 5-digit number."),
 });
 
 export async function saveUser(formData: FormData) {
@@ -450,12 +451,19 @@ export async function saveUser(formData: FormData) {
         // Update existing user
         const userIndex = users.findIndex(u => u.id === id);
         if (userIndex > -1) {
+            const existingDAMid = users[userIndex].DAMid;
+            if(data.DAMid !== existingDAMid && users.some(u => u.DAMid === data.DAMid)) {
+                return { success: false, error: { formErrors: [], fieldErrors: { DAMid: ["This DAMid is already in use."] } }};
+            }
             users[userIndex] = { ...users[userIndex], ...data };
         } else {
              return { success: false, error: "User not. found" };
         }
     } else {
         // Add new user
+        if(users.some(u => u.DAMid === data.DAMid)) {
+            return { success: false, error: { formErrors: [], fieldErrors: { DAMid: ["This DAMid is already in use."] } }};
+        }
         const newUser: User = {
             id: `user-${Date.now()}`,
             ...data,

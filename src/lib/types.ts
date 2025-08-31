@@ -5,6 +5,7 @@ export type User = {
   fullName: string;
   company: string;
   appRole: 'Crew Member' | 'Crew Supervisor' | 'Admin' | 'Subcontractor Admin' | 'MEI Supervisor' | 'Read Only';
+  DAMid: number;
 };
 
 export type Activity = {

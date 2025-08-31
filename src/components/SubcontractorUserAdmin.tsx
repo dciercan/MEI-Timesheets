@@ -78,6 +78,7 @@ const userFormSchema = z.object({
   fullName: z.string().min(1, 'Full name is required.'),
   company: z.string().min(1, 'Company is required.'),
   appRole: z.enum(['Crew Member', 'Crew Supervisor']),
+  DAMid: z.coerce.number().min(10000, "DAMid must be a 5-digit number.").max(99999, "DAMid must be a 5-digit number."),
 });
 
 type UserFormData = z.infer<typeof userFormSchema>;
@@ -104,10 +105,16 @@ export default function SubcontractorUserAdmin({ initialUsers, currentUser }: Us
 
   const handleAddNew = () => {
     setSelectedUser(null);
+    const existingDAMids = new Set(users.map(u => u.DAMid));
+    let newDAMid = 10000;
+    while(existingDAMids.has(newDAMid)) {
+        newDAMid++;
+    }
     form.reset({ 
         fullName: '', 
         company: currentUser.company, 
-        appRole: 'Crew Member' 
+        appRole: 'Crew Member',
+        DAMid: newDAMid
     });
     setIsFormOpen(true);
   };
@@ -143,6 +150,7 @@ export default function SubcontractorUserAdmin({ initialUsers, currentUser }: Us
       fullName: '',
       company: currentUser.company,
       appRole: 'Crew Member',
+      DAMid: 10000,
     },
   });
 
@@ -153,6 +161,7 @@ export default function SubcontractorUserAdmin({ initialUsers, currentUser }: Us
     formData.append('fullName', data.fullName);
     formData.append('company', data.company);
     formData.append('appRole', data.appRole);
+    formData.append('DAMid', String(data.DAMid));
 
     const result = await saveUser(formData);
 
@@ -161,7 +170,12 @@ export default function SubcontractorUserAdmin({ initialUsers, currentUser }: Us
       setIsFormOpen(false);
       await refetchUsers();
     } else {
-      toast({ variant: 'destructive', title: 'Error saving user.' });
+      const fieldErrors = result.error?.fieldErrors;
+      if(fieldErrors?.DAMid) {
+        form.setError("DAMid", { type: "manual", message: fieldErrors.DAMid[0]});
+      } else {
+        toast({ variant: 'destructive', title: 'Error saving user.' });
+      }
     }
     setIsSaving(false);
   };
@@ -180,6 +194,10 @@ export default function SubcontractorUserAdmin({ initialUsers, currentUser }: Us
           </Button>
         );
       },
+    },
+     {
+      accessorKey: 'DAMid',
+      header: 'DAMid',
     },
     {
       accessorKey: 'company',
@@ -342,6 +360,19 @@ export default function SubcontractorUserAdmin({ initialUsers, currentUser }: Us
                     </FormItem>
                     )}
                 />
+                 <FormField
+                    control={form.control}
+                    name="DAMid"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>DAMid</FormLabel>
+                        <FormControl>
+                        <Input type="number" placeholder="12345" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
                 <FormField
                     control={form.control}
                     name="company"
@@ -409,7 +440,3 @@ export default function SubcontractorUserAdmin({ initialUsers, currentUser }: Us
     </Card>
   );
 }
-
-    
-
-    
