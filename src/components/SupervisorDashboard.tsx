@@ -85,7 +85,7 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
     const groups: Record<string, GroupedSubmission> = {};
     submissions.forEach(s => {
       const groupId = s.submissionGroupId;
-      if (!groupId) return; // Skip entries without a group ID
+      if (!groupId) return; 
 
       if (!groups[groupId]) {
         groups[groupId] = {
