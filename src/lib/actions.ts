@@ -124,6 +124,7 @@ export async function addCrewDocket(data: z.infer<typeof addCrewDocketSchema>) {
             id: `TS-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
             crewDocketId: newDocket.id,
             crewMemberId: crewMemberId,
+            company: newDocket.company,
             submittedById: newDocket.submittedById,
             productiveHours: productiveHours,
             unproductiveEntries: unproductiveEntries || [],
@@ -203,6 +204,7 @@ export async function updateCrewDocket(data: z.infer<typeof updateCrewDocketSche
         id: `TS-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
         crewDocketId: crewDocketId,
         crewMemberId: crewMemberId,
+        company: updatedDocket.company,
         submittedById: updatedDocket.submittedById,
         productiveHours: productiveHours,
         unproductiveEntries: unproductiveEntries || [],
@@ -446,9 +448,7 @@ export async function getTimesheets(requestingUser?: User | null): Promise<Times
         relevantTimesheets = allTimesheets;
     } else {
         // Sub-contractor roles see only their company's timesheets
-        const companyDockets = allDockets.filter(d => d.company === currentUser.company);
-        const companyDocketIds = new Set(companyDockets.map(d => d.id));
-        relevantTimesheets = allTimesheets.filter(t => companyDocketIds.has(t.crewDocketId));
+        relevantTimesheets = allTimesheets.filter(t => t.company === currentUser.company);
     }
 
 

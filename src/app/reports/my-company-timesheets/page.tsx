@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { getTimesheets } from "@/lib/actions";
-import type { TimesheetWithDetails, User } from '@/lib/types';
+import type { TimesheetWithDetails } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ListTodo } from "lucide-react";
 import { useAuth } from '@/hooks/use-auth';

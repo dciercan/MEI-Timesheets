@@ -52,6 +52,14 @@ export default function TimesheetReport({ timesheets }: TimesheetReportProps) {
         cell: ({ row }) => format(new Date(row.original.crewDocket.timesheetDate), 'PPP')
     },
     {
+        accessorKey: 'company',
+        header: ({ column }) => (
+            <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+                Company <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
+        ),
+    },
+    {
         accessorKey: 'crewMember.fullName',
         header: 'Crew Member',
     },
@@ -112,6 +120,12 @@ export default function TimesheetReport({ timesheets }: TimesheetReportProps) {
                 placeholder="Filter by supervisor..."
                 value={(table.getColumn('submittedBy_fullName')?.getFilterValue() as string) ?? ''}
                 onChange={(event) => table.getColumn('submittedBy_fullName')?.setFilterValue(event.target.value)}
+                className="max-w-sm"
+            />
+             <Input
+                placeholder="Filter by company..."
+                value={(table.getColumn('company')?.getFilterValue() as string) ?? ''}
+                onChange={(event) => table.getColumn('company')?.setFilterValue(event.target.value)}
                 className="max-w-sm"
             />
         </div>
