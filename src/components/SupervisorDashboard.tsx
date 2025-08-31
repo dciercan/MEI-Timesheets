@@ -13,7 +13,7 @@ import { deleteCrewDocket, updateDocketStatus } from "@/lib/actions";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { useRouter } from 'next/navigation';
-import { Calendar, Users, Activity, Clock, Hash, Trash2, Copy, Edit, FileText, ListTodo, MapPin, Watch, ShieldCheck, CheckCircle, XCircle } from 'lucide-react';
+import { Calendar, Users, Activity, Clock, Hash, Trash2, Copy, Edit, FileText, ListTodo, MapPin, Watch, ShieldCheck, CheckCircle, XCircle, Building } from 'lucide-react';
 import InfoItem from './InfoItem';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import EditSubmissionGroupDialog from './EditSubmissionGroupDialog';
@@ -106,35 +106,50 @@ export default function SupervisorDashboard({ dockets }: SupervisorDashboardProp
     return (
         <div className="flex flex-col items-center justify-center h-[50vh] text-center">
             <ListTodo className="h-16 w-16 text-muted-foreground" />
-            <h2 className="mt-4 text-2xl font-semibold font-headline">No Crew Dockets Submitted Yet</h2>
-            <p className="mt-2 text-muted-foreground">Once you submit a crew docket, it will appear here.</p>
+            <h2 className="mt-4 text-2xl font-semibold font-headline">No Crew Dockets Found</h2>
+            <p className="mt-2 text-muted-foreground">There are no dockets that match the current filter.</p>
         </div>
     );
   }
 
+  const isMeiSupervisor = currentUser?.appRole === 'MEI Supervisor';
+  const pageTitle = isMeiSupervisor ? "Docket Approval Dashboard" : "My Crew Dockets";
+  const pageDescription = isMeiSupervisor 
+    ? "Review, approve, or reject dockets submitted by crew supervisors." 
+    : "A record of all crew dockets you have submitted.";
+
+
   return (
     <Card className="shadow-lg">
       <CardHeader>
-        <CardTitle className="font-headline text-3xl">My Crew Dockets</CardTitle>
-        <CardDescription>A record of all crew dockets you have submitted.</CardDescription>
+        <CardTitle className="font-headline text-3xl">{pageTitle}</CardTitle>
+        <CardDescription>{pageDescription}</CardDescription>
       </CardHeader>
       <CardContent>
         <Accordion type="single" collapsible className="w-full space-y-4">
           {dockets.map((docket) => {
             const totalUnproductiveMinutes = docket.timesheets[0]?.unproductiveEntries?.reduce((total, entry) => total + entry.minutes, 0) || 0;
             const productiveHours = docket.timesheets[0]?.productiveHours || 0;
-            const canApproveReject = currentUser?.appRole === 'MEI Supervisor' && docket.status === 'Submitted';
+            const canApproveReject = isMeiSupervisor && docket.status === 'Submitted';
+            const canEdit = currentUser?.appRole === 'Crew Supervisor' && docket.status === 'Rejected';
             
             return (
             <AccordionItem value={docket.id} key={docket.id} className="border rounded-lg shadow-sm bg-background">
               <div className="flex items-center justify-between pl-6 pr-2 py-2">
                 <AccordionTrigger className="flex-grow py-2 hover:no-underline">
-                  <div className="flex-grow grid grid-cols-1 md:grid-cols-4 gap-4 text-left">
+                  <div className="flex-grow grid grid-cols-1 md:grid-cols-5 gap-4 text-left">
                     <div className="flex items-center gap-3">
                         <Calendar className="h-5 w-5 text-primary"/>
                         <div>
                             <p className="font-semibold">{format(new Date(docket.timesheetDate), 'PPP')}</p>
                             <p className="text-xs text-muted-foreground">Date</p>
+                        </div>
+                    </div>
+                     <div className="flex items-center gap-3">
+                        <Building className="h-5 w-5 text-primary"/>
+                        <div>
+                            <p className="font-semibold">{docket.company}</p>
+                            <p className="text-xs text-muted-foreground">Company</p>
                         </div>
                     </div>
                      <div className="flex items-center gap-3">
@@ -216,12 +231,12 @@ export default function SupervisorDashboard({ dockets }: SupervisorDashboardProp
                    <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                             <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => handleCrewEdit(docket)} disabled={docket.status !== 'Rejected'}>
+                             <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => handleCrewEdit(docket)} disabled={!canEdit}>
                                 <Edit className="h-4 w-4" />
                             </Button>
                         </TooltipTrigger>
                         <TooltipContent>
-                        <p>{docket.status === 'Rejected' ? 'Edit Rejected Docket' : 'Edit (Disabled)'}</p>
+                        <p>{canEdit ? 'Edit Rejected Docket' : 'Edit (Disabled)'}</p>
                         </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>

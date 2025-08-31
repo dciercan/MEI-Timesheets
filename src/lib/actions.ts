@@ -317,11 +317,15 @@ export async function getCrewDockets(
     }
 
     let filteredDockets: CrewDocket[];
-    const isSparkUser = ['Admin', 'Read Only', 'MEI Supervisor'].includes(currentUser.appRole);
+    const isSparkAdmin = ['Admin', 'Read Only'].includes(currentUser.appRole);
 
-    if (isSparkUser) {
+    if (isSparkAdmin) {
         filteredDockets = allDockets;
-    } else if (currentUser.appRole === 'Subcontractor Admin') {
+    } else if (currentUser.appRole === 'MEI Supervisor') {
+        // MEI Supervisor sees all dockets for approval/oversight
+        filteredDockets = allDockets;
+    }
+    else if (currentUser.appRole === 'Subcontractor Admin') {
         filteredDockets = allDockets.filter(s => s.company === currentUser.company);
     } else if (currentUser.appRole === 'Crew Supervisor') {
         filteredDockets = allDockets.filter(s => s.submittedById === currentUser.id);
