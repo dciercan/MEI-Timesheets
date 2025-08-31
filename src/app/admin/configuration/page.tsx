@@ -3,18 +3,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import LocationConfig from "@/components/LocationConfig";
 import ActivityConfig from "@/components/ActivityConfig";
 import UnproductiveTimeConfig from "@/components/UnproductiveTimeConfig";
-import { getActivities, getUnproductiveReasons, getZones, getSections } from "@/lib/actions";
+import { getActivities, getUnproductiveReasons, getLocations } from "@/lib/actions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Map, ListChecks, Clock } from "lucide-react";
 
 export const dynamic = 'force-dynamic';
 
 export default async function ConfigurationPage() {
-    const [activities, unproductiveReasons, zones, sections] = await Promise.all([
+    const [activities, unproductiveReasons, locations] = await Promise.all([
         getActivities(),
         getUnproductiveReasons(),
-        getZones(),
-        getSections()
+        getLocations(),
     ]);
 
     return (
@@ -45,7 +44,7 @@ export default async function ConfigurationPage() {
                             <CardDescription>Add, edit, or remove zones and sections available for timesheet entries.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                           <LocationConfig zones={zones} sections={sections} />
+                           <LocationConfig locations={locations} />
                         </CardContent>
                      </Card>
                 </TabsContent>
@@ -65,7 +64,7 @@ export default async function ConfigurationPage() {
                         <CardHeader>
                             <CardTitle>Manage Unproductive Time</CardTitle>
                             <CardDescription>Define the reasons and codes for non-productive work hours.</CardDescription>
-                        </CardHeader>
+                        </Header>
                         <CardContent>
                             <UnproductiveTimeConfig reasons={unproductiveReasons} />
                         </CardContent>
