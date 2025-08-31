@@ -312,18 +312,16 @@ export async function getTimesheetSubmissions(requestingUser?: User | null, cont
 
     const isSparkUser = ['Admin', 'Read Only', 'MEI Supervisor'].includes(currentUser.appRole);
 
-    if (!isSparkUser) {
-        // For any non-spark user, filter to their company
+    if (context === 'my-submissions' && (currentUser.appRole === 'Crew Supervisor' || currentUser.appRole === 'MEI Supervisor')) {
+        submissions = submissions.filter(s => s.submittedById === currentUser.id);
+    } else if (!isSparkUser) {
+        // For any non-spark user, filter to their company.
+        // This applies to 'my-submissions' for sub-admins, and all reports for non-spark users.
         const users = await readUsers();
         const companyUserIds = new Set(
             users.filter(u => u.company === currentUser.company).map(u => u.id)
         );
         submissions = submissions.filter(s => companyUserIds.has(s.submittedById));
-    }
-    
-    // For 'my-submissions' context, a supervisor should only see what they submitted
-    if (context === 'my-submissions' && (currentUser.appRole === 'Crew Supervisor' || currentUser.appRole === 'MEI Supervisor')) {
-         submissions = submissions.filter(s => s.submittedById === currentUser.id);
     }
     
     const sorted = submissions.sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());
