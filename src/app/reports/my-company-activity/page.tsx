@@ -10,7 +10,9 @@ export default async function MyCompanyActivityReportPage() {
     // This action already filters dockets based on the user's role and company
     const dockets = await getCrewDockets(currentUser); 
     
-    const reportTitle = (currentUser?.company) ? `${currentUser.company} Crew Activity Report` : "My Company Crew Activity Report";
+    const reportTitle = currentUser?.company 
+        ? `${currentUser.company} Crew Activity Report` 
+        : "My Company Crew Activity Report";
 
     return (
         <div className="container mx-auto max-w-screen-2xl py-8 px-4 md:px-6">
