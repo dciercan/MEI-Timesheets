@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Menu, User, LayoutDashboard, Users, LogOut, FileText, BarChart, Building, Book } from 'lucide-react';
+import { Menu, User, LayoutDashboard, Users, LogOut, FileText, BarChart, Building, Book, Settings } from 'lucide-react';
 import Logo from './Logo';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
@@ -47,7 +47,7 @@ export default function Header() {
   const allLinks = [
       { href: '/timesheet', label: 'Timesheet Entry', icon: User, roles: ['Crew Supervisor', 'Subcontractor Admin', 'MEI Supervisor'] },
       { href: '/timesheet/my-submissions', label: isMeiSupervisor ? 'Docket Approvals' : 'My Crew Dockets', icon: FileText, roles: ['Crew Supervisor', 'MEI Supervisor'] },
-      { href: '/admin', label: 'Admin Dashboard', icon: LayoutDashboard, roles: ['Admin'] },
+      { href: '/admin/configuration', label: 'Configuration', icon: Settings, roles: ['Admin'] },
       { href: '/admin/users', label: 'User Admin', icon: Users, roles: ['Admin', 'Subcontractor Admin'] },
       { href: '/reports', label: 'Reports', icon: BarChart, roles: ['Admin', 'Read Only', 'Crew Supervisor', 'MEI Supervisor', 'Subcontractor Admin'] },
   ]
@@ -58,7 +58,10 @@ export default function Header() {
     if (linkHref === '/reports') {
         return pathname.startsWith('/reports');
     }
-    return pathname.startsWith(linkHref);
+     if (linkHref === '/admin/configuration') {
+        return pathname.startsWith(linkHref);
+    }
+    return pathname === linkHref;
   }
 
 

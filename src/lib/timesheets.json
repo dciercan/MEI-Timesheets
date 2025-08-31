@@ -1,5 +1,50 @@
 [
   {
+    "id": "TS-1756646240191-3mw0u2x",
+    "crewDocketId": "DOCKET-1756646240191-csr440z",
+    "crewMemberId": "4",
+    "company": "BuildIt",
+    "submittedById": "4",
+    "productiveHours": 8,
+    "unproductiveEntries": [
+      {
+        "reasonId": "unprod-04",
+        "minutes": 30
+      }
+    ],
+    "status": "Submitted"
+  },
+  {
+    "id": "TS-1756646240191-xh22886",
+    "crewDocketId": "DOCKET-1756646240191-csr440z",
+    "crewMemberId": "12",
+    "company": "BuildIt",
+    "submittedById": "4",
+    "productiveHours": 8,
+    "unproductiveEntries": [
+      {
+        "reasonId": "unprod-04",
+        "minutes": 30
+      }
+    ],
+    "status": "Submitted"
+  },
+  {
+    "id": "TS-1756646240191-h7v0sdz",
+    "crewDocketId": "DOCKET-1756646240191-csr440z",
+    "crewMemberId": "13",
+    "company": "BuildIt",
+    "submittedById": "4",
+    "productiveHours": 8,
+    "unproductiveEntries": [
+      {
+        "reasonId": "unprod-04",
+        "minutes": 30
+      }
+    ],
+    "status": "Submitted"
+  },
+  {
     "id": "TS-1756641158362-2hsjuow",
     "crewDocketId": "DOCKET-1756641158362-y6gwb7c",
     "crewMemberId": "4",
