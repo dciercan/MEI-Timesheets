@@ -129,7 +129,7 @@ function TimesheetFormContent() {
         }
       }
     }
-  }, [searchParams, form]);
+  }, [searchParams, form, allUsers, loggedInUser]);
 
 
    useEffect(() => {

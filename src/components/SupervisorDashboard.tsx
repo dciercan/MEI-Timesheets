@@ -15,6 +15,7 @@ import EditTimesheetDialog from "./EditTimesheetDialog";
 import { useRouter } from 'next/navigation';
 import { Calendar, Users, Activity, Clock, Hash, Trash2, Copy, Edit, MoreVertical, FileText } from 'lucide-react';
 import InfoItem from './InfoItem';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 
 
 interface SupervisorDashboardProps {
@@ -58,6 +59,23 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
     }
   };
 
+  const groupedSubmissions = React.useMemo(() => {
+    const groups: Record<string, GroupedSubmission> = {};
+    submissions.forEach(s => {
+      const groupId = s.submissionGroupId || `synthetic-${s.id}`;
+      
+      if (!groups[groupId]) {
+        groups[groupId] = {
+          id: groupId,
+          entries: [],
+          representative: s
+        };
+      }
+      groups[groupId].entries.push(s);
+    });
+    return Object.values(groups);
+  }, [submissions]);
+
   const handleCopy = (submission: TimesheetSubmissionWithDetails) => {
      // Using query params to pass data to the form page
      const params = new URLSearchParams();
@@ -72,7 +90,7 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
      params.set('notes', submission.notes || '');
 
      const crewIds = groupedSubmissions
-        .find(g => g.id === submission.submissionGroupId)?.entries
+        .find(g => g.id === (submission.submissionGroupId || `synthetic-${submission.id}`))?.entries
         .map(e => e.crewMemberId)
         .filter(id => id !== submission.submittedById) || [];
 
@@ -81,22 +99,6 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
      router.push(`/timesheet?${params.toString()}`);
   }
 
-  const groupedSubmissions = React.useMemo(() => {
-    const groups: Record<string, GroupedSubmission> = {};
-    submissions.forEach(s => {
-      const groupId = s.submissionGroupId || `synthetic-${s.submittedAt.getTime()}-${s.submittedById}`;
-      
-      if (!groups[groupId]) {
-        groups[groupId] = {
-          id: groupId,
-          entries: [],
-          representative: s
-        };
-      }
-      groups[groupId].entries.push(s);
-    });
-    return Object.values(groups);
-  }, [submissions]);
 
   return (
     <Card className="shadow-lg">
@@ -124,9 +126,18 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
                 <div className="flex items-center gap-2 pl-4">
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="outline" size="icon" className="h-9 w-9" disabled={!representative.submissionGroupId}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                       <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="outline" size="icon" className="h-9 w-9" disabled={!representative.submissionGroupId}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                             <TooltipContent>
+                              <p>Delete Submission Group</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
@@ -141,9 +152,18 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
-                  <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => handleCopy(representative)}>
-                    <Copy className="h-4 w-4" />
-                  </Button>
+                  <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => handleCopy(representative)}>
+                                <Copy className="h-4 w-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                        <p>Copy to New Timesheet Entry</p>
+                        </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
               </div>
               <AccordionContent className="px-6 pb-4">
