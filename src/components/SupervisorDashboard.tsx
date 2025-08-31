@@ -9,16 +9,17 @@ import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { CrewDocketWithDetails, CrewDocketStatus } from "@/lib/types";
-import { deleteCrewDocket } from "@/lib/actions";
+import { deleteCrewDocket, updateDocketStatus } from "@/lib/actions";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { useRouter } from 'next/navigation';
-import { Calendar, Users, Activity, Clock, Hash, Trash2, Copy, Edit, FileText, ListTodo, MapPin, Watch, ShieldCheck } from 'lucide-react';
+import { Calendar, Users, Activity, Clock, Hash, Trash2, Copy, Edit, FileText, ListTodo, MapPin, Watch, ShieldCheck, CheckCircle, XCircle } from 'lucide-react';
 import InfoItem from './InfoItem';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import EditSubmissionGroupDialog from './EditSubmissionGroupDialog';
 import { Badge } from './ui/badge';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/use-auth';
 
 interface SupervisorDashboardProps {
   dockets: CrewDocketWithDetails[];
@@ -27,6 +28,7 @@ interface SupervisorDashboardProps {
 export default function SupervisorDashboard({ dockets }: SupervisorDashboardProps) {
   const { toast } = useToast();
   const router = useRouter();
+  const { user: currentUser } = useAuth();
 
   const [isCrewEditDialogOpen, setIsCrewEditDialogOpen] = React.useState(false);
   const [selectedCrew, setSelectedCrew] = React.useState<CrewDocketWithDetails | null>(null);
@@ -50,6 +52,16 @@ export default function SupervisorDashboard({ dockets }: SupervisorDashboardProp
       router.refresh();
     } else {
       toast({ variant: "destructive", title: "Error", description: result.error });
+    }
+  };
+
+  const handleStatusUpdate = async (docketId: string, status: 'Approved' | 'Rejected') => {
+    const result = await updateDocketStatus(docketId, status);
+    if (result.success) {
+        toast({ title: result.message });
+        router.refresh();
+    } else {
+        toast({ variant: 'destructive', title: 'Error', description: result.error });
     }
   };
 
@@ -111,6 +123,7 @@ export default function SupervisorDashboard({ dockets }: SupervisorDashboardProp
           {dockets.map((docket) => {
             const totalUnproductiveMinutes = docket.timesheets[0]?.unproductiveEntries?.reduce((total, entry) => total + entry.minutes, 0) || 0;
             const productiveHours = docket.timesheets[0]?.productiveHours || 0;
+            const canApproveReject = currentUser?.appRole === 'MEI Supervisor' && docket.status === 'Submitted';
             
             return (
             <AccordionItem value={docket.id} key={docket.id} className="border rounded-lg shadow-sm bg-background">
@@ -148,6 +161,30 @@ export default function SupervisorDashboard({ dockets }: SupervisorDashboardProp
                   </div>
                 </AccordionTrigger>
                 <div className="flex items-center gap-2 pl-4">
+                  {canApproveReject && (
+                    <>
+                      <TooltipProvider>
+                          <Tooltip>
+                              <TooltipTrigger asChild>
+                                  <Button variant="outline" size="icon" className="h-9 w-9 border-green-500 text-green-500 hover:bg-green-50 hover:text-green-600" onClick={() => handleStatusUpdate(docket.id, 'Approved')}>
+                                      <CheckCircle className="h-4 w-4" />
+                                  </Button>
+                              </TooltipTrigger>
+                              <TooltipContent><p>Approve</p></TooltipContent>
+                          </Tooltip>
+                      </TooltipProvider>
+                      <TooltipProvider>
+                          <Tooltip>
+                              <TooltipTrigger asChild>
+                                  <Button variant="outline" size="icon" className="h-9 w-9 border-red-500 text-red-500 hover:bg-red-50 hover:text-red-600" onClick={() => handleStatusUpdate(docket.id, 'Rejected')}>
+                                      <XCircle className="h-4 w-4" />
+                                  </Button>
+                              </TooltipTrigger>
+                              <TooltipContent><p>Reject</p></TooltipContent>
+                          </Tooltip>
+                      </TooltipProvider>
+                    </>
+                  )}
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                        <TooltipProvider>
