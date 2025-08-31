@@ -7,10 +7,11 @@ export const dynamic = 'force-dynamic';
 
 export default async function CrewActivityReportPage() {
     const currentUser = await getCurrentUser();
-    const submissions = await getTimesheetSubmissions(currentUser);
+    // Pass the user to the action to ensure correct filtering
+    const submissions = await getTimesheetSubmissions(currentUser); 
     
     const isSparkUser = currentUser?.appRole === 'Admin' || currentUser?.appRole === 'MEI Supervisor' || currentUser?.appRole === 'Read Only';
-    const reportTitle = isSparkUser ? "Crew Activity Report" : `${currentUser?.company} Crew Activity Report`;
+    const reportTitle = (isSparkUser || !currentUser?.company) ? "Crew Activity Report" : `${currentUser.company} Crew Activity Report`;
 
     return (
         <div className="container mx-auto max-w-screen-2xl py-8 px-4 md:px-6">
