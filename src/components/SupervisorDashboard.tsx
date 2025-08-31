@@ -83,9 +83,10 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
 
   const groupedSubmissions = React.useMemo(() => {
     const groups: Record<string, GroupedSubmission> = {};
-    submissions.forEach((s, index) => {
-      // Fallback for older data that might not have a submissionGroupId
-      const groupId = s.submissionGroupId || `no-group-${s.id}-${index}`;
+    submissions.forEach(s => {
+      const groupId = s.submissionGroupId;
+      if (!groupId) return; // Skip entries without a group ID
+
       if (!groups[groupId]) {
         groups[groupId] = {
           id: groupId,
@@ -108,44 +109,44 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
         <Accordion type="single" collapsible className="w-full space-y-4">
           {groupedSubmissions.map(({ id, entries, representative }) => (
             <AccordionItem value={id} key={id} className="border rounded-lg shadow-sm bg-background">
-              <AccordionTrigger className="px-6 py-4 hover:no-underline">
-                <div className="flex justify-between w-full">
+              <div className="flex items-center justify-between pl-6 pr-2 py-2">
+                <AccordionTrigger className="flex-grow py-2 hover:no-underline">
                   <div className="flex gap-6 items-center">
-                     <div className="text-center">
-                        <p className="text-2xl font-bold font-headline">{new Date(representative.timesheetDate).getDate()}</p>
-                        <p className="text-sm uppercase text-muted-foreground">{format(new Date(representative.timesheetDate), 'MMM')}</p>
-                     </div>
-                     <div>
-                        <h4 className="font-semibold text-lg text-left">{representative.activity?.activity}</h4>
-                        <p className="text-sm text-muted-foreground text-left">{representative.asset} / {representative.subAsset}</p>
-                     </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold font-headline">{new Date(representative.timesheetDate).getDate()}</p>
+                      <p className="text-sm uppercase text-muted-foreground">{format(new Date(representative.timesheetDate), 'MMM')}</p>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-lg text-left">{representative.activity?.activity}</h4>
+                      <p className="text-sm text-muted-foreground text-left">{representative.asset} / {representative.subAsset}</p>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 pr-4">
-                     <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                            <Button variant="outline" size="icon" className="h-9 w-9" disabled={!representative.submissionGroupId}>
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete this submission group and all its entries.
-                            </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDeleteGroup(id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                     </AlertDialog>
-                    <Button variant="outline" size="icon" className="h-9 w-9" onClick={(e) => { e.stopPropagation(); handleCopy(representative); }}>
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </div>
+                </AccordionTrigger>
+                <div className="flex items-center gap-2 pl-4">
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="outline" size="icon" className="h-9 w-9" disabled={!representative.submissionGroupId}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently delete this submission group and all its entries.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDeleteGroup(id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                  <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => handleCopy(representative)}>
+                    <Copy className="h-4 w-4" />
+                  </Button>
                 </div>
-              </AccordionTrigger>
+              </div>
               <AccordionContent className="px-6 pb-4">
                  <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6 pt-4 border-t">
                     <InfoItem icon={Calendar} label="Timesheet Date" value={format(new Date(representative.timesheetDate), 'PPP')} />
