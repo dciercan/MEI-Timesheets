@@ -168,17 +168,17 @@ export default function SupervisorDashboard({ dockets }: SupervisorDashboardProp
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
-                        <Clock className="h-5 w-5 text-primary"/>
-                        <div>
-                            <p className="font-semibold text-sm">{productiveHours}</p>
-                            <p className="text-xs text-muted-foreground">Productive Hours</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-3">
                         <Hash className="h-5 w-5 text-primary"/>
                         <div>
                             <p className="font-semibold text-sm">{`${docket.quantity} ${docket.activity?.activityUom || ''}`.trim()}</p>
                             <p className="text-xs text-muted-foreground">Quantity</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <Clock className="h-5 w-5 text-primary"/>
+                        <div>
+                            <p className="font-semibold text-sm">{productiveHours}</p>
+                            <p className="text-xs text-muted-foreground">Productive Hours</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
