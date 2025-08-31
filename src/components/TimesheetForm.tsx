@@ -58,6 +58,7 @@ function TimesheetFormContent() {
   const searchParams = useSearchParams();
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [selectedCompany, setSelectedCompany] = useState<string>("");
   const [selectedSupervisorId, setSelectedSupervisorId] = useState<string>("");
 
    useEffect(() => {
@@ -68,17 +69,40 @@ function TimesheetFormContent() {
     fetchUsers();
   }, []);
 
-  const isAdmin = loggedInUser?.appRole === 'Admin' || loggedInUser?.appRole === 'Subcontractor Admin';
+  const canSelectCompany = loggedInUser?.appRole === 'Admin' || loggedInUser?.appRole === 'MEI Supervisor';
+  const isSubbieAdmin = loggedInUser?.appRole === 'Subcontractor Admin';
+  const isSupervisor = loggedInUser?.appRole === 'Crew Supervisor' || loggedInUser?.appRole === 'MEI Supervisor';
+
+
+  const companies = useMemo(() => {
+    return [...new Set(allUsers.filter(u => u.appRole === 'Crew Supervisor' || u.appRole === 'MEI Supervisor').map(u => u.company))].sort();
+  }, [allUsers]);
+
+
   const supervisors = useMemo(() => {
     if (!loggedInUser) return [];
-    return allUsers.filter(u => u.company === loggedInUser.company && (u.appRole === 'Crew Supervisor' || u.appRole === 'MEI Supervisor'));
-  }, [allUsers, loggedInUser]);
+    let companyToFilter = "";
+    if (canSelectCompany) {
+      companyToFilter = selectedCompany;
+    } else if (isSubbieAdmin) {
+      companyToFilter = loggedInUser.company;
+    }
+    
+    if (!companyToFilter) return [];
+
+    return allUsers.filter(u => u.company === companyToFilter && (u.appRole === 'Crew Supervisor' || u.appRole === 'MEI Supervisor'));
+  }, [allUsers, loggedInUser, canSelectCompany, isSubbieAdmin, selectedCompany]);
 
   useEffect(() => {
-    if (loggedInUser && !isAdmin) {
+    // If user is not an admin type, set them as the supervisor
+    if (loggedInUser && (loggedInUser.appRole === 'Crew Supervisor' || loggedInUser.appRole === 'MEI Supervisor')) {
       setSelectedSupervisorId(loggedInUser.id);
     }
-  }, [loggedInUser, isAdmin]);
+     // If user is a subbie admin, their company is fixed
+    if (isSubbieAdmin) {
+      setSelectedCompany(loggedInUser.company);
+    }
+  }, [loggedInUser, isSubbieAdmin]);
 
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -209,10 +233,13 @@ function TimesheetFormContent() {
                 quantity: 0,
                 unproductiveEntries: [],
                 notes: "",
-                submittedById: isAdmin ? "" : selectedSupervisorId,
+                submittedById: (isSubbieAdmin || canSelectCompany) ? "" : selectedSupervisorId,
             });
-            if (isAdmin) {
+            if (isSubbieAdmin || canSelectCompany) {
               setSelectedSupervisorId("");
+            }
+            if (canSelectCompany) {
+              setSelectedCompany("");
             }
             setSelectedActivity(null);
         } else {
@@ -264,37 +291,63 @@ function TimesheetFormContent() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-               {isAdmin && (
-                <FormField
-                  control={form.control}
-                  name="submittedById"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Crew Supervisor</FormLabel>
-                      <Select 
-                        onValueChange={(value) => {
-                            field.onChange(value)
-                            setSelectedSupervisorId(value);
-                            form.setValue("crewMemberIds", []);
-                        }} 
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a supervisor" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {supervisors.map(sup => (
-                            <SelectItem key={sup.id} value={sup.id}>{sup.fullName}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {canSelectCompany && (
+                  <FormItem>
+                    <FormLabel>Company</FormLabel>
+                    <Select
+                      onValueChange={(value) => {
+                        setSelectedCompany(value);
+                        setSelectedSupervisorId("");
+                        form.setValue("submittedById", "");
+                        form.setValue("crewMemberIds", []);
+                      }}
+                      value={selectedCompany}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a company" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {companies.map(company => (
+                          <SelectItem key={company} value={company}>{company}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+                {(canSelectCompany || isSubbieAdmin) && (
+                  <FormField
+                    control={form.control}
+                    name="submittedById"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Crew Supervisor</FormLabel>
+                        <Select 
+                          onValueChange={(value) => {
+                              field.onChange(value)
+                              setSelectedSupervisorId(value);
+                              form.setValue("crewMemberIds", []);
+                          }} 
+                          value={field.value}
+                          disabled={!selectedCompany}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a supervisor" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {supervisors.map(sup => (
+                              <SelectItem key={sup.id} value={sup.id}>{sup.fullName}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
