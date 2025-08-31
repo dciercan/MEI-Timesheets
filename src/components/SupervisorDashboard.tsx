@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -13,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import EditTimesheetDialog from "./EditTimesheetDialog";
 import { useRouter } from 'next/navigation';
-import { Calendar, Users, Activity, Clock, Hash, Trash2, Copy, Edit, FileText, ListTodo } from 'lucide-react';
+import { Calendar, Users, Activity, Clock, Hash, Trash2, Copy, Edit, FileText, ListTodo, MapPin } from 'lucide-react';
 import InfoItem from './InfoItem';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 
@@ -61,20 +62,16 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
   const groupedSubmissions = React.useMemo(() => {
     const groups: Record<string, GroupedSubmission> = {};
     initialSubmissions.forEach(s => {
-      const groupId = s.submissionGroupId;
+      let groupId = s.submissionGroupId;
       if (!groupId) {
-        // Fallback for older data without a group ID - group by shared properties
-        const fallbackGroupId = `${s.submittedById}-${s.timesheetDate.toISOString()}-${s.activityId}`;
-         if (!groups[fallbackGroupId]) {
-            groups[fallbackGroupId] = { id: s.id, entries: [], representative: s };
-        }
-        groups[fallbackGroupId].entries.push(s);
-      } else {
-        if (!groups[groupId]) {
-            groups[groupId] = { id: groupId, entries: [], representative: s };
-        }
-        groups[groupId].entries.push(s);
+        // Create a fallback group ID for older data
+        groupId = `${s.submittedById}-${s.timesheetDate.toISOString()}-${s.activityId}-${s.asset}-${s.subAsset}`;
       }
+      
+      if (!groups[groupId]) {
+          groups[groupId] = { id: groupId, entries: [], representative: s };
+      }
+      groups[groupId].entries.push(s);
     });
     return Object.values(groups).sort((a,b) => new Date(b.representative.submittedAt).getTime() - new Date(a.representative.submittedAt).getTime());
   }, [initialSubmissions]);
@@ -124,14 +121,27 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
             <AccordionItem value={group.id} key={group.id} className="border rounded-lg shadow-sm bg-background">
               <div className="flex items-center justify-between pl-6 pr-2 py-2">
                 <AccordionTrigger className="flex-grow py-2 hover:no-underline">
-                  <div className="flex gap-6 items-center">
-                    <div className="text-center">
-                      <p className="text-2xl font-bold font-headline">{new Date(group.representative.timesheetDate).getDate()}</p>
-                      <p className="text-sm uppercase text-muted-foreground">{format(new Date(group.representative.timesheetDate), 'MMM')}</p>
+                  <div className="flex-grow grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
+                    <div className="flex items-center gap-3">
+                        <Calendar className="h-5 w-5 text-primary"/>
+                        <div>
+                            <p className="font-semibold">{format(new Date(group.representative.timesheetDate), 'PPP')}</p>
+                            <p className="text-xs text-muted-foreground">Date</p>
+                        </div>
                     </div>
-                    <div>
-                      <h4 className="font-semibold text-lg text-left">{group.representative.activity?.activity}</h4>
-                      <p className="text-sm text-muted-foreground text-left">{group.representative.asset} / {group.representative.subAsset}</p>
+                     <div className="flex items-center gap-3">
+                        <MapPin className="h-5 w-5 text-primary"/>
+                        <div>
+                            <p className="font-semibold">{group.representative.zone} / {group.representative.section}</p>
+                            <p className="text-xs text-muted-foreground">Location</p>
+                        </div>
+                    </div>
+                     <div className="flex items-center gap-3">
+                        <Activity className="h-5 w-5 text-primary"/>
+                        <div>
+                            <p className="font-semibold">{group.representative.activity?.activity}</p>
+                            <p className="text-xs text-muted-foreground">Activity</p>
+                        </div>
                     </div>
                   </div>
                 </AccordionTrigger>
@@ -180,9 +190,7 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
               </div>
               <AccordionContent className="px-6 pb-4">
                  <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6 pt-4 border-t">
-                    <InfoItem icon={Calendar} label="Timesheet Date" value={format(new Date(group.representative.timesheetDate), 'PPP')} />
                     <InfoItem icon={Users} label="Crew Members" value={group.entries.length} />
-                    <InfoItem icon={Activity} label="Activity" value={group.representative.activity?.activity} />
                     <InfoItem icon={FileText} label="Asset / Sub-Asset" value={`${group.representative.asset} / ${group.representative.subAsset}`} />
                     <InfoItem icon={Clock} label="Productive Hours" value={group.representative.productiveHours} />
                     <InfoItem icon={Hash} label="Quantity" value={group.representative.quantity} badge={group.representative.activity?.activityUom} />
