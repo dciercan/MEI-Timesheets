@@ -60,9 +60,7 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
 
   const groupedSubmissions = React.useMemo(() => {
     const groups: Record<string, GroupedSubmission> = {};
-    submissions.forEach(s => {
-      // Use submissionGroupId if it exists, otherwise use the entry's own ID as a fallback.
-      // This ensures every entry is part of a group, even if it's a group of one.
+    initialSubmissions.forEach(s => {
       const groupId = s.submissionGroupId || s.id;
       if (!groups[groupId]) {
         groups[groupId] = {
@@ -74,24 +72,24 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
       groups[groupId].entries.push(s);
     });
     return Object.values(groups).sort((a,b) => new Date(b.representative.submittedAt).getTime() - new Date(a.representative.submittedAt).getTime());
-  }, [submissions]);
+  }, [initialSubmissions]);
 
-  const handleCopy = (submission: TimesheetSubmissionWithDetails) => {
+  const handleCopy = (submissionGroup: GroupedSubmission) => {
+     const representative = submissionGroup.representative;
      const params = new URLSearchParams();
-     params.set('date', submission.timesheetDate.toISOString());
-     params.set('zone', submission.zone || '');
-     params.set('section', submission.section || '');
-     params.set('asset', submission.asset);
-     params.set('subAsset', submission.subAsset);
-     params.set('activityId', submission.activityId);
-     params.set('productiveHours', submission.productiveHours.toString());
-     params.set('quantity', submission.quantity.toString());
-     params.set('notes', submission.notes || '');
+     params.set('date', representative.timesheetDate.toISOString());
+     params.set('zone', representative.zone || '');
+     params.set('section', representative.section || '');
+     params.set('asset', representative.asset);
+     params.set('subAsset', representative.subAsset);
+     params.set('activityId', representative.activityId);
+     params.set('productiveHours', representative.productiveHours.toString());
+     params.set('quantity', representative.quantity.toString());
+     params.set('notes', representative.notes || '');
 
-     const crewIds = groupedSubmissions
-        .find(g => g.id === (submission.submissionGroupId || submission.id))?.entries
+     const crewIds = submissionGroup.entries
         .map(e => e.crewMemberId)
-        .filter(id => id !== submission.submittedById) || [];
+        .filter(id => id !== representative.submittedById) || [];
 
      params.set('crewMemberIds', JSON.stringify(crewIds));
      
@@ -117,18 +115,18 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
       </CardHeader>
       <CardContent>
         <Accordion type="single" collapsible className="w-full space-y-4">
-          {groupedSubmissions.map(({ id, entries, representative }) => (
-            <AccordionItem value={id} key={id} className="border rounded-lg shadow-sm bg-background">
+          {groupedSubmissions.map((group) => (
+            <AccordionItem value={group.id} key={group.id} className="border rounded-lg shadow-sm bg-background">
               <div className="flex items-center justify-between pl-6 pr-2 py-2">
                 <AccordionTrigger className="flex-grow py-2 hover:no-underline">
                   <div className="flex gap-6 items-center">
                     <div className="text-center">
-                      <p className="text-2xl font-bold font-headline">{new Date(representative.timesheetDate).getDate()}</p>
-                      <p className="text-sm uppercase text-muted-foreground">{format(new Date(representative.timesheetDate), 'MMM')}</p>
+                      <p className="text-2xl font-bold font-headline">{new Date(group.representative.timesheetDate).getDate()}</p>
+                      <p className="text-sm uppercase text-muted-foreground">{format(new Date(group.representative.timesheetDate), 'MMM')}</p>
                     </div>
                     <div>
-                      <h4 className="font-semibold text-lg text-left">{representative.activity?.activity}</h4>
-                      <p className="text-sm text-muted-foreground text-left">{representative.asset} / {representative.subAsset}</p>
+                      <h4 className="font-semibold text-lg text-left">{group.representative.activity?.activity}</h4>
+                      <p className="text-sm text-muted-foreground text-left">{group.representative.asset} / {group.representative.subAsset}</p>
                     </div>
                   </div>
                 </AccordionTrigger>
@@ -138,7 +136,7 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
                        <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Button variant="outline" size="icon" className="h-9 w-9" disabled={!representative.submissionGroupId}>
+                              <Button variant="outline" size="icon" className="h-9 w-9" disabled={!group.representative.submissionGroupId}>
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </TooltipTrigger>
@@ -157,14 +155,14 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleDeleteGroup(id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                        <AlertDialogAction onClick={() => handleDeleteGroup(group.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
                   <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => handleCopy(representative)}>
+                            <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => handleCopy(group)}>
                                 <Copy className="h-4 w-4" />
                             </Button>
                         </TooltipTrigger>
@@ -177,12 +175,12 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
               </div>
               <AccordionContent className="px-6 pb-4">
                  <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6 pt-4 border-t">
-                    <InfoItem icon={Calendar} label="Timesheet Date" value={format(new Date(representative.timesheetDate), 'PPP')} />
-                    <InfoItem icon={Users} label="Crew Members" value={entries.length} />
-                    <InfoItem icon={Activity} label="Activity" value={representative.activity?.activity} />
-                    <InfoItem icon={FileText} label="Asset / Sub-Asset" value={`${representative.asset} / ${representative.subAsset}`} />
-                    <InfoItem icon={Clock} label="Productive Hours" value={representative.productiveHours} />
-                    <InfoItem icon={Hash} label="Quantity" value={representative.quantity} badge={representative.activity?.activityUom} />
+                    <InfoItem icon={Calendar} label="Timesheet Date" value={format(new Date(group.representative.timesheetDate), 'PPP')} />
+                    <InfoItem icon={Users} label="Crew Members" value={group.entries.length} />
+                    <InfoItem icon={Activity} label="Activity" value={group.representative.activity?.activity} />
+                    <InfoItem icon={FileText} label="Asset / Sub-Asset" value={`${group.representative.asset} / ${group.representative.subAsset}`} />
+                    <InfoItem icon={Clock} label="Productive Hours" value={group.representative.productiveHours} />
+                    <InfoItem icon={Hash} label="Quantity" value={group.representative.quantity} badge={group.representative.activity?.activityUom} />
                  </div>
                 
                  <div className="border rounded-md">
@@ -195,7 +193,7 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
                         </TableRow>
                         </TableHeader>
                         <TableBody>
-                        {entries.map((entry) => (
+                        {group.entries.map((entry) => (
                             <TableRow key={entry.id}>
                             <TableCell>{entry.crewMember?.fullName}</TableCell>
                             <TableCell>{entry.crewMember?.company}</TableCell>
