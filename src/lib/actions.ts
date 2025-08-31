@@ -61,10 +61,26 @@ async function writeUsers(users: User[]): Promise<void> {
      await fs.writeFile(usersDbPath, JSON.stringify(users, null, 2), 'utf-8');
 }
 
-async function readActivities(): Promise<Activity[]> {
+export async function getActivities(): Promise<Activity[]> {
     const data = await fs.readFile(path.join(process.cwd(), 'src', 'lib', 'activities.json'), 'utf-8');
     return JSON.parse(data);
 }
+
+export async function getUnproductiveReasons(): Promise<UnproductiveReason[]> {
+    const data = await fs.readFile(path.join(process.cwd(), 'src', 'lib', 'unproductiveReasons.json'), 'utf-8');
+    return JSON.parse(data);
+}
+
+export async function getZones(): Promise<string[]> {
+    const data = await fs.readFile(path.join(process.cwd(), 'src', 'lib', 'zones.json'), 'utf-8');
+    return JSON.parse(data);
+}
+
+export async function getSections(): Promise<string[]> {
+    const data = await fs.readFile(path.join(process.cwd(), 'src', 'lib', 'sections.json'), 'utf-8');
+    return JSON.parse(data);
+}
+
 
 // Schema for the main timesheet form
 const addCrewDocketSchema = z.object({
@@ -285,7 +301,7 @@ export async function updateDocketStatus(requestingUserId: string, crewDocketId:
 
 async function enrichCrewDockets(dockets: CrewDocket[]): Promise<CrewDocketWithDetails[]> {
     const allUsers = await readUsers();
-    const allActivities = await readActivities();
+    const allActivities = await getActivities();
     const allTimesheets = await readTimesheets();
 
     const userMap = new Map(allUsers.map(u => [u.id, u]));

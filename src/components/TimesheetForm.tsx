@@ -7,8 +7,7 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { cn } from "@/lib/utils";
-import { addCrewDocket, getUsers } from "@/lib/actions";
-import { activities, unproductiveReasons } from "@/lib/data";
+import { addCrewDocket, getActivities, getUsers, getUnproductiveReasons, getZones, getSections } from "@/lib/actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -20,7 +19,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { CalendarIcon, PlusCircle, Trash2, Loader2, Send } from "lucide-react";
-import type { Activity, User } from "@/lib/types";
+import type { Activity, User, UnproductiveReason } from "@/lib/types";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/hooks/use-auth";
@@ -47,24 +46,37 @@ const formSchema = z.object({
   submittedById: z.string().min(1, "Supervisor is required."),
 });
 
-const zoneOptions = ['S1', 'S2', 'S3', 'S4', 'S5', 'MAN RAMPS', 'LPR RAMPS'];
-const sectionOptions = ['M011', 'M01J', 'M020 S1', 'M020 S2', 'Central Corridor', 'XP1', 'XP2', 'XP3', 'XP4', 'XP5'];
-
 function TimesheetFormContent() {
   const { toast } = useToast();
   const { user: loggedInUser } = useAuth();
   const searchParams = useSearchParams();
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
+  
   const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [unproductiveReasons, setUnproductiveReasons] = useState<UnproductiveReason[]>([]);
+  const [zones, setZones] = useState<string[]>([]);
+  const [sections, setSections] = useState<string[]>([]);
+
   const [selectedCompany, setSelectedCompany] = useState<string>("");
   const [selectedSupervisorId, setSelectedSupervisorId] = useState<string>("");
 
    useEffect(() => {
-    async function fetchUsers() {
-      const users = await getUsers();
-      setAllUsers(users);
+    async function fetchData() {
+      const [fetchedUsers, fetchedActivities, fetchedUnproductive, fetchedZones, fetchedSections] = await Promise.all([
+        getUsers(),
+        getActivities(),
+        getUnproductiveReasons(),
+        getZones(),
+        getSections(),
+      ]);
+      setAllUsers(fetchedUsers);
+      setActivities(fetchedActivities);
+      setUnproductiveReasons(fetchedUnproductive);
+      setZones(fetchedZones);
+      setSections(fetchedSections);
     }
-    fetchUsers();
+    fetchData();
   }, []);
 
   const canSelectCompany = loggedInUser?.appRole === 'Admin' || loggedInUser?.appRole === 'MEI Supervisor';
@@ -124,12 +136,12 @@ function TimesheetFormContent() {
   const selectedAsset = form.watch("asset");
   const selectedSubAsset = form.watch("subAsset");
 
-  const assets = useMemo(() => [...new Set(activities.map(a => a.asset))], []);
+  const assets = useMemo(() => [...new Set(activities.map(a => a.asset))], [activities]);
 
   const subAssets = useMemo(() => {
     if (!selectedAsset) return [];
     return [...new Set(activities.filter(a => a.asset === selectedAsset).map(a => a.subAsset))];
-  }, [selectedAsset]);
+  }, [selectedAsset, activities]);
 
   useEffect(() => {
     if (subAssets.length === 1) {
@@ -140,7 +152,7 @@ function TimesheetFormContent() {
   const filteredActivities = useMemo(() => {
     if (!selectedAsset || !selectedSubAsset) return [];
     return activities.filter(a => a.asset === selectedAsset && a.subAsset === selectedSubAsset);
-  }, [selectedAsset, selectedSubAsset]);
+  }, [selectedAsset, selectedSubAsset, activities]);
 
 
   useEffect(() => {
@@ -164,7 +176,7 @@ function TimesheetFormContent() {
         if (activity) setSelectedActivity(activity);
       }
     }
-  }, [searchParams, form]);
+  }, [searchParams, form, activities]);
 
    useEffect(() => {
     if (selectedSupervisorId) {
@@ -369,7 +381,7 @@ function TimesheetFormContent() {
                         <Select onValueChange={field.onChange} value={field.value} disabled={!selectedSupervisorId}>
                           <FormControl><SelectTrigger><SelectValue placeholder="Select a zone" /></SelectTrigger></FormControl>
                           <SelectContent>
-                            {zoneOptions.map(zone => <SelectItem key={zone} value={zone}>{zone}</SelectItem>)}
+                            {zones.map(zone => <SelectItem key={zone} value={zone}>{zone}</SelectItem>)}
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -385,7 +397,7 @@ function TimesheetFormContent() {
                         <Select onValueChange={field.onChange} value={field.value} disabled={!selectedSupervisorId}>
                             <FormControl><SelectTrigger><SelectValue placeholder="Select a section" /></SelectTrigger></FormControl>
                             <SelectContent>
-                                {sectionOptions.map(section => <SelectItem key={section} value={section}>{section}</SelectItem>)}
+                                {sections.map(section => <SelectItem key={section} value={section}>{section}</SelectItem>)}
                             </SelectContent>
                         </Select>
                         <FormMessage />
