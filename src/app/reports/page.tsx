@@ -9,8 +9,9 @@ import { useAuth } from "@/hooks/use-auth";
 export default function ReportsPage() {
   const { user } = useAuth();
 
-  const isSparkUser = user?.appRole === 'Admin' || user?.appRole === 'MEI Supervisor' || user?.appRole === 'Read Only' || user?.appRole === 'Crew Supervisor';
-  const isSubbieUser = user?.appRole === 'Subcontractor Admin';
+  const isSparkUser = user?.appRole === 'Admin' || user?.appRole === 'MEI Supervisor' || user?.appRole === 'Read Only';
+  const isSubbieAdmin = user?.appRole === 'Subcontractor Admin';
+  const isSubbieSupervisor = user?.appRole === 'Crew Supervisor';
 
   return (
     <div className="container mx-auto max-w-6xl py-8 px-4 md:px-6">
@@ -43,7 +44,7 @@ export default function ReportsPage() {
             </Card>
         )}
 
-        {isSubbieUser && user && (
+        {(isSubbieAdmin || isSubbieSupervisor) && user && (
             <Card className="shadow-lg hover:shadow-xl transition-shadow">
             <Link href="/reports/my-company-submissions" className="block">
                 <CardHeader>

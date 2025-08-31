@@ -26,7 +26,7 @@ const adminLinks = [
   { href: '/admin', label: 'Admin Dashboard', icon: LayoutDashboard, roles: ['Admin'] },
   { href: '/admin/users', label: 'User Admin', icon: Users, roles: ['Admin', 'Subcontractor Admin'] },
   { href: '/reports/my-company-submissions', label: 'Company Submissions', icon: Building, roles: ['Subcontractor Admin'] },
-  { href: '/reports', label: 'Reports', icon: BarChart, roles: ['Admin', 'Read Only', 'Crew Supervisor', 'MEI Supervisor'] },
+  { href: '/reports', label: 'Reports', icon: BarChart, roles: ['Admin', 'Read Only', 'Crew Supervisor', 'MEI Supervisor', 'Subcontractor Admin'] },
 ]
 
 export default function Header() {

@@ -7,6 +7,7 @@ import { z } from 'zod';
 import fs from 'fs/promises';
 import path from 'path';
 import { cookies } from 'next/headers';
+import { listModels } from 'genkit';
 
 // In a real app, you would use a proper database.
 // For this demo, we'll use a JSON file for persistence.
@@ -219,7 +220,7 @@ export async function getTimesheetSubmissions(requestingUser?: User | null): Pro
     let submissions = await readSubmissions();
     const users = await readUsers();
 
-    if (requestingUser && requestingUser.appRole !== 'Admin' && requestingUser.appRole !== 'MEI Supervisor') {
+    if (requestingUser && (requestingUser.appRole === 'Subcontractor Admin' || requestingUser.appRole === 'Crew Supervisor')) {
         const userMap = new Map(users.map(u => [u.id, u]));
         
         submissions = submissions.filter(s => {
@@ -333,4 +334,9 @@ export async function findActivityById(activityId: string): Promise<Activity | u
 export async function findUnproductiveReasonById(reasonId: string): Promise<any | undefined> {
     const reasons = await readUnproductiveReasons();
     return reasons.find(r => r.id === reasonId);
+}
+
+export async function getAvailableModels() {
+    const models = await listModels();
+    return models;
 }
