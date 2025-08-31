@@ -84,9 +84,8 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
   const groupedSubmissions = React.useMemo(() => {
     const groups: Record<string, GroupedSubmission> = {};
     submissions.forEach(s => {
-      const groupId = s.submissionGroupId;
-      if (!groupId) return; 
-
+      const groupId = s.submissionGroupId || `synthetic-${s.submittedAt.getTime()}-${s.submittedById}`;
+      
       if (!groups[groupId]) {
         groups[groupId] = {
           id: groupId,
