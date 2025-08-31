@@ -8,15 +8,17 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import type { CrewDocketWithDetails } from "@/lib/types";
+import type { CrewDocketWithDetails, CrewDocketStatus } from "@/lib/types";
 import { deleteCrewDocket } from "@/lib/actions";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { useRouter } from 'next/navigation';
-import { Calendar, Users, Activity, Clock, Hash, Trash2, Copy, Edit, FileText, ListTodo, MapPin, Watch } from 'lucide-react';
+import { Calendar, Users, Activity, Clock, Hash, Trash2, Copy, Edit, FileText, ListTodo, MapPin, Watch, ShieldCheck } from 'lucide-react';
 import InfoItem from './InfoItem';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import EditSubmissionGroupDialog from './EditSubmissionGroupDialog';
+import { Badge } from './ui/badge';
+import { cn } from '@/lib/utils';
 
 interface SupervisorDashboardProps {
   dockets: CrewDocketWithDetails[];
@@ -78,6 +80,16 @@ export default function SupervisorDashboard({ dockets }: SupervisorDashboardProp
      router.push(`/timesheet?${params.toString()}`);
   }
 
+  const statusBadgeVariant = (status: CrewDocketStatus) => {
+    switch (status) {
+        case 'Submitted': return 'secondary';
+        case 'Approved': return 'default';
+        case 'Rejected': return 'destructive';
+        case 'Processed': return 'outline';
+        default: return 'secondary';
+    }
+  }
+
   if (dockets.length === 0) {
     return (
         <div className="flex flex-col items-center justify-center h-[50vh] text-center">
@@ -104,7 +116,7 @@ export default function SupervisorDashboard({ dockets }: SupervisorDashboardProp
             <AccordionItem value={docket.id} key={docket.id} className="border rounded-lg shadow-sm bg-background">
               <div className="flex items-center justify-between pl-6 pr-2 py-2">
                 <AccordionTrigger className="flex-grow py-2 hover:no-underline">
-                  <div className="flex-grow grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
+                  <div className="flex-grow grid grid-cols-1 md:grid-cols-4 gap-4 text-left">
                     <div className="flex items-center gap-3">
                         <Calendar className="h-5 w-5 text-primary"/>
                         <div>
@@ -124,6 +136,13 @@ export default function SupervisorDashboard({ dockets }: SupervisorDashboardProp
                         <div>
                             <p className="font-semibold">{docket.activity?.activity}</p>
                             <p className="text-xs text-muted-foreground">Activity</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <ShieldCheck className="h-5 w-5 text-primary"/>
+                        <div>
+                             <Badge variant={statusBadgeVariant(docket.status)} className={cn(docket.status === 'Approved' && 'bg-green-600')}>{docket.status}</Badge>
+                            <p className="text-xs text-muted-foreground mt-1">Status</p>
                         </div>
                     </div>
                   </div>
@@ -160,12 +179,12 @@ export default function SupervisorDashboard({ dockets }: SupervisorDashboardProp
                    <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                             <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => handleCrewEdit(docket)}>
+                             <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => handleCrewEdit(docket)} disabled={docket.status !== 'Rejected'}>
                                 <Edit className="h-4 w-4" />
                             </Button>
                         </TooltipTrigger>
                         <TooltipContent>
-                        <p>Edit</p>
+                        <p>{docket.status === 'Rejected' ? 'Edit Rejected Docket' : 'Edit (Disabled)'}</p>
                         </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
