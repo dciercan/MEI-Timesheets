@@ -13,7 +13,7 @@ import { deleteCrewDocket, updateDocketStatus } from "@/lib/actions";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { useRouter } from 'next/navigation';
-import { Calendar, Users, Activity, Clock, Hash, Trash2, Copy, Edit, FileText, ListTodo, MapPin, Watch, ShieldCheck, CheckCircle, XCircle, Building, User } from 'lucide-react';
+import { Calendar, Users, Activity, Clock, Hash, Trash2, Copy, Edit, FileText, ListTodo, MapPin, Watch, ShieldCheck, CheckCircle, XCircle, Building, User, Archive } from 'lucide-react';
 import InfoItem from './InfoItem';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import EditSubmissionGroupDialog from './EditSubmissionGroupDialog';
@@ -138,7 +138,7 @@ export default function SupervisorDashboard({ dockets }: SupervisorDashboardProp
             <AccordionItem value={docket.id} key={docket.id} className="border rounded-lg shadow-sm bg-background">
               <div className="flex items-center justify-between pl-6 pr-2 py-2">
                 <AccordionTrigger className="flex-grow py-2 hover:no-underline">
-                   <div className="flex-grow grid grid-cols-1 md:grid-cols-6 gap-4 text-left">
+                   <div className="flex-grow grid grid-cols-1 md:grid-cols-7 gap-4 text-left">
                      <div className="flex items-center gap-3">
                         <Calendar className="h-5 w-5 text-primary"/>
                         <div>
@@ -151,6 +151,13 @@ export default function SupervisorDashboard({ dockets }: SupervisorDashboardProp
                         <div>
                             <p className="font-semibold text-sm">{docket.zone} / {docket.section}</p>
                             <p className="text-xs text-muted-foreground">Location</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <Archive className="h-5 w-5 text-primary"/>
+                        <div>
+                            <p className="font-semibold text-sm">{docket.asset} / {docket.subAsset}</p>
+                            <p className="text-xs text-muted-foreground">Asset / Sub-Asset</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
@@ -315,3 +322,5 @@ export default function SupervisorDashboard({ dockets }: SupervisorDashboardProp
     </Card>
   );
 }
+
+    
