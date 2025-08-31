@@ -7,7 +7,6 @@ import { getSupervisorSubmissions } from "@/lib/actions";
 import { useAuth } from '@/hooks/use-auth';
 import type { TimesheetSubmissionWithDetails } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ListTodo } from 'lucide-react';
 
 export default function SupervisorSubmissionsPage() {
     const { user, isLoading: isAuthLoading } = useAuth();
@@ -24,8 +23,11 @@ export default function SupervisorSubmissionsPage() {
                 .finally(() => {
                     setIsLoading(false);
                 });
+        } else if (!isAuthLoading) {
+            // If there's no user and auth is done loading, we can stop loading the page data.
+            setIsLoading(false);
         }
-    }, [user]);
+    }, [user, isAuthLoading]);
 
     if (isAuthLoading || isLoading) {
         return (
@@ -40,18 +42,6 @@ export default function SupervisorSubmissionsPage() {
                     </div>
                 </div>
             </div>
-        );
-    }
-
-    if (submissions.length === 0) {
-        return (
-          <div className="container mx-auto py-8 px-4 md:px-6">
-            <div className="flex flex-col items-center justify-center h-[50vh] text-center">
-                <ListTodo className="h-16 w-16 text-muted-foreground" />
-                <h2 className="mt-4 text-2xl font-semibold font-headline">No Timesheets Submitted Yet</h2>
-                <p className="mt-2 text-muted-foreground">Once you submit timesheets, they will appear here.</p>
-            </div>
-          </div>
         );
     }
     

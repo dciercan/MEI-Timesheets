@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import EditTimesheetDialog from "./EditTimesheetDialog";
 import { useRouter } from 'next/navigation';
-import { Calendar, Users, Activity, Clock, Hash, Trash2, Copy, Edit, FileText } from 'lucide-react';
+import { Calendar, Users, Activity, Clock, Hash, Trash2, Copy, Edit, FileText, ListTodo } from 'lucide-react';
 import InfoItem from './InfoItem';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 
@@ -61,7 +61,6 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
   const groupedSubmissions = React.useMemo(() => {
     const groups: Record<string, GroupedSubmission> = {};
     submissions.forEach(s => {
-      // Only process entries that have a group ID
       if (s.submissionGroupId) {
         if (!groups[s.submissionGroupId]) {
           groups[s.submissionGroupId] = {
@@ -96,6 +95,16 @@ export default function SupervisorDashboard({ submissions: initialSubmissions }:
      params.set('crewMemberIds', JSON.stringify(crewIds));
      
      router.push(`/timesheet?${params.toString()}`);
+  }
+
+  if (groupedSubmissions.length === 0) {
+    return (
+        <div className="flex flex-col items-center justify-center h-[50vh] text-center">
+            <ListTodo className="h-16 w-16 text-muted-foreground" />
+            <h2 className="mt-4 text-2xl font-semibold font-headline">No Timesheets Submitted Yet</h2>
+            <p className="mt-2 text-muted-foreground">Once you submit timesheets, they will appear here.</p>
+        </div>
+    );
   }
 
 
