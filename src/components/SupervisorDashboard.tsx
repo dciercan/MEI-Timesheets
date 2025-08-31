@@ -114,7 +114,7 @@ export default function SupervisorDashboard({ dockets }: SupervisorDashboardProp
   }
 
   const isMeiSupervisor = currentUser?.appRole === 'MEI Supervisor';
-  const pageTitle = isMeiSupervisor ? "Docket Approval Dashboard" : "My Crew Dockets";
+  const pageTitle = isMeiSupervisor ? "Docket Approvals" : "My Crew Dockets";
   const pageDescription = isMeiSupervisor 
     ? "Review, approve, or reject dockets submitted by crew supervisors." 
     : "A record of all crew dockets you have submitted.";

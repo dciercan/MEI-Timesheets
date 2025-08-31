@@ -42,9 +42,11 @@ export default function Header() {
     );
   }
 
+  const isMeiSupervisor = user?.appRole === 'MEI Supervisor';
+
   const allLinks = [
       { href: '/timesheet', label: 'Timesheet Entry', icon: User, roles: ['Crew Supervisor', 'Subcontractor Admin', 'MEI Supervisor'] },
-      { href: '/timesheet/my-submissions', label: 'My Crew Dockets', icon: FileText, roles: ['Crew Supervisor', 'MEI Supervisor'] },
+      { href: '/timesheet/my-submissions', label: isMeiSupervisor ? 'Docket Approvals' : 'My Crew Dockets', icon: FileText, roles: ['Crew Supervisor', 'MEI Supervisor'] },
       { href: '/admin', label: 'Admin Dashboard', icon: LayoutDashboard, roles: ['Admin'] },
       { href: '/admin/users', label: 'User Admin', icon: Users, roles: ['Admin', 'Subcontractor Admin'] },
       { href: '/reports', label: 'Reports', icon: BarChart, roles: ['Admin', 'Read Only', 'Crew Supervisor', 'MEI Supervisor', 'Subcontractor Admin'] },
