@@ -1,5 +1,65 @@
 [
   {
+    "id": "TS-1756643453251-9c9sxz6",
+    "crewDocketId": "DOCKET-1756643453251-zt9erwr",
+    "crewMemberId": "4",
+    "company": "BuildIt",
+    "submittedById": "4",
+    "productiveHours": 4,
+    "unproductiveEntries": [
+      {
+        "reasonId": "unprod-05",
+        "minutes": 15
+      }
+    ],
+    "status": "Submitted"
+  },
+  {
+    "id": "TS-1756643453251-5lknstt",
+    "crewDocketId": "DOCKET-1756643453251-zt9erwr",
+    "crewMemberId": "3",
+    "company": "BuildIt",
+    "submittedById": "4",
+    "productiveHours": 4,
+    "unproductiveEntries": [
+      {
+        "reasonId": "unprod-05",
+        "minutes": 15
+      }
+    ],
+    "status": "Submitted"
+  },
+  {
+    "id": "TS-1756643453251-e1ivk82",
+    "crewDocketId": "DOCKET-1756643453251-zt9erwr",
+    "crewMemberId": "8",
+    "company": "BuildIt",
+    "submittedById": "4",
+    "productiveHours": 4,
+    "unproductiveEntries": [
+      {
+        "reasonId": "unprod-05",
+        "minutes": 15
+      }
+    ],
+    "status": "Submitted"
+  },
+  {
+    "id": "TS-1756643453251-i8mc7u3",
+    "crewDocketId": "DOCKET-1756643453251-zt9erwr",
+    "crewMemberId": "13",
+    "company": "BuildIt",
+    "submittedById": "4",
+    "productiveHours": 4,
+    "unproductiveEntries": [
+      {
+        "reasonId": "unprod-05",
+        "minutes": 15
+      }
+    ],
+    "status": "Submitted"
+  },
+  {
     "id": "TS-1756641158362-2hsjuow",
     "crewDocketId": "DOCKET-1756641158362-y6gwb7c",
     "crewMemberId": "4",
@@ -70,7 +130,7 @@
         "minutes": 30
       }
     ],
-    "status": "Submitted",
+    "status": "Approved",
     "company": "BuildIt"
   },
   {
@@ -89,7 +149,7 @@
         "minutes": 30
       }
     ],
-    "status": "Submitted",
+    "status": "Approved",
     "company": "BuildIt"
   },
   {
@@ -108,7 +168,7 @@
         "minutes": 30
       }
     ],
-    "status": "Submitted",
+    "status": "Approved",
     "company": "BuildIt"
   }
 ]
