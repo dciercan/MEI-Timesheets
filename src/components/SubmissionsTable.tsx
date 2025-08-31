@@ -134,7 +134,7 @@ export default function SubmissionsTable({ dockets: initialDockets }: Submission
                 Date <ArrowUpDown className="ml-2 h-4 w-4" />
             </Button>
         ),
-        cell: ({ row }) => format(new Date(row.getValue('timesheetDate')), 'PPP')
+        cell: ({ row }) => format(new Date(row.getValue('timesheetDate')), 'dd/MM/yy')
     },
     {
         accessorKey: 'status',

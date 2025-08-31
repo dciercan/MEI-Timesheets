@@ -142,7 +142,7 @@ export default function SupervisorDashboard({ dockets }: SupervisorDashboardProp
                      <div className="flex items-center gap-3">
                         <Calendar className="h-5 w-5 text-primary"/>
                         <div>
-                            <p className="font-semibold text-sm">{format(new Date(docket.timesheetDate), 'PPP')}</p>
+                            <p className="font-semibold text-sm">{format(new Date(docket.timesheetDate), 'dd/MM/yy')}</p>
                             <p className="text-xs text-muted-foreground">Date</p>
                         </div>
                     </div>

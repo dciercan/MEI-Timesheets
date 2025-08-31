@@ -65,7 +65,7 @@ export default function TimesheetReport({ timesheets }: TimesheetReportProps) {
                 Date <ArrowUpDown className="ml-2 h-4 w-4" />
             </Button>
         ),
-        cell: ({ row }) => format(new Date(row.original.crewDocket.timesheetDate), 'PPP')
+        cell: ({ row }) => format(new Date(row.original.crewDocket.timesheetDate), 'dd/MM/yy')
     },
     {
         accessorKey: 'crewMember.fullName',

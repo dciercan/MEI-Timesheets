@@ -49,7 +49,7 @@ export default function CrewActivityReport({ dockets }: CrewActivityReportProps)
                 Date <ArrowUpDown className="ml-2 h-4 w-4" />
             </Button>
         ),
-        cell: ({ row }) => format(new Date(row.getValue('timesheetDate')), 'PPP')
+        cell: ({ row }) => format(new Date(row.getValue('timesheetDate')), 'dd/MM/yy')
     },
     { accessorKey: 'zone', header: 'Zone' },
     { accessorKey: 'section', header: 'Section' },
