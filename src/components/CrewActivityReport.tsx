@@ -57,19 +57,21 @@ export default function CrewActivityReport({ submissions }: CrewActivityReportPr
   const crewSummaries = React.useMemo(() => {
     const crews: Record<string, {
         entries: TimesheetSubmissionWithDetails[],
+        representative: TimesheetSubmissionWithDetails,
     }> = {};
 
     submissions.forEach(s => {
+      // All submissions in a crew share the same ID.
       const crewId = s.submissionCrewId;
       if (!crews[crewId]) {
-        crews[crewId] = { entries: [] };
+        // Initialize the crew with the first entry as its representative.
+        crews[crewId] = { entries: [], representative: s };
       }
       crews[crewId].entries.push(s);
     });
     
     return Object.values(crews).map((crew): CrewSummary => {
-        const { entries } = crew;
-        const representative = entries[0];
+        const { representative, entries } = crew;
         const totalUnproductiveMinutes = representative.unproductiveEntries?.reduce((total, entry) => total + entry.minutes, 0) || 0;
         const unproductiveHours = totalUnproductiveMinutes / 60;
         const totalHours = representative.productiveHours + unproductiveHours;
@@ -267,5 +269,3 @@ export default function CrewActivityReport({ submissions }: CrewActivityReportPr
     </>
   );
 }
-
-    
