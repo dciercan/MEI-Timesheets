@@ -434,18 +434,25 @@ export async function getTimesheets(requestingUser?: User | null): Promise<Times
     if (!currentUser) {
         return [];
     }
-    
-    // First, find all dockets for the current user's company
-    const companyDockets = allDockets.filter(d => d.company === currentUser.company);
-    const companyDocketIds = new Set(companyDockets.map(d => d.id));
 
-    // Then, filter timesheets that belong to those dockets
-    const companyTimesheets = allTimesheets.filter(t => companyDocketIds.has(t.crewDocketId));
+    let relevantTimesheets: Timesheet[];
+
+    const isSparkUser = ['Admin', 'MEI Supervisor', 'Read Only'].includes(currentUser.appRole);
+
+    if (isSparkUser) {
+        relevantTimesheets = allTimesheets;
+    } else {
+        // Sub-contractor roles see only their company's timesheets
+        const companyDockets = allDockets.filter(d => d.company === currentUser.company);
+        const companyDocketIds = new Set(companyDockets.map(d => d.id));
+        relevantTimesheets = allTimesheets.filter(t => companyDocketIds.has(t.crewDocketId));
+    }
+
 
     const userMap = new Map(allUsers.map(u => [u.id, u]));
     const docketMap = new Map(allDockets.map(d => [d.id, d]));
 
-    const enrichedTimesheets: TimesheetWithDetails[] = companyTimesheets.map(ts => {
+    const enrichedTimesheets: TimesheetWithDetails[] = relevantTimesheets.map(ts => {
         const docket = docketMap.get(ts.crewDocketId);
         if (!docket) return null; // Should not happen if data is consistent
 
@@ -465,5 +472,3 @@ export async function getAvailableModels() {
     const models = await listModels();
     return models;
 }
-
-    

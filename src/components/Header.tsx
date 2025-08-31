@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Menu, User, LayoutDashboard, Users, LogOut, FileText, BarChart, Building } from 'lucide-react';
+import { Menu, User, LayoutDashboard, Users, LogOut, FileText, BarChart, Building, Book } from 'lucide-react';
 import Logo from './Logo';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
@@ -25,8 +25,12 @@ const defaultLinks = [
 const adminLinks = [
   { href: '/admin', label: 'Admin Dashboard', icon: LayoutDashboard, roles: ['Admin'] },
   { href: '/admin/users', label: 'User Admin', icon: Users, roles: ['Admin', 'Subcontractor Admin'] },
+  { href: '/reports', label: 'Reports', icon: BarChart, roles: ['Admin', 'Read Only', 'Crew Supervisor', 'MEI Supervisor', 'Subcontractor Admin'], exact: true },
   { href: '/reports/my-company-submissions', label: 'Company Dockets', icon: Building, roles: ['Subcontractor Admin'] },
-  { href: '/reports', label: 'Reports', icon: BarChart, roles: ['Admin', 'Read Only', 'Crew Supervisor', 'MEI Supervisor', 'Subcontractor Admin'] },
+  { href: '/reports/my-company-timesheets', label: 'Company Timesheets', icon: FileText, roles: ['Subcontractor Admin']},
+  { href: '/reports/all-submissions', label: 'All Crew Dockets', icon: BarChart, roles: ['Admin']},
+  { href: '/reports/crew-activity', label: 'Global Crew Activity', icon: Users, roles: ['Admin', 'MEI Supervisor', 'Read Only']},
+  { href: '/reports/all-timesheets', label: 'Global Timesheets', icon: Book, roles: ['Admin', 'MEI Supervisor', 'Read Only']},
 ]
 
 export default function Header() {
@@ -43,13 +47,29 @@ export default function Header() {
     );
   }
 
-  const availableLinks = [...defaultLinks, ...adminLinks].filter(link => user?.appRole && link.roles.includes(user.appRole));
+  const allLinks = [
+      { href: '/timesheet', label: 'Timesheet Entry', icon: User, roles: ['Crew Supervisor', 'Subcontractor Admin', 'MEI Supervisor'] },
+      { href: '/timesheet/my-submissions', label: 'My Crew Dockets', icon: FileText, roles: ['Crew Supervisor', 'MEI Supervisor'] },
+      { href: '/admin', label: 'Admin Dashboard', icon: LayoutDashboard, roles: ['Admin'] },
+      { href: '/admin/users', label: 'User Admin', icon: Users, roles: ['Admin', 'Subcontractor Admin'] },
+      { href: '/reports', label: 'Reports', icon: BarChart, roles: ['Admin', 'Read Only', 'Crew Supervisor', 'MEI Supervisor', 'Subcontractor Admin'] },
+  ]
+
+  const availableLinks = allLinks.filter(link => user?.appRole && link.roles.includes(user.appRole));
+
+  const isCurrentPage = (linkHref: string) => {
+    if (linkHref === '/reports') {
+        return pathname.startsWith('/reports');
+    }
+    return pathname.startsWith(linkHref);
+  }
+
 
   const renderNavLinks = (isMobile = false) =>
     availableLinks.map((link) => (
       <Link key={link.href} href={link.href} passHref>
         <Button
-          variant={pathname.startsWith(link.href) ? 'secondary' : 'ghost'}
+          variant={isCurrentPage(link.href) ? 'secondary' : 'ghost'}
           className={cn('w-full justify-start', isMobile && 'text-lg py-6')}
         >
           <link.icon className="mr-2 h-5 w-5" />
