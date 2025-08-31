@@ -138,50 +138,50 @@ export default function SupervisorDashboard({ dockets }: SupervisorDashboardProp
             <AccordionItem value={docket.id} key={docket.id} className="border rounded-lg shadow-sm bg-background">
               <div className="flex items-center justify-between pl-6 pr-2 py-2">
                 <AccordionTrigger className="flex-grow py-2 hover:no-underline">
-                   <div className="flex-grow grid grid-cols-1 md:grid-cols-7 gap-4 text-left">
-                     <div className="flex items-center gap-3">
+                   <div className="flex-grow flex items-center gap-4 text-left w-full">
+                     <div className="flex items-center gap-3 w-[10%]">
                         <Calendar className="h-5 w-5 text-primary"/>
                         <div>
                             <p className="font-semibold text-sm">{format(new Date(docket.timesheetDate), 'dd/MM/yy')}</p>
                             <p className="text-xs text-muted-foreground">Date</p>
                         </div>
                     </div>
-                     <div className="flex items-center gap-3">
+                     <div className="flex items-center gap-3 w-[12%]">
                         <MapPin className="h-5 w-5 text-primary"/>
                         <div>
                             <p className="font-semibold text-sm">{docket.zone} / {docket.section}</p>
                             <p className="text-xs text-muted-foreground">Location</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 w-[18%]">
                         <Archive className="h-5 w-5 text-primary"/>
                         <div>
                             <p className="font-semibold text-sm">{docket.asset} / {docket.subAsset}</p>
                             <p className="text-xs text-muted-foreground">Asset / Sub-Asset</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 w-[15%]">
                         <Activity className="h-5 w-5 text-primary"/>
                         <div>
                             <p className="font-semibold text-sm">{docket.activity?.activity || 'N/A'}</p>
                             <p className="text-xs text-muted-foreground">Activity</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 w-[10%]">
                         <Hash className="h-5 w-5 text-primary"/>
                         <div>
                             <p className="font-semibold text-sm">{`${docket.quantity} ${docket.activity?.activityUom || ''}`.trim()}</p>
                             <p className="text-xs text-muted-foreground">Quantity</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 w-[10%]">
                         <Clock className="h-5 w-5 text-primary"/>
                         <div>
                             <p className="font-semibold text-sm">{productiveHours}</p>
                             <p className="text-xs text-muted-foreground">Productive Hours</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 w-[10%]">
                         <ShieldCheck className="h-5 w-5 text-primary"/>
                         <div>
                              <Badge variant={statusBadgeVariant(docket.status)} className={cn('text-sm', docket.status === 'Approved' && 'bg-green-600')}>{docket.status}</Badge>
