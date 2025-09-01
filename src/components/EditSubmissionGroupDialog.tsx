@@ -105,10 +105,30 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, docket,
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
-  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
+  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(() => {
+      const initialActivity = activities.find(a => a.id === docket.activityId) || null;
+      return initialActivity;
+  });
+
+  const representativeTimesheet = docket.timesheets[0] || {};
 
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
+    defaultValues: {
+        crewDocketId: docket.id,
+        shiftStart: representativeTimesheet.shiftStart ? new Date(representativeTimesheet.shiftStart) : new Date(),
+        shiftEnd: representativeTimesheet.shiftEnd ? new Date(representativeTimesheet.shiftEnd) : new Date(),
+        crewMemberIds: docket.crewMemberIds.filter(id => id !== docket.submittedById),
+        zone: docket.zone,
+        section: docket.section,
+        asset: docket.asset,
+        subAsset: docket.subAsset,
+        activityId: docket.activityId,
+        quantity: docket.quantity || 0,
+        notes: docket.notes || '',
+        productiveHours: representativeTimesheet.productiveHours || 0,
+        unproductiveEntries: representativeTimesheet.unproductiveEntries || [],
+    }
   });
   
   const { fields, append, remove } = useFieldArray({
@@ -160,29 +180,12 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, docket,
   }, [loggedInUser]);
 
   useEffect(() => {
-    if (docket && isOpen && activities.length > 0) {
-        const representativeTimesheet = docket.timesheets[0] || {};
-        
-        form.reset({
-            crewDocketId: docket.id,
-            shiftStart: representativeTimesheet.shiftStart ? new Date(representativeTimesheet.shiftStart) : new Date(),
-            shiftEnd: representativeTimesheet.shiftEnd ? new Date(representativeTimesheet.shiftEnd) : new Date(),
-            crewMemberIds: docket.crewMemberIds.filter(id => id !== docket.submittedById),
-            zone: docket.zone,
-            section: docket.section,
-            asset: docket.asset,
-            subAsset: docket.subAsset,
-            activityId: docket.activityId,
-            quantity: docket.quantity,
-            notes: docket.notes || '',
-            productiveHours: representativeTimesheet.productiveHours || 0,
-            unproductiveEntries: representativeTimesheet.unproductiveEntries || [],
-        });
-
+    if (isOpen && activities.length > 0) {
         const initialActivity = activities.find(a => a.id === docket.activityId) || null;
         setSelectedActivity(initialActivity);
     }
-  }, [docket, isOpen, form, activities]);
+  }, [docket, isOpen, activities]);
+
 
   const onSubmit = async (values: FormSchemaType) => {
     const result = await updateCrewDocket(values);
