@@ -21,7 +21,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Edit, Trash2, PlusCircle, Loader2, ArrowUpDown } from 'lucide-react';
+import { MoreHorizontal, Edit, Trash2, PlusCircle, Loader2, ArrowUpDown, Upload } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel } from './ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
@@ -35,6 +35,7 @@ import * as z from 'zod';
 import { deleteLocation, getLocations, saveLocation } from '@/lib/actions';
 import type { Location } from '@/lib/types';
 import { Checkbox } from './ui/checkbox';
+import LocationImporter from './LocationImporter';
 
 interface LocationConfigProps {
   locations: Location[];
@@ -60,6 +61,7 @@ export default function LocationConfig({ locations: initialLocations }: Location
     const [sorting, setSorting] = React.useState<SortingState>([]);
     
     const [isFormOpen, setIsFormOpen] = React.useState(false);
+    const [isImporterOpen, setIsImporterOpen] = React.useState(false);
     const [isDeleteAlertOpen, setIsDeleteAlertOpen] = React.useState(false);
     const [selectedLocation, setSelectedLocation] = React.useState<LocationRow | null>(null);
     const [isSaving, setIsSaving] = React.useState(false);
@@ -102,6 +104,12 @@ export default function LocationConfig({ locations: initialLocations }: Location
         setSelectedLocation(location);
         setIsDeleteAlertOpen(true);
     };
+    
+    const handleImportFinished = async () => {
+        setIsImporterOpen(false);
+        await refetchData();
+    }
+
 
     const confirmDelete = async () => {
         if (selectedLocation) {
@@ -178,7 +186,11 @@ export default function LocationConfig({ locations: initialLocations }: Location
 
   return (
     <>
-        <div className='flex justify-end py-4'>
+        <div className='flex justify-end gap-2 py-4'>
+            <Button onClick={() => setIsImporterOpen(true)} variant="outline">
+                <Upload className="mr-2 h-4 w-4" />
+                Import from CSV
+            </Button>
             <Button onClick={handleAddNew}>
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Add Location
@@ -224,6 +236,13 @@ export default function LocationConfig({ locations: initialLocations }: Location
             Next
             </Button>
       </div>
+
+        {/* Importer Dialog */}
+        <LocationImporter 
+            isOpen={isImporterOpen} 
+            onOpenChange={setIsImporterOpen} 
+            onImportFinished={handleImportFinished}
+        />
 
         {/* Form Dialog */}
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
@@ -302,4 +321,3 @@ export default function LocationConfig({ locations: initialLocations }: Location
     </>
   );
 }
-

@@ -123,28 +123,31 @@ export async function getSections(): Promise<string[]> {
 
 // Schema for the main timesheet form
 const addCrewDocketSchema = z.object({
-    submittedById: z.string().min(1, "Supervisor is required."),
-    shiftStart: z.coerce.date({ required_error: "A start date is required." }),
-    shiftEnd: z.coerce.date({ required_error: "An end date is required." }),
-    crewMemberIds: z.array(z.string()), // Can be empty if supervisor is only crew member
-    zone: z.string().min(1, "Zone is required."),
-    section: z.string().min(1, "Section is required."),
-    asset: z.string().min(1, "Please select an asset."),
-    subAsset: z.string().min(1, "Please select a sub-asset."),
-    activityId: z.string().min(1, "Please select an activity."),
-    productiveHours: z.coerce.number().min(0, "Productive hours must be a positive number."),
-    quantity: z.coerce.number().min(0, "Quantity is required."),
-    unproductiveEntries: z.array(
-      z.object({
-        reasonId: z.string().min(1, "Please select a reason."),
-        minutes: z.coerce.number().min(1, "Minutes must be greater than 0."),
-      })
-    ).optional(),
-    notes: z.string().optional(),
-  }).refine((data) => data.shiftEnd > data.shiftStart, {
-    message: "End date must be after start date.",
-    path: ["shiftEnd"], 
-  });
+  submittedById: z.string().min(1, "Supervisor is required."),
+  shiftStart: z.coerce.date({ required_error: "A start date is required." }),
+  shiftEnd: z.coerce.date({ required_error: "An end date is required." }),
+  crewMemberIds: z.array(z.string()), // Can be empty if supervisor is only crew member
+  zone: z.string().min(1, "Zone is required."),
+  section: z.string().min(1, "Section is required."),
+  asset: z.string().min(1, "Please select an asset."),
+  subAsset: z.string().min(1, "Please select a sub-asset."),
+  activityId: z.string().min(1, "Please select an activity."),
+  productiveHours: z.any().transform(val => val === '' ? undefined : Number(val)).pipe(z.number({ required_error: "Productive hours are required."}).min(0, "Productive hours must be a positive number.")),
+  quantity: z.any().transform(val => val === '' ? undefined : Number(val)).pipe(z.number({ required_error: "Quantity is required."}).min(0, "Quantity is required.")),
+  unproductiveEntries: z.array(
+    z.object({
+      reasonId: z.string().min(1, "Please select a reason."),
+      minutes: z.coerce.number().min(1, "Minutes must be greater than 0."),
+    })
+  ).optional(),
+  notes: z.string().optional(),
+}).refine((data) => {
+    if (!data.shiftStart || !data.shiftEnd) return true;
+    return data.shiftEnd > data.shiftStart;
+}, {
+    message: "End date/time must be after start date/time.",
+    path: ["shiftEnd"],
+});
 
 export async function addCrewDocket(data: z.infer<typeof addCrewDocketSchema>) {
     const validation = addCrewDocketSchema.safeParse(data);
@@ -743,4 +746,80 @@ export async function deleteUnproductiveReason(id: string) {
     await writeUnproductiveReasons(newReasons);
     revalidatePath('/admin/configuration');
     return { success: true };
+}
+
+const importLocationsSchema = z.object({
+  locations: z.array(z.object({
+    zone: z.string(),
+    section: z.string(),
+  })),
+  deleteMissing: z.boolean(),
+});
+
+export async function importLocations(data: z.infer<typeof importLocationsSchema>) {
+  const validation = importLocationsSchema.safeParse(data);
+  if (!validation.success) {
+    console.error("Import locations validation error:", validation.error.flatten());
+    return { success: false, error: "Invalid data format." };
+  }
+
+  const { locations: newLocationData, deleteMissing } = validation.data;
+  const existingLocations = await readLocations();
+  let updatedCount = 0;
+  let createdCount = 0;
+  let deletedCount = 0;
+
+  // Transform new data into the same structure as existing data
+  const newLocationsMap = new Map<string, string[]>();
+  for (const { zone, section } of newLocationData) {
+    if (!newLocationsMap.has(zone)) {
+      newLocationsMap.set(zone, []);
+    }
+    newLocationsMap.get(zone)!.push(section);
+  }
+
+  const finalLocations: Location[] = [];
+
+  // Process new and existing zones
+  const allZoneKeys = new Set([...existingLocations.map(l => l.zone), ...newLocationsMap.keys()]);
+
+  allZoneKeys.forEach(zone => {
+    const existingZone = existingLocations.find(l => l.zone === zone);
+    const newSections = newLocationsMap.get(zone);
+
+    if (newSections) { // Zone is in the new data
+      if (existingZone) { // Zone exists, update sections
+        const combinedSections = new Set([...existingZone.sections, ...newSections]);
+        const sortedSections = Array.from(combinedSections).sort((a,b) => a.localeCompare(b));
+        
+        updatedCount += sortedSections.length - existingZone.sections.length; // Simplified count for now
+        finalLocations.push({ zone, sections: sortedSections });
+      } else { // New zone, create it
+        createdCount += newSections.length;
+        finalLocations.push({ zone, sections: newSections.sort((a,b) => a.localeCompare(b)) });
+      }
+    } else if (existingZone && !deleteMissing) { // Zone not in new data, but we are not deleting
+      finalLocations.push(existingZone);
+    } else if (existingZone && deleteMissing) {
+      deletedCount += existingZone.sections.length;
+      // Do nothing, effectively deleting the zone
+    }
+  });
+
+
+  await writeLocations(finalLocations.sort((a, b) => a.zone.localeCompare(b.zone)));
+  revalidatePath('/admin/configuration');
+
+  // A more accurate count would require deeper comparison, but this is a good summary.
+  if (updatedCount < 0) updatedCount = 0; // Don't show negative updates
+  
+  return { 
+      success: true, 
+      report: {
+          created: createdCount,
+          updated: updatedCount,
+          deleted: deletedCount,
+          total: finalLocations.flatMap(l => l.sections).length,
+      }
+  };
 }
