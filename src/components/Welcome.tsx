@@ -27,7 +27,7 @@ export default function Welcome({ users }: WelcomeProps) {
   const [damId, setDamId] = useState('');
   const [error, setError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const { login, user, isLoading } = useAuth();
+  const { login, user } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -119,20 +119,6 @@ export default function Welcome({ users }: WelcomeProps) {
     return users.filter(u => u.company === selectedCompany && (u.appRole === 'Crew Supervisor' || u.appRole === 'Subcontractor Admin'));
 
   }, [selectedCompany, users]);
-
-  useEffect(() => {
-    if (user) {
-        if (user.appRole === 'Read Only') {
-            router.push('/reports');
-        } else if (user.appRole === 'MEI Supervisor') {
-            router.push('/timesheet/my-submissions');
-        } else {
-            const isAdmin = user.appRole === 'Admin' || user.appRole === 'Subcontractor Admin';
-            const targetUrl = isAdmin ? '/admin' : '/timesheet';
-            router.push(targetUrl);
-        }
-    }
-  }, [user, router]);
 
   const handleDamIdLogin = (id: string | number) => {
       const parsedId = typeof id === 'string' ? parseInt(id, 10) : id;

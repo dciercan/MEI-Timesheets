@@ -3,7 +3,7 @@
 
 import React, { createContext, useContext, useState, ReactNode, useCallback, useEffect } from 'react';
 import type { User } from '@/lib/types';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 interface AuthContextType {
   user: User | null;
@@ -54,6 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  const pathname = usePathname();
   
   useEffect(() => {
     try {
@@ -70,17 +71,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const handleLoginRedirect = (loggedInUser: User) => {
+    if (loggedInUser.appRole === 'Read Only') {
+        router.push('/reports');
+    } else if (loggedInUser.appRole === 'MEI Supervisor') {
+        router.push('/timesheet/my-submissions');
+    } else {
+        const isAdmin = loggedInUser.appRole === 'Admin' || loggedInUser.appRole === 'Subcontractor Admin';
+        const targetUrl = isAdmin ? '/admin' : '/timesheet';
+        router.push(targetUrl);
+    }
+  }
+
 
   const login = useCallback((userToLogin: User) => {
     setCookie('currentUser', JSON.stringify(userToLogin), 7);
     setUser(userToLogin);
-  }, []);
+    handleLoginRedirect(userToLogin);
+  }, [router]);
 
   const logout = useCallback(() => {
     eraseCookie('currentUser');
     setUser(null);
     router.push('/');
   }, [router]);
+
+  useEffect(() => {
+    if (!isLoading && user && pathname ==='/') {
+        handleLoginRedirect(user);
+    }
+  }, [user, isLoading, pathname, router]);
 
   return (
     <AuthContext.Provider value={{ user, login, logout, isLoading }}>
