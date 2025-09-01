@@ -221,11 +221,11 @@ export default function SupervisorDashboard({ dockets }: SupervisorDashboardProp
                   )}
                   {!isMeiSupervisor && (
                     <AlertDialog>
-                        <AlertDialogTrigger asChild>
+                        <AlertDialogTrigger asChild disabled={!canDelete}>
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                <Button variant="outline" size="icon" className="h-9 w-9" disabled={!canDelete}>
+                                <Button variant="outline" size="icon" className="h-9 w-9">
                                     <Trash2 className="h-4 w-4" />
                                 </Button>
                                 </TooltipTrigger>
