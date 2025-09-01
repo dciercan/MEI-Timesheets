@@ -35,8 +35,8 @@ const formSchema = z.object({
   asset: z.string().min(1, "Please select an asset."),
   subAsset: z.string().min(1, "Please select a sub-asset."),
   activityId: z.string().min(1, "Please select an activity."),
-  productiveHours: z.coerce.number().min(0, "Productive hours must be a positive number."),
-  quantity: z.coerce.number().min(0, "Quantity is required."),
+  productiveHours: z.any().transform(val => val === '' ? undefined : Number(val)).pipe(z.number({ required_error: "Productive hours are required."}).min(0, "Productive hours must be a positive number.")),
+  quantity: z.any().transform(val => val === '' ? undefined : Number(val)).pipe(z.number({ required_error: "Quantity is required."}).min(0, "Quantity is required.")),
   unproductiveEntries: z.array(
     z.object({
       reasonId: z.string().min(1, "Please select a reason."),
@@ -58,39 +58,46 @@ type FormValues = z.infer<typeof formSchema>;
 const DateTimePicker = ({ field, disabled = false }: { field: any, disabled?: boolean }) => {
   const { value, onChange } = field;
 
-  const [timeValue, setTimeValue] = useState(() =>
+  const [dateValue, setDateValue] = useState<Date | undefined>(
+    value && isValid(new Date(value)) ? new Date(value) : undefined
+  );
+  const [timeValue, setTimeValue] = useState<string>(
     value && isValid(new Date(value)) ? format(new Date(value), "HH:mm") : ""
   );
 
   useEffect(() => {
     if (value && isValid(new Date(value))) {
-      const formattedTime = format(new Date(value), "HH:mm");
-      if (formattedTime !== timeValue) {
-        setTimeValue(formattedTime);
+      const newDate = new Date(value);
+      if (!dateValue || !isEqual(newDate, dateValue)) {
+        setDateValue(newDate);
+      }
+      const newTime = format(newDate, "HH:mm");
+      if (newTime !== timeValue) {
+        setTimeValue(newTime);
       }
     } else if (!value) {
+      setDateValue(undefined);
       setTimeValue("");
     }
   }, [value]);
 
   const handleDateChange = (newDate: Date | undefined) => {
-    if (!newDate) {
-      onChange(undefined);
-      return;
-    }
-    
-    const [hours, minutes] = timeValue.split(":").map(Number);
-    const hasValidTime = timeValue && !isNaN(hours) && !isNaN(minutes);
-    
-    if (hasValidTime) {
-        const updatedDate = set(newDate, { hours, minutes, seconds: 0, milliseconds: 0 });
-        onChange(updatedDate);
+    setDateValue(newDate);
+    if (newDate) {
+        if (timeValue) {
+            const [hours, minutes] = timeValue.split(":").map(Number);
+            if (!isNaN(hours) && !isNaN(minutes)) {
+                const updatedDate = set(newDate, { hours, minutes, seconds: 0, milliseconds: 0 });
+                onChange(updatedDate);
+                return;
+            }
+        }
+        // If no time is set, or time is invalid, only update the date part internally but don't call onChange yet.
+        // We let the time input trigger the final combined date-time value.
+        // For the purpose of the form, if there's no time, the value is incomplete.
+         onChange(undefined);
     } else {
-        // If there's no valid time, just update with the date part, but keep time undefined
-        // by passing the raw date object. The time part will be zeroed but we won't set it.
-        // A better approach is to not set the value at all until time is picked.
-        const updatedDate = set(newDate, { hours: 0, minutes: 0, seconds: 0, milliseconds: 0 });
-        onChange(updatedDate);
+      onChange(undefined);
     }
   };
 
@@ -98,14 +105,18 @@ const DateTimePicker = ({ field, disabled = false }: { field: any, disabled?: bo
     const newTimeValue = e.target.value;
     setTimeValue(newTimeValue);
 
-    const baseDate = value && isValid(new Date(value)) ? new Date(value) : new Date();
-    const [hours, minutes] = newTimeValue.split(":").map(Number);
-
-    if (!isNaN(hours) && !isNaN(minutes)) {
-      const updatedDate = set(baseDate, { hours, minutes, seconds: 0, milliseconds: 0 });
-      if (!value || !isEqual(updatedDate, value)) {
-        onChange(updatedDate);
+    if (dateValue) {
+      const [hours, minutes] = newTimeValue.split(":").map(Number);
+      if (!isNaN(hours) && !isNaN(minutes)) {
+        const updatedDate = set(dateValue, { hours, minutes, seconds: 0, milliseconds: 0 });
+        if (!value || !isEqual(updatedDate, value)) {
+          onChange(updatedDate);
+        }
+      } else {
+        onChange(undefined);
       }
+    } else {
+        onChange(undefined);
     }
   };
   
@@ -116,10 +127,10 @@ const DateTimePicker = ({ field, disabled = false }: { field: any, disabled?: bo
           <FormControl>
             <Button
               variant={"outline"}
-              className={cn("w-full pl-3 text-left font-normal", !value && "text-muted-foreground")}
+              className={cn("w-full pl-3 text-left font-normal", !dateValue && "text-muted-foreground")}
               disabled={disabled}
             >
-              {value && isValid(new Date(value)) ? format(new Date(value), "PPP") : <span>Pick a date</span>}
+              {dateValue ? format(dateValue, "PPP") : <span>Pick a date</span>}
               <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
             </Button>
           </FormControl>
@@ -127,7 +138,7 @@ const DateTimePicker = ({ field, disabled = false }: { field: any, disabled?: bo
         <PopoverContent className="w-auto p-0" align="start">
           <Calendar
             mode="single"
-            selected={value ? new Date(value) : undefined}
+            selected={dateValue}
             onSelect={handleDateChange}
             disabled={disabled || ((date) => date > new Date() || date < new Date("2000-01-01"))}
             initialFocus
@@ -215,8 +226,8 @@ function TimesheetFormContent() {
       asset: "",
       subAsset: "",
       activityId: "",
-      productiveHours: 0,
-      quantity: 0,
+      productiveHours: '',
+      quantity: '',
       unproductiveEntries: [],
       notes: "",
       submittedById: "",
@@ -268,14 +279,14 @@ function TimesheetFormContent() {
   useEffect(() => {
     if (searchParams.has('asset') && activities.length > 0) {
       const initialData: { [key: string]: any } = {
-          productiveHours: 0,
-          quantity: 0,
+          productiveHours: '',
+          quantity: '',
       };
       searchParams.forEach((value, key) => {
         if (key === 'crewMemberIds' || key === 'unproductiveEntries') {
             try { initialData[key] = JSON.parse(value); } catch { /* ignore parse error */ }
         } else if (key === 'productiveHours' || key === 'quantity') {
-            initialData[key] = parseFloat(value) || 0;
+            initialData[key] = parseFloat(value) || '';
         } else if (key === 'shiftStart' || key === 'shiftEnd') {
             // Dont copy dates from params
         } else {
@@ -321,8 +332,8 @@ function TimesheetFormContent() {
                 asset: "",
                 subAsset: "",
                 activityId: "",
-                productiveHours: 0,
-                quantity: 0,
+                productiveHours: '',
+                quantity: '',
                 unproductiveEntries: [],
                 notes: "",
                 submittedById: (isSubbieAdmin || canSelectCompany) ? "" : selectedSupervisorId,
@@ -362,7 +373,7 @@ function TimesheetFormContent() {
   return (
     <div className="container mx-auto max-w-4xl py-8 px-4 md:px-6">
       <Form {...form}>
-        <Card className="shadow-lg">
+        <Card className="shadow-lg pb-32">
           <CardHeader>
             <CardTitle className="font-headline text-3xl">New Crew Docket</CardTitle>
             <CardDescription>
@@ -648,20 +659,18 @@ function TimesheetFormContent() {
                   </FormItem>
                 )}
               />
-            </form>
-          </CardContent>
-           <CardFooter>
+
                 <Button 
-                    type="button" 
+                    type="submit" 
                     size="lg" 
                     className="w-full sm:w-auto" 
-                    onClick={form.handleSubmit(onSubmit)}
                     disabled={form.formState.isSubmitting || !selectedSupervisorId}
                 >
                     {form.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Send className="mr-2 h-4 w-4" />}
                     Submit Crew Docket
                 </Button>
-            </CardFooter>
+            </form>
+          </CardContent>
         </Card>
       </Form>
     </div>
@@ -675,3 +684,5 @@ export default function TimesheetForm() {
     </Suspense>
   )
 }
+
+    
