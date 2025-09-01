@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns";
+import { format, set } from "date-fns";
 import { CalendarIcon, PlusCircle, Trash2, Loader2, Send } from "lucide-react";
 import type { Activity, User, UnproductiveReason, Location } from "@/lib/types";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -28,7 +28,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 
 
 const formSchema = z.object({
-  timesheetDate: z.date({ required_error: "A timesheet date is required." }),
+  shiftStart: z.coerce.date({ required_error: "A start date is required." }),
+  shiftEnd: z.coerce.date({ required_error: "An end date is required." }),
   crewMemberIds: z.array(z.string()),
   zone: z.string().min(1, "Zone is required."),
   section: z.string().min(1, "Section is required."),
@@ -45,9 +46,45 @@ const formSchema = z.object({
   ).optional(),
   notes: z.string().optional(),
   submittedById: z.string().min(1, "Supervisor is required."),
+}).refine((data) => data.shiftEnd > data.shiftStart, {
+    message: "End date/time must be after start date/time.",
+    path: ["shiftEnd"],
 });
 
 type FormValues = z.infer<typeof formSchema>;
+
+const DateTimePicker = ({ field }: { field: any }) => {
+    const [date, setDate] = useState<Date | undefined>(field.value ? new Date(field.value) : undefined);
+    const [time, setTime] = useState(field.value ? format(new Date(field.value), 'HH:mm') : '00:00');
+
+    useEffect(() => {
+        if (date) {
+            const [hours, minutes] = time.split(':').map(Number);
+            const newDate = set(date, { hours, minutes });
+            field.onChange(newDate);
+        }
+    }, [date, time, field]);
+
+    return (
+        <div className="flex flex-col gap-2">
+            <Popover>
+                <PopoverTrigger asChild>
+                    <FormControl>
+                        <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
+                            {field.value ? format(new Date(field.value), "PPP") : <span>Pick a date</span>}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                    </FormControl>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={date} onSelect={setDate} disabled={(date) => date > new Date() || date < new Date("2000-01-01")} initialFocus />
+                </PopoverContent>
+            </Popover>
+            <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+        </div>
+    );
+};
+
 
 function TimesheetFormContent() {
   const { toast } = useToast();
@@ -117,7 +154,6 @@ function TimesheetFormContent() {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      timesheetDate: new Date(),
       crewMemberIds: [],
       zone: "",
       section: "",
@@ -167,7 +203,6 @@ function TimesheetFormContent() {
   useEffect(() => {
     if (searchParams.has('asset')) {
       const initialData: { [key: string]: any } = {
-          timesheetDate: new Date(),
           productiveHours: 0,
           quantity: 0,
       };
@@ -176,6 +211,8 @@ function TimesheetFormContent() {
             try { initialData[key] = JSON.parse(value); } catch { /* ignore parse error */ }
         } else if (key === 'productiveHours' || key === 'quantity') {
             initialData[key] = parseFloat(value) || 0;
+        } else if (key === 'shiftStart' || key === 'shiftEnd') {
+            initialData[key] = new Date(value);
         } else {
           initialData[key] = value;
         }
@@ -209,7 +246,6 @@ function TimesheetFormContent() {
                     description: `Created docket ${result.docketId}.`,
                 });
                 form.reset({
-                    timesheetDate: new Date(),
                     crewMemberIds: [],
                     zone: "",
                     section: "",
@@ -329,30 +365,31 @@ function TimesheetFormContent() {
                 )}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
+                 <FormField
                   control={form.control}
-                  name="timesheetDate"
+                  name="shiftStart"
                   render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Timesheet Date</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal",!field.value && "text-muted-foreground")} disabled={!selectedSupervisorId}>
-                              {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(date) => date > new Date() || date < new Date("2000-01-01")} initialFocus />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
+                    <FormItem>
+                        <FormLabel>Start Date/Time</FormLabel>
+                        <DateTimePicker field={field} />
+                        <FormMessage />
                     </FormItem>
                   )}
                 />
                  <FormField
+                  control={form.control}
+                  name="shiftEnd"
+                  render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>End Date/Time</FormLabel>
+                        <DateTimePicker field={field} />
+                        <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+               <FormField
                   control={form.control}
                   name="crewMemberIds"
                   render={() => (
@@ -389,7 +426,6 @@ function TimesheetFormContent() {
                     </FormItem>
                   )}
                 />
-              </div>
 
               <div className="space-y-2">
                 <h3 className="text-lg font-medium font-headline">Location</h3>

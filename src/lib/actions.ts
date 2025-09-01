@@ -9,6 +9,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { cookies } from 'next/headers';
 import { listModels } from 'genkit';
+import { startOfDay } from 'date-fns';
 
 // In a real app, you would use a proper database.
 const crewDocketsDbPath = path.join(process.cwd(), 'src', 'lib', 'crew-dockets.json');
@@ -40,7 +41,7 @@ async function readTimesheets(): Promise<Timesheet[]> {
         await fs.access(timesheetsDbPath);
         const data = await fs.readFile(timesheetsDbPath, 'utf-8');
         if (data.trim() === '') return [];
-        return JSON.parse(data);
+         return JSON.parse(data).map((t: any) => ({ ...t, shiftStart: new Date(t.shiftStart), shiftEnd: new Date(t.shiftEnd) }));
     } catch (error) {
         return [];
     }
@@ -123,7 +124,8 @@ export async function getSections(): Promise<string[]> {
 // Schema for the main timesheet form
 const addCrewDocketSchema = z.object({
     submittedById: z.string().min(1, "Supervisor is required."),
-    timesheetDate: z.coerce.date(),
+    shiftStart: z.coerce.date(),
+    shiftEnd: z.coerce.date(),
     crewMemberIds: z.array(z.string()), // Can be empty if supervisor is only crew member
     zone: z.string().min(1, "Zone is required."),
     section: z.string().min(1, "Section is required."),
@@ -139,6 +141,9 @@ const addCrewDocketSchema = z.object({
       })
     ).optional(),
     notes: z.string().optional(),
+  }).refine((data) => data.shiftEnd > data.shiftStart, {
+    message: "End date must be after start date.",
+    path: ["shiftEnd"], 
   });
 
 export async function addCrewDocket(data: z.infer<typeof addCrewDocketSchema>) {
@@ -149,7 +154,7 @@ export async function addCrewDocket(data: z.infer<typeof addCrewDocketSchema>) {
         return { success: false, error: "Invalid data submitted." };
     }
 
-    const { productiveHours, unproductiveEntries, ...docketData } = validation.data;
+    const { productiveHours, unproductiveEntries, shiftStart, shiftEnd, ...docketData } = validation.data;
     
     const users = await readUsers();
     const supervisor = users.find(u => u.id === docketData.submittedById);
@@ -165,6 +170,7 @@ export async function addCrewDocket(data: z.infer<typeof addCrewDocketSchema>) {
     const newDocket: CrewDocket = {
         id: `CD-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 9)}`,
         ...docketData,
+        timesheetDate: startOfDay(shiftStart),
         company: supervisor.company,
         crewMemberIds: allCrewForSubmission,
         submittedAt: new Date(),
@@ -183,6 +189,8 @@ export async function addCrewDocket(data: z.infer<typeof addCrewDocketSchema>) {
             productiveHours: productiveHours,
             unproductiveEntries: unproductiveEntries || [],
             status: 'Submitted',
+            shiftStart,
+            shiftEnd,
         };
         allTimesheets.unshift(newTimesheet);
     }
@@ -200,7 +208,8 @@ export async function addCrewDocket(data: z.infer<typeof addCrewDocketSchema>) {
 
 const updateCrewDocketSchema = z.object({
   crewDocketId: z.string(),
-  timesheetDate: z.coerce.date(),
+  shiftStart: z.coerce.date(),
+  shiftEnd: z.coerce.date(),
   crewMemberIds: z.array(z.string()),
   zone: z.string().min(1, "Zone is required."),
   section: z.string().min(1, "Section is required."),
@@ -216,6 +225,9 @@ const updateCrewDocketSchema = z.object({
     })
   ).optional(),
   notes: z.string().optional(),
+}).refine((data) => data.shiftEnd > data.shiftStart, {
+    message: "End date must be after start date.",
+    path: ["shiftEnd"],
 });
 
 
@@ -226,7 +238,7 @@ export async function updateCrewDocket(data: z.infer<typeof updateCrewDocketSche
         return { success: false, error: validationResult.error.flatten() };
     }
     
-    const { crewDocketId, productiveHours, unproductiveEntries, ...docketUpdates } = validationResult.data;
+    const { crewDocketId, productiveHours, unproductiveEntries, shiftStart, shiftEnd, ...docketUpdates } = validationResult.data;
     
     const allDockets = await readCrewDockets();
     const allTimesheets = await readTimesheets();
@@ -243,6 +255,7 @@ export async function updateCrewDocket(data: z.infer<typeof updateCrewDocketSche
     const updatedDocket: CrewDocket = {
         ...originalDocket,
         ...docketUpdates,
+        timesheetDate: startOfDay(shiftStart),
         crewMemberIds: allCrewForSubmission,
         // If a rejected docket is edited, it should go back to "Submitted"
         status: originalDocket.status === 'Rejected' ? 'Submitted' : originalDocket.status,
@@ -263,6 +276,8 @@ export async function updateCrewDocket(data: z.infer<typeof updateCrewDocketSche
         productiveHours: productiveHours,
         unproductiveEntries: unproductiveEntries || [],
         status: updatedDocket.status, // Match the docket's new status
+        shiftStart,
+        shiftEnd,
     }));
 
     const finalTimesheets = [...otherTimesheets, ...newTimesheets];
@@ -710,6 +725,4 @@ export async function deleteUnproductiveReason(id: string) {
     revalidatePath('/admin/configuration');
     return { success: true };
 }
-
-
 

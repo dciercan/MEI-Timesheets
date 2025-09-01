@@ -44,6 +44,8 @@ export type Timesheet = {
   productiveHours: number;
   unproductiveEntries: UnproductiveEntry[];
   status: TimesheetStatus;
+  shiftStart: Date;
+  shiftEnd: Date;
 };
 
 export type CrewDocketStatus = 'Submitted' | 'Approved' | 'Rejected' | 'Processed';

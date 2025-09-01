@@ -18,7 +18,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { format, set } from "date-fns";
 import { CalendarIcon, Loader2, PlusCircle, Trash2 } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
 import { Checkbox } from "./ui/checkbox";
@@ -27,7 +27,8 @@ import { useAuth } from "@/hooks/use-auth";
 
 const formSchema = z.object({
   crewDocketId: z.string(),
-  timesheetDate: z.date(),
+  shiftStart: z.coerce.date(),
+  shiftEnd: z.coerce.date(),
   crewMemberIds: z.array(z.string()),
   zone: z.string().min(1, "Zone is required."),
   section: z.string().min(1, "Section is required."),
@@ -43,7 +44,10 @@ const formSchema = z.object({
     })
   ).optional(),
   notes: z.string().optional(),
-});
+}).refine((data) => data.shiftEnd > data.shiftStart, {
+    message: "End date/time must be after start date/time.",
+    path: ["shiftEnd"],
+});;
 
 type FormSchemaType = z.infer<typeof formSchema>;
 
@@ -53,6 +57,47 @@ interface EditSubmissionCrewDialogProps {
     docket: CrewDocketWithDetails;
     onSubmissionUpdated: () => void;
 }
+
+const DateTimePicker = ({ field, disabled }: { field: any, disabled?: boolean }) => {
+    const [date, setDate] = useState<Date | undefined>(field.value ? new Date(field.value) : undefined);
+    const [time, setTime] = useState(field.value ? format(new Date(field.value), 'HH:mm') : '00:00');
+
+    useEffect(() => {
+        if (field.value) {
+            setDate(new Date(field.value));
+            setTime(format(new Date(field.value), 'HH:mm'));
+        }
+    }, [field.value]);
+
+    useEffect(() => {
+        if (date) {
+            const [hours, minutes] = time.split(':').map(Number);
+            const newDate = set(date, { hours, minutes });
+            if (field.value?.getTime() !== newDate.getTime()) {
+              field.onChange(newDate);
+            }
+        }
+    }, [date, time, field]);
+
+    return (
+        <div className="flex flex-col gap-2">
+            <Popover>
+                <PopoverTrigger asChild>
+                    <FormControl>
+                        <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")} disabled={disabled}>
+                            {field.value ? format(new Date(field.value), "PPP") : <span>Pick a date</span>}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                    </FormControl>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={date} onSelect={setDate} disabled={(date) => date > new Date() || date < new Date("2000-01-01")} initialFocus />
+                </PopoverContent>
+            </Popover>
+            <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} disabled={disabled} />
+        </div>
+    );
+};
 
 export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, docket, onSubmissionUpdated }: EditSubmissionCrewDialogProps) {
   const { toast } = useToast();
@@ -120,7 +165,8 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, docket,
         
         form.reset({
             crewDocketId: docket.id,
-            timesheetDate: new Date(docket.timesheetDate),
+            shiftStart: representativeTimesheet.shiftStart ? new Date(representativeTimesheet.shiftStart) : new Date(),
+            shiftEnd: representativeTimesheet.shiftEnd ? new Date(representativeTimesheet.shiftEnd) : new Date(),
             crewMemberIds: docket.crewMemberIds.filter(id => id !== docket.submittedById),
             zone: docket.zone,
             section: docket.section,
@@ -178,64 +224,64 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, docket,
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                <FormField
                   control={form.control}
-                  name="timesheetDate"
+                  name="shiftStart"
                   render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Timesheet Date</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
-                              {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(date) => date > new Date() || date < new Date("2000-01-01")} initialFocus />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
+                    <FormItem>
+                        <FormLabel>Start Date/Time</FormLabel>
+                        <DateTimePicker field={field} />
+                        <FormMessage />
                     </FormItem>
                   )}
                 />
                  <FormField
                   control={form.control}
-                  name="crewMemberIds"
-                  render={() => (
+                  name="shiftEnd"
+                  render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Crew Members (Supervisor is automatically included)</FormLabel>
-                        <ScrollArea className="h-40 w-full rounded-md border p-4">
-                            <div className="space-y-2">
-                            {crewMembers.map((user) => (
-                                <FormField
-                                key={user.id}
-                                control={form.control}
-                                name="crewMemberIds"
-                                render={({ field }) => {
-                                    return (
-                                    <FormItem key={user.id} className="flex flex-row items-start space-x-3 space-y-0">
-                                        <FormControl>
-                                        <Checkbox
-                                            checked={field.value?.includes(user.id)}
-                                            onCheckedChange={(checked) => {
-                                            return checked ? field.onChange([...(field.value || []), user.id]) : field.onChange(field.value?.filter((value) => value !== user.id))
-                                            }}
-                                        />
-                                        </FormControl>
-                                        <FormLabel className="font-normal">{user.fullName} ({user.company})</FormLabel>
-                                    </FormItem>
-                                    )
-                                }}
-                                />
-                            ))}
-                            </div>
-                        </ScrollArea>
-                      <FormMessage />
+                        <FormLabel>End Date/Time</FormLabel>
+                        <DateTimePicker field={field} />
+                        <FormMessage />
                     </FormItem>
                   )}
                 />
             </div>
+
+            <FormField
+              control={form.control}
+              name="crewMemberIds"
+              render={() => (
+                <FormItem>
+                  <FormLabel>Crew Members (Supervisor is automatically included)</FormLabel>
+                    <ScrollArea className="h-40 w-full rounded-md border p-4">
+                        <div className="space-y-2">
+                        {crewMembers.map((user) => (
+                            <FormField
+                            key={user.id}
+                            control={form.control}
+                            name="crewMemberIds"
+                            render={({ field }) => {
+                                return (
+                                <FormItem key={user.id} className="flex flex-row items-start space-x-3 space-y-0">
+                                    <FormControl>
+                                    <Checkbox
+                                        checked={field.value?.includes(user.id)}
+                                        onCheckedChange={(checked) => {
+                                        return checked ? field.onChange([...(field.value || []), user.id]) : field.onChange(field.value?.filter((value) => value !== user.id))
+                                        }}
+                                    />
+                                    </FormControl>
+                                    <FormLabel className="font-normal">{user.fullName} ({user.company})</FormLabel>
+                                </FormItem>
+                                )
+                            }}
+                            />
+                        ))}
+                        </div>
+                    </ScrollArea>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                  <FormField

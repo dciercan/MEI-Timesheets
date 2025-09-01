@@ -80,6 +80,8 @@ export default function SupervisorDashboard({ dockets }: SupervisorDashboardProp
      if (crewDocket.timesheets.length > 0) {
         const representativeTimesheet = crewDocket.timesheets[0];
         params.set('productiveHours', representativeTimesheet.productiveHours.toString());
+        params.set('shiftStart', representativeTimesheet.shiftStart.toISOString());
+        params.set('shiftEnd', representativeTimesheet.shiftEnd.toISOString());
         if (representativeTimesheet.unproductiveEntries) {
             params.set('unproductiveEntries', JSON.stringify(representativeTimesheet.unproductiveEntries));
         }
@@ -133,6 +135,7 @@ export default function SupervisorDashboard({ dockets }: SupervisorDashboardProp
             const productiveHours = docket.timesheets[0]?.productiveHours || 0;
             const canApproveReject = isMeiSupervisor && docket.status === 'Submitted';
             const canEdit = currentUser?.appRole === 'Crew Supervisor' && (docket.status === 'Rejected' || docket.status === 'Submitted');
+            const representativeTimesheet = docket.timesheets[0];
             
             return (
             <AccordionItem value={docket.id} key={docket.id} className="border rounded-lg shadow-sm bg-background">
@@ -275,6 +278,8 @@ export default function SupervisorDashboard({ dockets }: SupervisorDashboardProp
                  <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6 pt-4 border-t">
                     <InfoItem icon={Hash} label="Docket ID" value={docket.id} />
                     <InfoItem icon={Building} label="Company" value={docket.company} />
+                    {representativeTimesheet && <InfoItem icon={Clock} label="Shift Start" value={format(new Date(representativeTimesheet.shiftStart), 'Pp')} />}
+                    {representativeTimesheet && <InfoItem icon={Clock} label="Shift End" value={format(new Date(representativeTimesheet.shiftEnd), 'Pp')} />}
                     <InfoItem icon={Users} label="Crew Members" value={docket.crewMembers.length} />
                     <InfoItem icon={Watch} label="Unproductive Time" value={totalUnproductiveMinutes} badge="minutes per person" />
                     <InfoItem icon={User} label="Supervisor" value={docket.submittedBy?.fullName} />
