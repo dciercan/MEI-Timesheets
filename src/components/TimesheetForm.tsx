@@ -438,6 +438,44 @@ function TimesheetFormContent() {
                     </FormItem>
                   )}
                 />
+                
+                <div className="space-y-2">
+                  <h3 className="text-lg font-medium font-headline">Location</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="zone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Zone</FormLabel>
+                          <Select onValueChange={(value) => { field.onChange(value); form.setValue("section", ""); }} value={field.value} disabled={!selectedSupervisorId}>
+                            <FormControl><SelectTrigger><SelectValue placeholder="Select a zone" /></SelectTrigger></FormControl>
+                            <SelectContent>
+                              {locations.map(loc => <SelectItem key={loc.zone} value={loc.zone}>{loc.zone}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="section"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Section</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value} disabled={!selectedZone}>
+                              <FormControl><SelectTrigger><SelectValue placeholder="Select a section" /></SelectTrigger></FormControl>
+                              <SelectContent>
+                                  {sectionsForSelectedZone.map(section => <SelectItem key={section} value={section}>{section}</SelectItem>)}
+                              </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
 
                 <div className="space-y-2">
                     <h3 className="text-lg font-medium font-headline">Work Details</h3>
@@ -511,43 +549,6 @@ function TimesheetFormContent() {
                     </div>
               </div>
 
-              <div className="space-y-2">
-                <h3 className="text-lg font-medium font-headline">Location</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="zone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Zone</FormLabel>
-                        <Select onValueChange={(value) => { field.onChange(value); form.setValue("section", ""); }} value={field.value} disabled={!selectedSupervisorId}>
-                          <FormControl><SelectTrigger><SelectValue placeholder="Select a zone" /></SelectTrigger></FormControl>
-                          <SelectContent>
-                            {locations.map(loc => <SelectItem key={loc.zone} value={loc.zone}>{loc.zone}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="section"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Section</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value} disabled={!selectedZone}>
-                            <FormControl><SelectTrigger><SelectValue placeholder="Select a section" /></SelectTrigger></FormControl>
-                            <SelectContent>
-                                {sectionsForSelectedZone.map(section => <SelectItem key={section} value={section}>{section}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
 
               <div className="space-y-2">
                 <h3 className="text-lg font-medium font-headline">Unproductive Time (per person)</h3>
@@ -646,3 +647,5 @@ export default function TimesheetForm() {
     </React.Suspense>
   )
 }
+
+    
