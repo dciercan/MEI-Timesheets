@@ -85,7 +85,8 @@ export default function Welcome({ users }: WelcomeProps) {
                       inversionAttempts: "dontInvert",
                   });
                   if (code) {
-                      handleDamIdLogin(code.data);
+                      // For testing: Log in as Emily White (DAMid: 10003) regardless of QR code content
+                      handleDamIdLogin(10003);
                       setIsScanning(false);
                   }
               }
