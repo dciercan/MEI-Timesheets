@@ -8,7 +8,7 @@ import * as z from "zod";
 import { cn } from "@/lib/utils";
 import { addCrewDocket, getActivities, getUsers, getUnproductiveReasons, getLocations } from "@/lib/actions";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -54,23 +54,33 @@ type FormValues = z.infer<typeof formSchema>;
 const DateTimePicker = ({ field }: { field: any }) => {
     const [date, setDate] = useState<Date | undefined>(field.value ? new Date(field.value) : undefined);
     const [time, setTime] = useState(field.value ? format(new Date(field.value), 'HH:mm') : '00:00');
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     useEffect(() => {
         if (field.value) {
-            setDate(new Date(field.value));
-            setTime(format(new Date(field.value), 'HH:mm'));
+            const newDate = new Date(field.value);
+            setDate(newDate);
+            setTime(format(newDate, 'HH:mm'));
         }
     }, [field.value]);
 
     useEffect(() => {
-        if (date) {
+        if (date && isMounted) {
             const [hours, minutes] = time.split(':').map(Number);
             const newDate = set(date, { hours, minutes });
-             if (field.value?.getTime() !== newDate.getTime()) {
+             if (!field.value || field.value.getTime() !== newDate.getTime()) {
                 field.onChange(newDate);
             }
         }
-    }, [date, time, field]);
+    }, [date, time, field, isMounted]);
+
+    if (!isMounted) {
+        return null;
+    }
 
     return (
         <div className="flex flex-col gap-2">
@@ -109,19 +119,21 @@ function TimesheetFormContent() {
 
    useEffect(() => {
     async function fetchData() {
-      const [fetchedUsers, fetchedActivities, fetchedUnproductive, fetchedLocations] = await Promise.all([
-        getUsers(),
-        getActivities(),
-        getUnproductiveReasons(),
-        getLocations(),
-      ]);
-      setAllUsers(fetchedUsers);
-      setActivities(fetchedActivities);
-      setUnproductiveReasons(fetchedUnproductive);
-      setLocations(fetchedLocations);
+      if(loggedInUser) {
+        const [fetchedUsers, fetchedActivities, fetchedUnproductive, fetchedLocations] = await Promise.all([
+          getUsers(loggedInUser),
+          getActivities(),
+          getUnproductiveReasons(),
+          getLocations(),
+        ]);
+        setAllUsers(fetchedUsers);
+        setActivities(fetchedActivities);
+        setUnproductiveReasons(fetchedUnproductive);
+        setLocations(fetchedLocations);
+      }
     }
     fetchData();
-  }, []);
+  }, [loggedInUser]);
 
   const canSelectCompany = loggedInUser?.appRole === 'Admin' || loggedInUser?.appRole === 'MEI Supervisor';
   const isSubbieAdmin = loggedInUser?.appRole === 'Subcontractor Admin';
@@ -590,12 +602,10 @@ function TimesheetFormContent() {
                   </FormItem>
                 )}
               />
-              <CardFooter>
-                 <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={form.formState.isSubmitting || !selectedSupervisorId}>
+               <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={form.formState.isSubmitting || !selectedSupervisorId}>
                     {form.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Send className="mr-2 h-4 w-4" />}
                     Submit Crew Docket
                 </Button>
-              </CardFooter>
             </CardContent>
           </Card>
         </form>
@@ -611,5 +621,3 @@ export default function TimesheetForm() {
     </React.Suspense>
   )
 }
-
-    
