@@ -136,52 +136,52 @@ export default function SupervisorDashboard({ dockets, onDocketDeleted }: Superv
             
             return (
             <AccordionItem value={docket.id} key={docket.id} className="border rounded-lg shadow-sm bg-background">
-              <div className="flex items-center justify-between pl-6 pr-2 py-2">
-                <AccordionTrigger className="flex-grow py-2 hover:no-underline">
-                   <div className="flex-grow flex items-center gap-4 text-left w-full">
-                     <div className="flex items-center gap-3 w-[10%]">
+              <div className="flex flex-col md:flex-row items-center justify-between pl-4 pr-2 py-2">
+                <AccordionTrigger className="flex-grow py-2 hover:no-underline w-full">
+                   <div className="grid grid-cols-2 md:grid-cols-none md:flex flex-grow items-center gap-x-4 gap-y-2 text-left w-full">
+                     <div className="flex items-center gap-3">
                         <Calendar className="h-5 w-5 text-primary"/>
                         <div>
                             <p className="font-semibold text-sm">{format(new Date(docket.timesheetDate), 'dd/MM/yy')}</p>
                             <p className="text-xs text-muted-foreground">Date</p>
                         </div>
                     </div>
-                     <div className="flex items-center gap-3 w-[12%]">
+                     <div className="flex items-center gap-3">
                         <MapPin className="h-5 w-5 text-primary"/>
                         <div>
                             <p className="font-semibold text-sm">{docket.zone} / {docket.section}</p>
                             <p className="text-xs text-muted-foreground">Location</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-3 w-[18%]">
+                    <div className="flex items-center gap-3 col-span-2">
                         <Archive className="h-5 w-5 text-primary"/>
                         <div>
                             <p className="font-semibold text-sm">{docket.asset} / {docket.subAsset}</p>
                             <p className="text-xs text-muted-foreground">Asset / Sub-Asset</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-3 w-[15%]">
+                    <div className="flex items-center gap-3 col-span-2">
                         <Activity className="h-5 w-5 text-primary"/>
                         <div>
                             <p className="font-semibold text-sm">{docket.activity?.activity || 'N/A'}</p>
                             <p className="text-xs text-muted-foreground">Activity</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-3 w-[10%]">
+                    <div className="flex items-center gap-3">
                         <Hash className="h-5 w-5 text-primary"/>
                         <div>
                             <p className="font-semibold text-sm">{`${docket.quantity} ${docket.activity?.activityUom || ''}`.trim()}</p>
                             <p className="text-xs text-muted-foreground">Quantity</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-3 w-[10%]">
+                    <div className="flex items-center gap-3">
                         <Clock className="h-5 w-5 text-primary"/>
                         <div>
                             <p className="font-semibold text-sm">{productiveHours}</p>
                             <p className="text-xs text-muted-foreground">Productive Hours</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-3 w-[10%]">
+                    <div className="flex items-center gap-3">
                         <ShieldCheck className="h-5 w-5 text-primary"/>
                         <div>
                              <Badge variant={statusBadgeVariant(docket.status)} className={cn('text-sm', docket.status === 'Approved' && 'bg-green-600')}>{docket.status}</Badge>
@@ -190,7 +190,7 @@ export default function SupervisorDashboard({ dockets, onDocketDeleted }: Superv
                     </div>
                   </div>
                 </AccordionTrigger>
-                <div className="flex items-center gap-2 pl-4">
+                <div className="flex items-center gap-2 pl-4 md:pl-0 pt-2 md:pt-0 border-t md:border-t-0 md:border-l w-full md:w-auto justify-end md:justify-center md:ml-4">
                   {canApproveReject && (
                     <>
                       <TooltipProvider>
@@ -220,11 +220,9 @@ export default function SupervisorDashboard({ dockets, onDocketDeleted }: Superv
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <AlertDialogTrigger asChild>
-                              <Button asChild variant="outline" size="icon" className="h-9 w-9" disabled={!canDelete}>
+                            <Button asChild variant="outline" size="icon" className="h-9 w-9" disabled={!canDelete}>
                                 <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </AlertDialogTrigger>
+                            </Button>
                           </TooltipTrigger>
                           <TooltipContent>
                             <p>{canDelete ? 'Delete Crew Docket' : 'Cannot delete approved dockets'}</p>
