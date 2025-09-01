@@ -603,13 +603,13 @@ function TimesheetFormContent() {
                 )}
               />
 
+              <div className="pt-4">
+                <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={form.formState.isSubmitting || !selectedSupervisorId}>
+                  {form.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Send className="mr-2 h-4 w-4" />}
+                  Submit Crew Docket
+                </Button>
+              </div>
             </CardContent>
-            <CardFooter>
-              <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={form.formState.isSubmitting || !selectedSupervisorId}>
-                {form.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Send className="mr-2 h-4 w-4" />}
-                Submit Crew Docket
-              </Button>
-            </CardFooter>
           </Card>
         </form>
       </Form>
@@ -647,5 +647,7 @@ export default function TimesheetForm() {
     </React.Suspense>
   )
 }
+
+    
 
     
