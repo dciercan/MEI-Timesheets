@@ -220,8 +220,10 @@ export default function SupervisorDashboard({ dockets, onDocketDeleted }: Superv
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Button asChild variant="outline" size="icon" className="h-9 w-9" disabled={!canDelete}>
-                                <Trash2 className="h-4 w-4" />
+                            <Button variant="outline" size="icon" className="h-9 w-9" disabled={!canDelete} asChild>
+                                <AlertDialogTrigger>
+                                     <Trash2 className="h-4 w-4" />
+                                </AlertDialogTrigger>
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>
