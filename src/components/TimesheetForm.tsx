@@ -439,6 +439,78 @@ function TimesheetFormContent() {
                   )}
                 />
 
+                <div className="space-y-2">
+                    <h3 className="text-lg font-medium font-headline">Work Details</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end pt-4">
+                    <FormField
+                        control={form.control}
+                        name="asset"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Asset</FormLabel>
+                            <Select onValueChange={(value) => { field.onChange(value); form.setValue("subAsset", ""); form.setValue("activityId", ""); setSelectedActivity(null); }} value={field.value} disabled={!selectedSupervisorId}>
+                            <FormControl><SelectTrigger><SelectValue placeholder="Select an asset" /></SelectTrigger></FormControl>
+                            <SelectContent>{assets.map(asset => <SelectItem key={asset} value={asset}>{asset}</SelectItem>)}</SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="subAsset"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Sub Asset</FormLabel>
+                            <Select onValueChange={(value) => { field.onChange(value); form.setValue("activityId", ""); setSelectedActivity(null); }} value={field.value} disabled={!selectedAsset || !selectedSupervisorId}>
+                            <FormControl><SelectTrigger><SelectValue placeholder="Select a sub-asset" /></SelectTrigger></FormControl>
+                            <SelectContent>{subAssets.map(subAsset => <SelectItem key={subAsset} value={subAsset}>{subAsset}</SelectItem>)}</SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="activityId"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Activity</FormLabel>
+                            <Select onValueChange={(value) => { field.onChange(value); setSelectedActivity(activities.find(a => a.id === value) || null); }} value={field.value} disabled={!selectedSubAsset || !selectedSupervisorId}>
+                            <FormControl><SelectTrigger><SelectValue placeholder="Select an activity" /></SelectTrigger></FormControl>
+                            <SelectContent>{filteredActivities.map(act => (<SelectItem key={act.id} value={act.id}>{act.activity}</SelectItem>))}</SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end pt-4">
+                    <FormField
+                        control={form.control}
+                        name="quantity"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Quantity {selectedActivity ? `(${selectedActivity.activityUom})` : ''}</FormLabel>
+                            <FormControl><Input type="number" step="0.1" placeholder="e.g., 25" {...field} disabled={!selectedSupervisorId}/></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="productiveHours"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Productive Hours (per person)</FormLabel>
+                            <FormControl><Input type="number" step="0.1" placeholder="e.g., 8" {...field} disabled={!selectedSupervisorId}/></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    </div>
+              </div>
+
               <div className="space-y-2">
                 <h3 className="text-lg font-medium font-headline">Location</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -470,78 +542,6 @@ function TimesheetFormContent() {
                                 {sectionsForSelectedZone.map(section => <SelectItem key={section} value={section}>{section}</SelectItem>)}
                             </SelectContent>
                         </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <h3 className="text-lg font-medium font-headline">Work Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end pt-4">
-                  <FormField
-                    control={form.control}
-                    name="asset"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Asset</FormLabel>
-                        <Select onValueChange={(value) => { field.onChange(value); form.setValue("subAsset", ""); form.setValue("activityId", ""); setSelectedActivity(null); }} value={field.value} disabled={!selectedSupervisorId}>
-                          <FormControl><SelectTrigger><SelectValue placeholder="Select an asset" /></SelectTrigger></FormControl>
-                          <SelectContent>{assets.map(asset => <SelectItem key={asset} value={asset}>{asset}</SelectItem>)}</SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="subAsset"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Sub Asset</FormLabel>
-                        <Select onValueChange={(value) => { field.onChange(value); form.setValue("activityId", ""); setSelectedActivity(null); }} value={field.value} disabled={!selectedAsset || !selectedSupervisorId}>
-                          <FormControl><SelectTrigger><SelectValue placeholder="Select a sub-asset" /></SelectTrigger></FormControl>
-                          <SelectContent>{subAssets.map(subAsset => <SelectItem key={subAsset} value={subAsset}>{subAsset}</SelectItem>)}</SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="activityId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Activity</FormLabel>
-                        <Select onValueChange={(value) => { field.onChange(value); setSelectedActivity(activities.find(a => a.id === value) || null); }} value={field.value} disabled={!selectedSubAsset || !selectedSupervisorId}>
-                          <FormControl><SelectTrigger><SelectValue placeholder="Select an activity" /></SelectTrigger></FormControl>
-                          <SelectContent>{filteredActivities.map(act => (<SelectItem key={act.id} value={act.id}>{act.activity}</SelectItem>))}</SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end pt-4">
-                   <FormField
-                    control={form.control}
-                    name="quantity"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Quantity {selectedActivity ? `(${selectedActivity.activityUom})` : ''}</FormLabel>
-                        <FormControl><Input type="number" step="0.1" placeholder="e.g., 25" {...field} disabled={!selectedSupervisorId}/></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="productiveHours"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Productive Hours (per person)</FormLabel>
-                        <FormControl><Input type="number" step="0.1" placeholder="e.g., 8" {...field} disabled={!selectedSupervisorId}/></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
