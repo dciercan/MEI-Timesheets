@@ -52,46 +52,41 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 const DateTimePicker = ({ field }: { field: any }) => {
-    const { onChange, value } = field;
-    const [date, setDate] = useState<Date | undefined>(value ? new Date(value) : new Date());
-    const [time, setTime] = useState(value ? format(new Date(value), 'HH:mm') : '00:00');
+    const { value, onChange } = field;
+    const selectedDate = value ? new Date(value) : undefined;
 
-    useEffect(() => {
-        if (value) {
-            const newDate = new Date(value);
-            if (!isEqual(date || 0, newDate)) {
-              setDate(newDate);
-              setTime(format(newDate, 'HH:mm'));
-            }
-        }
-    }, [value, date]);
+    const handleDateChange = (newDate: Date | undefined) => {
+        if (!newDate) return;
+        const currentHours = selectedDate ? selectedDate.getHours() : 0;
+        const currentMinutes = selectedDate ? selectedDate.getMinutes() : 0;
+        const updatedDate = set(newDate, { hours: currentHours, minutes: currentMinutes });
+        onChange(updatedDate);
+    };
 
-    useEffect(() => {
-        if (date) {
-            const [hours, minutes] = time.split(':').map(Number);
-            const newDate = set(date, { hours, minutes });
-            if (!value || !isEqual(value, newDate)) {
-                onChange(newDate);
-            }
-        }
-    }, [date, time, onChange, value]);
+    const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const timeValue = e.target.value;
+        const [hours, minutes] = timeValue.split(':').map(Number);
+        const baseDate = selectedDate || new Date();
+        const updatedDate = set(baseDate, { hours, minutes });
+        onChange(updatedDate);
+    };
     
     return (
         <div className="flex flex-col gap-2">
             <Popover>
                 <PopoverTrigger asChild>
                     <FormControl>
-                        <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
-                            {field.value ? format(new Date(field.value), "PPP") : <span>Pick a date</span>}
+                        <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !value && "text-muted-foreground")}>
+                            {value ? format(new Date(value), "PPP") : <span>Pick a date</span>}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
                     </FormControl>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar mode="single" selected={date} onSelect={setDate} disabled={(date) => date > new Date() || date < new Date("2000-01-01")} initialFocus />
+                    <Calendar mode="single" selected={selectedDate} onSelect={handleDateChange} disabled={(date) => date > new Date() || date < new Date("2000-01-01")} initialFocus />
                 </PopoverContent>
             </Popover>
-            <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+            <Input type="time" value={value ? format(new Date(value), 'HH:mm') : ''} onChange={handleTimeChange} />
         </div>
     );
 };
@@ -307,7 +302,7 @@ function TimesheetFormContent() {
     <div className="container mx-auto max-w-4xl py-8 px-4 md:px-6">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-0">
-          <Card className="shadow-lg">
+          <Card className="shadow-lg pb-12">
             <CardHeader>
               <CardTitle className="font-headline text-3xl">New Crew Docket</CardTitle>
               <CardDescription>
@@ -592,13 +587,11 @@ function TimesheetFormContent() {
                   </FormItem>
                 )}
               />
-            </CardContent>
-            <CardFooter>
-               <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={form.formState.isSubmitting || !selectedSupervisorId}>
+               <Button type="submit" size="lg" className="w-full sm:w-auto mt-6" disabled={form.formState.isSubmitting || !selectedSupervisorId}>
                     {form.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Send className="mr-2 h-4 w-4" />}
                     Submit Crew Docket
                 </Button>
-            </CardFooter>
+            </CardContent>
           </Card>
         </form>
       </Form>
@@ -608,8 +601,10 @@ function TimesheetFormContent() {
 
 export default function TimesheetForm() {
   return (
-    <React.Suspense fallback={<div>Loading...</div>}>
+    <React.Suspense fallback={<div className="container mx-auto max-w-4xl py-8 px-4 md:px-6"><Skeleton className="h-96 w-full" /></div>}>
       <TimesheetFormContent />
     </React.Suspense>
   )
 }
+
+    
