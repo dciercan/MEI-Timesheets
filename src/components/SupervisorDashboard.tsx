@@ -219,27 +219,27 @@ export default function SupervisorDashboard({ dockets, onDocketDeleted }: Superv
                     <AlertDialog>
                         <TooltipProvider>
                              <Tooltip>
-                                <AlertDialogTrigger asChild disabled={!canDelete}>
-                                    <Button variant="outline" size="icon" className="h-9 w-9">
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                </AlertDialogTrigger>
+                                <TooltipTrigger asChild>
+                                  <Button asChild variant="outline" size="icon" className="h-9 w-9" disabled={!canDelete}>
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
                                 <TooltipContent>
                                     <p>{canDelete ? 'Delete Crew Docket' : 'Cannot delete approved dockets'}</p>
                                 </TooltipContent>
                             </Tooltip>
                         </TooltipProvider>
                         <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete this crew docket and all associated timesheets.
-                            </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDeleteCrew(docket.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
-                        </AlertDialogFooter>
+                          <AlertDialogHeader>
+                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                              This action cannot be undone. This will permanently delete this crew docket and all associated timesheets.
+                              </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDeleteCrew(docket.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                          </AlertDialogFooter>
                         </AlertDialogContent>
                     </AlertDialog>
                   )}
