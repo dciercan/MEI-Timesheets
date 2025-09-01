@@ -163,7 +163,7 @@ export async function addCrewDocket(data: z.infer<typeof addCrewDocketSchema>) {
     const allCrewForSubmission = [...new Set([...docketData.crewMemberIds, docketData.submittedById])];
 
     const newDocket: CrewDocket = {
-        id: `CD-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+        id: `CD-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 9)}`,
         ...docketData,
         company: supervisor.company,
         crewMemberIds: allCrewForSubmission,
@@ -175,7 +175,7 @@ export async function addCrewDocket(data: z.infer<typeof addCrewDocketSchema>) {
 
     for (const crewMemberId of allCrewForSubmission) {
         const newTimesheet: Timesheet = {
-            id: `TS-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+            id: `TS-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 9)}`,
             crewDocketId: newDocket.id,
             crewMemberId: crewMemberId,
             company: newDocket.company,
@@ -255,7 +255,7 @@ export async function updateCrewDocket(data: z.infer<typeof updateCrewDocketSche
 
     // Create new timesheets for the updated crew
     const newTimesheets: Timesheet[] = allCrewForSubmission.map(crewMemberId => ({
-        id: `TS-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+        id: `TS-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 9)}`,
         crewDocketId: crewDocketId,
         crewMemberId: crewMemberId,
         company: updatedDocket.company,
@@ -710,5 +710,6 @@ export async function deleteUnproductiveReason(id: string) {
     revalidatePath('/admin/configuration');
     return { success: true };
 }
+
 
 
