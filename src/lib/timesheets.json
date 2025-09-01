@@ -1,5 +1,41 @@
 [
   {
+    "id": "TS-mf0ljj7w-b8of4zy",
+    "crewDocketId": "CD-mf0ljj7w-7uwn8dd",
+    "crewMemberId": "15",
+    "company": "ConstructCo",
+    "submittedById": "15",
+    "productiveHours": 8,
+    "unproductiveEntries": [],
+    "status": "Submitted",
+    "shiftStart": "2025-06-30T20:00:00.000Z",
+    "shiftEnd": "2025-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "TS-mf0ljj7w-snzy6wp",
+    "crewDocketId": "CD-mf0ljj7w-7uwn8dd",
+    "crewMemberId": "10",
+    "company": "ConstructCo",
+    "submittedById": "15",
+    "productiveHours": 8,
+    "unproductiveEntries": [],
+    "status": "Submitted",
+    "shiftStart": "2025-06-30T20:00:00.000Z",
+    "shiftEnd": "2025-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "TS-mf0ljj7w-k7ltpo8",
+    "crewDocketId": "CD-mf0ljj7w-7uwn8dd",
+    "crewMemberId": "1",
+    "company": "ConstructCo",
+    "submittedById": "15",
+    "productiveHours": 8,
+    "unproductiveEntries": [],
+    "status": "Submitted",
+    "shiftStart": "2025-06-30T20:00:00.000Z",
+    "shiftEnd": "2025-07-01T00:00:00.000Z"
+  },
+  {
     "id": "TS-mf0fi78z-1o3w6u3",
     "crewDocketId": "CD-mf0fi78y-lhpkfz5",
     "crewMemberId": "4",

@@ -8,7 +8,7 @@ import * as z from "zod";
 import { cn } from "@/lib/utils";
 import { addCrewDocket, getActivities, getUsers, getUnproductiveReasons, getLocations } from "@/lib/actions";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -23,7 +23,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/hooks/use-auth";
 import { useSearchParams } from "next/navigation";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog";
 
 
 const formSchema = z.object({
@@ -107,10 +106,6 @@ function TimesheetFormContent() {
 
   const [selectedCompany, setSelectedCompany] = useState<string>("");
   const [selectedSupervisorId, setSelectedSupervisorId] = useState<string>("");
-
-  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [formDataToSubmit, setFormDataToSubmit] = useState<FormValues | null>(null);
-
 
    useEffect(() => {
     async function fetchData() {
@@ -240,56 +235,46 @@ function TimesheetFormContent() {
     }
    }, [selectedSupervisorId, form]);
 
-    const handleActualSubmit = async (values: FormValues) => {
-        if (!loggedInUser) {
-            toast({ variant: "destructive", title: "Error", description: "You must be logged in." });
-            return;
-        }
-        try {
-            const result = await addCrewDocket(values);
-
-            if (result.success && result.docketId) {
-                toast({
-                    title: "Crew Docket Submitted!",
-                    description: `Created docket ${result.docketId}.`,
-                });
-                form.reset({
-                    crewMemberIds: [],
-                    zone: "",
-                    section: "",
-                    asset: "",
-                    subAsset: "",
-                    activityId: "",
-                    productiveHours: 0,
-                    quantity: 0,
-                    unproductiveEntries: [],
-                    notes: "",
-                    submittedById: (isSubbieAdmin || canSelectCompany) ? "" : selectedSupervisorId,
-                });
-                if (isSubbieAdmin || canSelectCompany) setSelectedSupervisorId("");
-                if (canSelectCompany) setSelectedCompany("");
-                setSelectedActivity(null);
-            } else {
-                toast({
-                    variant: "destructive",
-                    title: "Submission Failed",
-                    description: result.error || "An unknown error occurred.",
-                });
-            }
-        } catch (error) {
-        console.error("Submission failed:", error);
-        toast({ variant: "destructive", title: "Submission Failed", description: "An unknown error occurred." });
-        } finally {
-            setFormDataToSubmit(null);
-        }
-    }
 
   const onSubmit = async (values: FormValues) => {
-    if (values.quantity === 0 || values.productiveHours === 0) {
-        setFormDataToSubmit(values);
-        setIsConfirmOpen(true);
-    } else {
-        await handleActualSubmit(values);
+    if (!loggedInUser) {
+        toast({ variant: "destructive", title: "Error", description: "You must be logged in." });
+        return;
+    }
+    try {
+        const result = await addCrewDocket(values);
+
+        if (result.success && result.docketId) {
+            toast({
+                title: "Crew Docket Submitted!",
+                description: `Created docket ${result.docketId}.`,
+            });
+            form.reset({
+                crewMemberIds: [],
+                zone: "",
+                section: "",
+                asset: "",
+                subAsset: "",
+                activityId: "",
+                productiveHours: 0,
+                quantity: 0,
+                unproductiveEntries: [],
+                notes: "",
+                submittedById: (isSubbieAdmin || canSelectCompany) ? "" : selectedSupervisorId,
+            });
+            if (isSubbieAdmin || canSelectCompany) setSelectedSupervisorId("");
+            if (canSelectCompany) setSelectedCompany("");
+            setSelectedActivity(null);
+        } else {
+            toast({
+                variant: "destructive",
+                title: "Submission Failed",
+                description: result.error || "An unknown error occurred.",
+            });
+        }
+    } catch (error) {
+    console.error("Submission failed:", error);
+    toast({ variant: "destructive", title: "Submission Failed", description: "An unknown error occurred." });
     }
   };
 
@@ -613,29 +598,6 @@ function TimesheetFormContent() {
           </Card>
         </form>
       </Form>
-      
-      <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                    <AlertDialogTitle>Confirm Submission</AlertDialogTitle>
-                    <AlertDialogDescription>
-                       You are about to submit a docket with 0 for quantity or productive hours. Are you sure you want to proceed?
-                    </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                    <AlertDialogCancel onClick={() => setFormDataToSubmit(null)}>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => {
-                        if (formDataToSubmit) {
-                           handleActualSubmit(formDataToSubmit);
-                        }
-                        setIsConfirmOpen(false);
-                    }}>
-                        Confirm
-                    </AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
-
     </div>
   );
 }
@@ -647,7 +609,5 @@ export default function TimesheetForm() {
     </React.Suspense>
   )
 }
-
-    
 
     
