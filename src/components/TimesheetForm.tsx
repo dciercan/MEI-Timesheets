@@ -321,7 +321,7 @@ function TimesheetFormContent() {
                 Timesheet for: <span className="font-semibold">{selectedSupervisor?.fullName} ({selectedSupervisor?.company})</span>
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+             <CardContent className="space-y-6 pb-24 sm:pb-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {canSelectCompany && (
                   <FormItem>
@@ -373,6 +373,7 @@ function TimesheetFormContent() {
                   />
                 )}
               </div>
+              
               <div className="space-y-2">
                 <h3 className="text-lg font-medium font-headline">Timesheet</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -604,8 +605,8 @@ function TimesheetFormContent() {
               />
 
             </CardContent>
-            <CardFooter>
-              <Button type="submit" size="lg" disabled={form.formState.isSubmitting || !selectedSupervisorId}>
+            <CardFooter className="fixed bottom-0 left-0 right-0 bg-background/90 backdrop-blur-sm p-4 border-t sm:relative sm:bg-transparent sm:backdrop-blur-none sm:p-6 sm:border-t-0">
+              <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={form.formState.isSubmitting || !selectedSupervisorId}>
                 {form.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Send className="mr-2 h-4 w-4" />}
                 Submit Crew Docket
               </Button>
