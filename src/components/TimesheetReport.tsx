@@ -26,7 +26,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowUpDown, Download } from 'lucide-react';
 import type { TimesheetWithDetails, TimesheetStatus } from '@/lib/types';
-import { format } from 'date-fns';
+import { format, differenceInMinutes } from 'date-fns';
 import { Badge } from './ui/badge';
 import { cn } from '@/lib/utils';
 import Papa from 'papaparse';
@@ -94,10 +94,10 @@ export default function TimesheetReport({ timesheets }: TimesheetReportProps) {
         id: 'totalHours',
         header: 'Total Hours',
         cell: ({ row }) => {
-            const productiveHours = row.original.productiveHours || 0;
-            const unproductiveMinutes = row.original.unproductiveEntries?.reduce((acc, entry) => acc + entry.minutes, 0) || 0;
-            const unproductiveHours = unproductiveMinutes / 60;
-            const totalHours = productiveHours + unproductiveHours;
+            const shiftStart = new Date(row.original.shiftStart);
+            const shiftEnd = new Date(row.original.shiftEnd);
+            const diffMins = differenceInMinutes(shiftEnd, shiftStart);
+            const totalHours = diffMins / 60;
             return totalHours.toFixed(2);
         }
     },
@@ -132,8 +132,12 @@ export default function TimesheetReport({ timesheets }: TimesheetReportProps) {
     const dataToExport = table.getFilteredRowModel().rows.map(row => {
       const productiveHours = row.original.productiveHours || 0;
       const unproductiveMinutes = row.original.unproductiveEntries?.reduce((acc, entry) => acc + entry.minutes, 0) || 0;
-      const unproductiveHours = unproductiveMinutes / 60;
-      const totalHours = productiveHours + unproductiveHours;
+      
+      const shiftStart = new Date(row.original.shiftStart);
+      const shiftEnd = new Date(row.original.shiftEnd);
+      const diffMins = differenceInMinutes(shiftEnd, shiftStart);
+      const totalHours = diffMins / 60;
+
         return {
             'TS ID': row.original.id,
             'CD ID': row.original.crewDocketId,
@@ -233,4 +237,5 @@ export default function TimesheetReport({ timesheets }: TimesheetReportProps) {
     </>
   );
 }
+
 
