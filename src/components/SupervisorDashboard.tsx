@@ -76,17 +76,11 @@ export default function SupervisorDashboard({ dockets, onDocketDeleted }: Superv
      params.set('subAsset', crewDocket.subAsset);
      params.set('activityId', crewDocket.activityId);
      params.set('notes', crewDocket.notes || '');
-     params.set('quantity', crewDocket.quantity.toString());
 
-     // Assuming timesheets array is not empty and all have same hours/unproductive
      if (crewDocket.timesheets.length > 0) {
         const representativeTimesheet = crewDocket.timesheets[0];
-        params.set('productiveHours', representativeTimesheet.productiveHours.toString());
         params.set('shiftStart', representativeTimesheet.shiftStart.toISOString());
         params.set('shiftEnd', representativeTimesheet.shiftEnd.toISOString());
-        if (representativeTimesheet.unproductiveEntries) {
-            params.set('unproductiveEntries', JSON.stringify(representativeTimesheet.unproductiveEntries));
-        }
      }
      
      const crewIds = crewDocket.crewMemberIds.filter(id => id !== crewDocket.submittedById) || [];
@@ -225,11 +219,11 @@ export default function SupervisorDashboard({ dockets, onDocketDeleted }: Superv
                     <AlertDialog>
                         <TooltipProvider>
                              <Tooltip>
-                                <TooltipTrigger asChild disabled={!canDelete}>
+                                <AlertDialogTrigger asChild disabled={!canDelete}>
                                     <Button variant="outline" size="icon" className="h-9 w-9">
                                         <Trash2 className="h-4 w-4" />
                                     </Button>
-                                </TooltipTrigger>
+                                </AlertDialogTrigger>
                                 <TooltipContent>
                                     <p>{canDelete ? 'Delete Crew Docket' : 'Cannot delete approved dockets'}</p>
                                 </TooltipContent>
