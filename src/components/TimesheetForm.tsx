@@ -373,29 +373,32 @@ function TimesheetFormContent() {
                   />
                 )}
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                 <FormField
-                  control={form.control}
-                  name="shiftStart"
-                  render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Start Date/Time</FormLabel>
-                        <DateTimePicker field={field} />
-                        <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                 <FormField
-                  control={form.control}
-                  name="shiftEnd"
-                  render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>End Date/Time</FormLabel>
-                        <DateTimePicker field={field} />
-                        <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <div className="space-y-2">
+                <h3 className="text-lg font-medium font-headline">Timesheet</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="shiftStart"
+                    render={({ field }) => (
+                      <FormItem>
+                          <FormLabel>Start Date/Time</FormLabel>
+                          <DateTimePicker field={field} />
+                          <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="shiftEnd"
+                    render={({ field }) => (
+                      <FormItem>
+                          <FormLabel>End Date/Time</FormLabel>
+                          <DateTimePicker field={field} />
+                          <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
 
                <FormField
