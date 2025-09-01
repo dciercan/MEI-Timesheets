@@ -9,7 +9,6 @@ import { useAuth } from "@/hooks/use-auth";
 export default function ReportsPage() {
   const { user } = useAuth();
 
-  const isSparkAdmin = user?.appRole === 'Admin';
   const isSparkUser = user?.appRole === 'Admin' || user?.appRole === 'MEI Supervisor' || user?.appRole === 'Read Only';
   const isSubbieAdmin = user?.appRole === 'Subcontractor Admin';
   const isSubbieSupervisor = user?.appRole === 'Crew Supervisor';
@@ -67,24 +66,6 @@ export default function ReportsPage() {
 
         {(isSubbieAdmin || isSubbieSupervisor) && user && (
             <>
-              <Card className="shadow-lg hover:shadow-xl transition-shadow">
-                <Link href="/reports/my-company-submissions" className="block">
-                    <CardHeader>
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                        <div className="p-3 bg-primary/10 rounded-full">
-                            <Building className="h-6 w-6 text-primary" />
-                        </div>
-                        <div>
-                            <CardTitle className="font-headline text-xl">All {user.company} Crew Dockets</CardTitle>
-                            <CardDescription>A log of all crew dockets from your company.</CardDescription>
-                        </div>
-                        </div>
-                        <ChevronRight className="h-6 w-6 text-muted-foreground" />
-                    </div>
-                    </CardHeader>
-                </Link>
-              </Card>
                <Card className="shadow-lg hover:shadow-xl transition-shadow">
                 <Link href="/reports/crew-activity" className="block">
                     <CardHeader>

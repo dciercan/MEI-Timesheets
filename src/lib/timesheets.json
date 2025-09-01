@@ -1,1 +1,98 @@
-[]
+[
+  {
+    "id": "TS-mf1r0f7f-thgk1x1",
+    "crewDocketId": "CD-mf1r0f7f-gs3xxh2",
+    "crewMemberId": "4",
+    "company": "BuildIt",
+    "submittedById": "4",
+    "productiveHours": 7,
+    "unproductiveEntries": [
+      {
+        "reasonId": "unprod-01",
+        "minutes": 30
+      },
+      {
+        "reasonId": "unprod-04",
+        "minutes": 30
+      }
+    ],
+    "status": "Submitted",
+    "shiftStart": "2025-09-01T00:25:00.000Z",
+    "shiftEnd": "2025-09-01T10:25:00.000Z"
+  },
+  {
+    "id": "TS-mf1r0f7f-qptcbtu",
+    "crewDocketId": "CD-mf1r0f7f-gs3xxh2",
+    "crewMemberId": "3",
+    "company": "BuildIt",
+    "submittedById": "4",
+    "productiveHours": 7,
+    "unproductiveEntries": [
+      {
+        "reasonId": "unprod-01",
+        "minutes": 30
+      },
+      {
+        "reasonId": "unprod-04",
+        "minutes": 30
+      }
+    ],
+    "status": "Submitted",
+    "shiftStart": "2025-09-01T00:25:00.000Z",
+    "shiftEnd": "2025-09-01T10:25:00.000Z"
+  },
+  {
+    "id": "TS-mf1r0f7f-rzgp7mv",
+    "crewDocketId": "CD-mf1r0f7f-gs3xxh2",
+    "crewMemberId": "13",
+    "company": "BuildIt",
+    "submittedById": "4",
+    "productiveHours": 7,
+    "unproductiveEntries": [
+      {
+        "reasonId": "unprod-01",
+        "minutes": 30
+      },
+      {
+        "reasonId": "unprod-04",
+        "minutes": 30
+      }
+    ],
+    "status": "Submitted",
+    "shiftStart": "2025-09-01T00:25:00.000Z",
+    "shiftEnd": "2025-09-01T10:25:00.000Z"
+  },
+  {
+    "id": "TS-mf1r0f7f-fi9g0we",
+    "crewDocketId": "CD-mf1r0f7f-gs3xxh2",
+    "crewMemberId": "9",
+    "company": "BuildIt",
+    "submittedById": "4",
+    "productiveHours": 7,
+    "unproductiveEntries": [
+      {
+        "reasonId": "unprod-01",
+        "minutes": 30
+      },
+      {
+        "reasonId": "unprod-04",
+        "minutes": 30
+      }
+    ],
+    "status": "Submitted",
+    "shiftStart": "2025-09-01T00:25:00.000Z",
+    "shiftEnd": "2025-09-01T10:25:00.000Z"
+  },
+  {
+    "id": "TS-mf1qsojn-lns1k28",
+    "crewDocketId": "CD-mf1qsojn-akg1z66",
+    "crewMemberId": "4",
+    "company": "BuildIt",
+    "submittedById": "4",
+    "productiveHours": 8,
+    "unproductiveEntries": [],
+    "status": "Submitted",
+    "shiftStart": "2025-08-31T00:02:00.000Z",
+    "shiftEnd": "2025-08-31T10:02:00.000Z"
+  }
+]
