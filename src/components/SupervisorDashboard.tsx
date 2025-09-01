@@ -46,7 +46,8 @@ export default function SupervisorDashboard({ dockets }: SupervisorDashboardProp
   };
 
   const handleDeleteCrew = async (crewId: string) => {
-    const result = await deleteCrewDocket(crewId);
+    if (!currentUser) return;
+    const result = await deleteCrewDocket(currentUser.id, crewId);
     if (result.success) {
       toast({ title: "Crew Docket deleted." });
       router.refresh();
@@ -221,20 +222,20 @@ export default function SupervisorDashboard({ dockets }: SupervisorDashboardProp
                   )}
                   {!isMeiSupervisor && (
                     <AlertDialog>
-                        <AlertDialogTrigger asChild disabled={!canDelete}>
                         <TooltipProvider>
-                            <Tooltip>
+                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                <Button variant="outline" size="icon" className="h-9 w-9">
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
+                                    <AlertDialogTrigger asChild>
+                                        <Button variant="outline" size="icon" className="h-9 w-9" disabled={!canDelete}>
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </AlertDialogTrigger>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                <p>{canDelete ? 'Delete Crew Docket' : 'Cannot delete approved dockets'}</p>
+                                    <p>{canDelete ? 'Delete Crew Docket' : 'Cannot delete approved dockets'}</p>
                                 </TooltipContent>
                             </Tooltip>
-                            </TooltipProvider>
-                        </AlertDialogTrigger>
+                        </TooltipProvider>
                         <AlertDialogContent>
                         <AlertDialogHeader>
                             <AlertDialogTitle>Are you sure?</AlertDialogTitle>

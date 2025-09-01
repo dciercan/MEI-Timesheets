@@ -124,8 +124,8 @@ export async function getSections(): Promise<string[]> {
 // Schema for the main timesheet form
 const addCrewDocketSchema = z.object({
     submittedById: z.string().min(1, "Supervisor is required."),
-    shiftStart: z.coerce.date(),
-    shiftEnd: z.coerce.date(),
+    shiftStart: z.coerce.date({ required_error: "A start date is required." }),
+    shiftEnd: z.coerce.date({ required_error: "An end date is required." }),
     crewMemberIds: z.array(z.string()), // Can be empty if supervisor is only crew member
     zone: z.string().min(1, "Zone is required."),
     section: z.string().min(1, "Section is required."),
@@ -292,9 +292,28 @@ export async function updateCrewDocket(data: z.infer<typeof updateCrewDocketSche
 }
 
 
-export async function deleteCrewDocket(crewDocketId: string) {
+export async function deleteCrewDocket(requestingUserId: string, crewDocketId: string) {
     const allDockets = await readCrewDockets();
     const allTimesheets = await readTimesheets();
+    const allUsers = await readUsers();
+
+    const docketToDelete = allDockets.find(d => d.id === crewDocketId);
+    if (!docketToDelete) {
+        return { success: false, error: "Crew docket not found." };
+    }
+
+    const currentUser = allUsers.find(u => u.id === requestingUserId);
+    if (!currentUser) {
+        return { success: false, error: "Requesting user not found." };
+    }
+
+    const isOwner = docketToDelete.submittedById === currentUser.id;
+    const isAdmin = currentUser.appRole === 'Admin';
+    const isDeletableStatus = ['Submitted', 'Rejected'].includes(docketToDelete.status);
+
+    if (!isAdmin && !(isOwner && isDeletableStatus)) {
+        return { success: false, error: "Permission denied. You cannot delete this docket." };
+    }
 
     const filteredDockets = allDockets.filter(d => d.id !== crewDocketId);
     const filteredTimesheets = allTimesheets.filter(t => t.crewDocketId !== crewDocketId);
@@ -725,4 +744,3 @@ export async function deleteUnproductiveReason(id: string) {
     revalidatePath('/admin/configuration');
     return { success: true };
 }
-
