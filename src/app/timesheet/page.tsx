@@ -3,10 +3,11 @@
 import TimesheetForm from "@/components/TimesheetForm";
 import React from 'react';
 import { Skeleton } from "@/components/ui/skeleton";
+import ClientOnly from "@/components/ClientOnly";
 
 export default function TimesheetPage() {
   return (
-    <React.Suspense fallback={
+    <ClientOnly fallback={
       <div className="container mx-auto max-w-4xl py-8 px-4 md:px-6 space-y-6">
         <Skeleton className="h-10 w-1/3" />
         <Skeleton className="h-8 w-1/2" />
@@ -18,6 +19,6 @@ export default function TimesheetPage() {
       </div>
     }>
       <TimesheetForm />
-    </React.Suspense>
+    </ClientOnly>
   );
 }

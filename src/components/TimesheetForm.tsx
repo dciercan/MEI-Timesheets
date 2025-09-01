@@ -8,7 +8,7 @@ import * as z from "zod";
 import { cn } from "@/lib/utils";
 import { addCrewDocket, getActivities, getUsers, getUnproductiveReasons, getLocations } from "@/lib/actions";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -52,36 +52,29 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 const DateTimePicker = ({ field }: { field: any }) => {
-    const [date, setDate] = useState<Date | undefined>(field.value ? new Date(field.value) : undefined);
+    const [date, setDate] = useState<Date | undefined>(field.value ? new Date(field.value) : new Date());
     const [time, setTime] = useState(field.value ? format(new Date(field.value), 'HH:mm') : '00:00');
-    const [isMounted, setIsMounted] = useState(false);
-
-    useEffect(() => {
-        setIsMounted(true);
-    }, []);
 
     useEffect(() => {
         if (field.value) {
             const newDate = new Date(field.value);
-            setDate(newDate);
-            setTime(format(newDate, 'HH:mm'));
+            if (date?.getTime() !== newDate.getTime()) {
+              setDate(newDate);
+              setTime(format(newDate, 'HH:mm'));
+            }
         }
-    }, [field.value]);
+    }, [field.value, date]);
 
     useEffect(() => {
-        if (date && isMounted) {
+        if (date) {
             const [hours, minutes] = time.split(':').map(Number);
             const newDate = set(date, { hours, minutes });
              if (!field.value || field.value.getTime() !== newDate.getTime()) {
                 field.onChange(newDate);
             }
         }
-    }, [date, time, field, isMounted]);
-
-    if (!isMounted) {
-        return null;
-    }
-
+    }, [date, time, field]);
+    
     return (
         <div className="flex flex-col gap-2">
             <Popover>
