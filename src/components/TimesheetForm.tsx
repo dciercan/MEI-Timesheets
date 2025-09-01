@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, Suspense } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -61,7 +61,10 @@ const DateTimePicker = ({ field }: { field: any }) => {
         const currentHours = selectedDate ? selectedDate.getHours() : 0;
         const currentMinutes = selectedDate ? selectedDate.getMinutes() : 0;
         const updatedDate = set(newDate, { hours: currentHours, minutes: currentMinutes });
-        onChange(updatedDate);
+        
+        if (!value || !isEqual(updatedDate, value)) {
+            onChange(updatedDate);
+        }
     };
 
     const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -69,7 +72,10 @@ const DateTimePicker = ({ field }: { field: any }) => {
         const [hours, minutes] = timeValue.split(':').map(Number);
         const baseDate = selectedDate || new Date();
         const updatedDate = set(baseDate, { hours, minutes });
-        onChange(updatedDate);
+
+        if (!value || !isEqual(updatedDate, value)) {
+            onChange(updatedDate);
+        }
     };
     
     return (
@@ -229,7 +235,7 @@ function TimesheetFormContent() {
         if (activity) setSelectedActivity(activity);
       }
     }
-  }, [searchParams, activities, form]);
+  }, [searchParams, activities, form.reset]);
 
    useEffect(() => {
     if (selectedSupervisorId) {
@@ -303,14 +309,15 @@ function TimesheetFormContent() {
     <div className="container mx-auto max-w-4xl py-8 px-4 md:px-6">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-0">
-          <Card className="shadow-lg pb-12">
+          <Card className="shadow-lg">
             <CardHeader>
               <CardTitle className="font-headline text-3xl">New Crew Docket</CardTitle>
               <CardDescription>
                 Timesheet for: <span className="font-semibold">{selectedSupervisor?.fullName} ({selectedSupervisor?.company})</span>
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent>
+                <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {canSelectCompany && (
                   <FormItem>
@@ -588,11 +595,14 @@ function TimesheetFormContent() {
                   </FormItem>
                 )}
               />
-               <Button type="submit" size="lg" className="w-full sm:w-auto mt-6" disabled={form.formState.isSubmitting || !selectedSupervisorId}>
+              </div>
+            </CardContent>
+            <CardFooter>
+                 <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={form.formState.isSubmitting || !selectedSupervisorId}>
                     {form.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Send className="mr-2 h-4 w-4" />}
                     Submit Crew Docket
                 </Button>
-            </CardContent>
+            </CardFooter>
           </Card>
         </form>
       </Form>
@@ -602,11 +612,8 @@ function TimesheetFormContent() {
 
 export default function TimesheetForm() {
   return (
-    <React.Suspense fallback={<div className="container mx-auto max-w-4xl py-8 px-4 md:px-6"><Skeleton className="h-96 w-full" /></div>}>
+    <Suspense fallback={<div className="container mx-auto max-w-4xl py-8 px-4 md:px-6"><Skeleton className="h-96 w-full" /></div>}>
       <TimesheetFormContent />
-    </React.Suspense>
+    </Suspense>
   )
 }
-
-    
-    
