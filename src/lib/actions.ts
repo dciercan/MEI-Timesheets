@@ -750,8 +750,8 @@ export async function deleteUnproductiveReason(id: string) {
 
 const importLocationsSchema = z.object({
   locations: z.array(z.object({
-    zone: z.string(),
-    section: z.string(),
+    zone: z.string().trim().min(1),
+    section: z.string().trim().min(1),
   })),
   deleteMissing: z.boolean(),
 });
@@ -760,20 +760,19 @@ export async function importLocations(data: z.infer<typeof importLocationsSchema
     const validation = importLocationsSchema.safeParse(data);
     if (!validation.success) {
       console.error("Import locations validation error:", validation.error.flatten());
-      return { success: false, error: "Invalid data format." };
+      return { success: false, error: "Invalid data format. Ensure 'zone' and 'section' columns are mapped and every row has a value." };
     }
   
-    const { locations: newLocationData, deleteMissing } = validation.data;
+    const { locations: importedRows, deleteMissing } = validation.data;
     const existingLocations = await readLocations();
+    const existingSectionCount = existingLocations.reduce((sum, loc) => sum + loc.sections.length, 0);
 
     const newLocationsMap = new Map<string, Set<string>>();
-    for (const { zone, section } of newLocationData) {
-        if (zone && section) { // Basic validation
-            if (!newLocationsMap.has(zone)) {
-                newLocationsMap.set(zone, new Set());
-            }
-            newLocationsMap.get(zone)!.add(section);
+    for (const { zone, section } of importedRows) {
+        if (!newLocationsMap.has(zone)) {
+            newLocationsMap.set(zone, new Set());
         }
+        newLocationsMap.get(zone)!.add(section);
     }
 
     let finalLocations: Location[];
@@ -795,13 +794,11 @@ export async function importLocations(data: z.infer<typeof importLocationsSchema
 
         // Add new locations to the map
         for (const [zone, sections] of newLocationsMap.entries()) {
-            if (!mergedLocationsMap.has(zone)) {
-                mergedLocationsMap.set(zone, new Set());
-            }
-            const existingSections = mergedLocationsMap.get(zone)!;
+            const existingSections = mergedLocationsMap.get(zone) || new Set();
             for (const section of sections) {
                 existingSections.add(section);
             }
+            mergedLocationsMap.set(zone, existingSections);
         }
         
         finalLocations = Array.from(mergedLocationsMap.entries()).map(([zone, sections]) => ({
@@ -817,26 +814,32 @@ export async function importLocations(data: z.infer<typeof importLocationsSchema
     revalidatePath('/admin/configuration');
   
     // For reporting, we recalculate counts based on what actually happened.
-    const existingTotal = existingLocations.reduce((sum, loc) => sum + loc.sections.length, 0);
-    const finalTotal = finalLocations.reduce((sum, loc) => sum + loc.sections.length, 0);
+    const finalSectionCount = finalLocations.reduce((sum, loc) => sum + loc.sections.length, 0);
 
     let createdCount = 0;
+    let deletedCount = 0;
+
     if (deleteMissing) {
-        createdCount = finalTotal; // In a replace, all final records are 'new' in a sense.
+        // If we replaced the data, compare old and new sets
+        const existingSections = new Set(existingLocations.flatMap(l => `${l.zone}::${l.sections.join(',')}`));
+        const finalSections = new Set(finalLocations.flatMap(l => `${l.zone}::${l.sections.join(',')}`));
+        
+        createdCount = finalSectionCount; // All final sections are considered "created" in a replace operation
+        deletedCount = existingSectionCount; // All old sections are considered "deleted"
     } else {
-        createdCount = Math.max(0, finalTotal - existingTotal);
+        // If merging, the number created is the difference in total counts
+        createdCount = Math.max(0, finalSectionCount - existingSectionCount);
     }
     
-    const deletedCount = deleteMissing ? Math.max(0, existingTotal - finalTotal) : 0;
-    const updatedCount = 0; // Simplified; precise update tracking is complex.
-
     return { 
         success: true, 
         report: {
             created: createdCount,
-            updated: updatedCount,
+            updated: 0, // Simplified, no direct update logic
             deleted: deletedCount,
-            total: finalTotal,
+            total: finalSectionCount,
         }
     };
 }
+
+    
