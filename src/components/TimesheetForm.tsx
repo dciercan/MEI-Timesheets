@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
-import { format, set, isEqual } from "date-fns";
+import { format, set, isEqual, addHours } from "date-fns";
 import { CalendarIcon, PlusCircle, Trash2, Loader2, Send } from "lucide-react";
 import type { Activity, User, UnproductiveReason, Location } from "@/lib/types";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -52,15 +52,15 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-const DateTimePicker = ({ field }: { field: any }) => {
+const DateTimePicker = ({ field, disabled = false }: { field: any, disabled?: boolean }) => {
     const { value, onChange } = field;
     const selectedDate = value ? new Date(value) : undefined;
+    const timeValue = selectedDate ? format(selectedDate, 'HH:mm') : '';
 
     const handleDateChange = (newDate: Date | undefined) => {
         if (!newDate) return;
-        const currentHours = selectedDate ? selectedDate.getHours() : 0;
-        const currentMinutes = selectedDate ? selectedDate.getMinutes() : 0;
-        const updatedDate = set(newDate, { hours: currentHours, minutes: currentMinutes });
+        const [currentHours, currentMinutes] = timeValue.split(':').map(Number);
+        const updatedDate = set(newDate, { hours: isNaN(currentHours) ? 0 : currentHours, minutes: isNaN(currentMinutes) ? 0 : currentMinutes });
         
         if (!value || !isEqual(updatedDate, value)) {
             onChange(updatedDate);
@@ -68,8 +68,8 @@ const DateTimePicker = ({ field }: { field: any }) => {
     };
 
     const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const timeValue = e.target.value;
-        const [hours, minutes] = timeValue.split(':').map(Number);
+        const newTimeValue = e.target.value;
+        const [hours, minutes] = newTimeValue.split(':').map(Number);
         const baseDate = selectedDate || new Date();
         const updatedDate = set(baseDate, { hours, minutes });
 
@@ -83,17 +83,17 @@ const DateTimePicker = ({ field }: { field: any }) => {
             <Popover>
                 <PopoverTrigger asChild>
                     <FormControl>
-                        <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !value && "text-muted-foreground")}>
+                        <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !value && "text-muted-foreground")} disabled={disabled}>
                             {value ? format(new Date(value), "PPP") : <span>Pick a date</span>}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
                     </FormControl>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar mode="single" selected={selectedDate} onSelect={handleDateChange} disabled={(date) => date > new Date() || date < new Date("2000-01-01")} initialFocus />
+                    <Calendar mode="single" selected={selectedDate} onSelect={handleDateChange} disabled={disabled || ((date) => date > new Date() || date < new Date("2000-01-01"))} initialFocus />
                 </PopoverContent>
             </Popover>
-            <Input type="time" value={value ? format(new Date(value), 'HH:mm') : ''} onChange={handleTimeChange} />
+            <Input type="time" value={timeValue} onChange={handleTimeChange} disabled={disabled}/>
         </div>
     );
 };
@@ -165,6 +165,8 @@ function TimesheetFormContent() {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      shiftStart: undefined,
+      shiftEnd: undefined,
       crewMemberIds: [],
       zone: "",
       section: "",
@@ -178,6 +180,20 @@ function TimesheetFormContent() {
       submittedById: "",
     },
   });
+  
+  const shiftStartValue = form.watch('shiftStart');
+
+  useEffect(() => {
+    if (shiftStartValue) {
+        const newEndDate = addHours(shiftStartValue, 10);
+        if (!form.getValues('shiftEnd') || form.getValues('shiftEnd')?.getTime() !== newEndDate.getTime()) {
+             form.setValue('shiftEnd', newEndDate, { shouldValidate: true });
+        }
+    } else {
+        form.setValue('shiftEnd', undefined);
+    }
+  }, [shiftStartValue, form]);
+
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -223,7 +239,7 @@ function TimesheetFormContent() {
         } else if (key === 'productiveHours' || key === 'quantity') {
             initialData[key] = parseFloat(value) || 0;
         } else if (key === 'shiftStart' || key === 'shiftEnd') {
-            initialData[key] = new Date(value);
+            // Dont copy dates from params
         } else {
           initialData[key] = value;
         }
@@ -308,7 +324,7 @@ function TimesheetFormContent() {
   return (
     <div className="container mx-auto max-w-4xl py-8 px-4 md:px-6">
       <Form {...form}>
-        <Card className="shadow-lg">
+        <Card className="shadow-lg pb-32">
           <CardHeader>
             <CardTitle className="font-headline text-3xl">New Crew Docket</CardTitle>
             <CardDescription>
@@ -389,7 +405,7 @@ function TimesheetFormContent() {
                     render={({ field }) => (
                       <FormItem>
                           <FormLabel>End Date/Time</FormLabel>
-                          <DateTimePicker field={field} />
+                          <DateTimePicker field={field} disabled={!shiftStartValue} />
                           <FormMessage />
                       </FormItem>
                     )}
@@ -594,6 +610,7 @@ function TimesheetFormContent() {
                   </FormItem>
                 )}
               />
+              <Button type="submit" className="hidden">Submit</Button>
             </form>
           </CardContent>
            <CardFooter>
@@ -622,4 +639,3 @@ export default function TimesheetForm() {
   )
 }
 
-    
