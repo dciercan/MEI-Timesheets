@@ -57,10 +57,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   
   useEffect(() => {
+    // This effect runs only on the client
     try {
       const userCookie = getCookie('currentUser');
       if (userCookie) {
-        setUser(JSON.parse(userCookie));
+        const loggedInUser = JSON.parse(userCookie);
+        setUser(loggedInUser);
+        if (pathname === '/') {
+           handleLoginRedirect(loggedInUser, true);
+        }
       }
     } catch (e) {
         // Corrupted cookie, clear it
@@ -69,16 +74,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
         setIsLoading(false);
     }
-  }, []);
+  }, []); // Empty dependency array ensures this runs once on mount
 
-  const handleLoginRedirect = (loggedInUser: User) => {
+  const handleLoginRedirect = (loggedInUser: User, replace = false) => {
+    let targetUrl: string;
     if (loggedInUser.appRole === 'Read Only') {
-        router.push('/reports');
+        targetUrl = '/reports';
     } else if (loggedInUser.appRole === 'MEI Supervisor') {
-        router.push('/timesheet/my-submissions');
+        targetUrl = '/timesheet/my-submissions';
     } else {
         const isAdmin = loggedInUser.appRole === 'Admin' || loggedInUser.appRole === 'Subcontractor Admin';
-        const targetUrl = isAdmin ? '/admin' : '/timesheet';
+        targetUrl = isAdmin ? '/admin' : '/timesheet';
+    }
+    
+    if(replace) {
+        router.replace(targetUrl);
+    } else {
         router.push(targetUrl);
     }
   }
@@ -95,12 +106,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     router.push('/');
   }, [router]);
-
-  useEffect(() => {
-    if (!isLoading && user && pathname ==='/') {
-        handleLoginRedirect(user);
-    }
-  }, [user, isLoading, pathname, router]);
 
   return (
     <AuthContext.Provider value={{ user, login, logout, isLoading }}>
