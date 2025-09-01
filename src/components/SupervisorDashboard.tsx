@@ -135,6 +135,7 @@ export default function SupervisorDashboard({ dockets }: SupervisorDashboardProp
             const productiveHours = docket.timesheets[0]?.productiveHours || 0;
             const canApproveReject = isMeiSupervisor && docket.status === 'Submitted';
             const canEdit = currentUser?.appRole === 'Crew Supervisor' && (docket.status === 'Rejected' || docket.status === 'Submitted');
+            const canDelete = currentUser?.appRole === 'Crew Supervisor' && (docket.status === 'Rejected' || docket.status === 'Submitted');
             const representativeTimesheet = docket.timesheets[0];
             
             return (
@@ -224,12 +225,12 @@ export default function SupervisorDashboard({ dockets }: SupervisorDashboardProp
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                <Button variant="outline" size="icon" className="h-9 w-9">
+                                <Button variant="outline" size="icon" className="h-9 w-9" disabled={!canDelete}>
                                     <Trash2 className="h-4 w-4" />
                                 </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                <p>Delete Crew Docket</p>
+                                <p>{canDelete ? 'Delete Crew Docket' : 'Cannot delete approved dockets'}</p>
                                 </TooltipContent>
                             </Tooltip>
                             </TooltipProvider>
