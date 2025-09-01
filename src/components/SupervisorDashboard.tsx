@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import type { CrewDocketWithDetails, CrewDocketStatus } from "@/lib/types";
 import { deleteCrewDocket, updateDocketStatus } from "@/lib/actions";
 import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns";
+import { format, differenceInMinutes } from "date-fns";
 import { useRouter } from 'next/navigation';
 import { Calendar, Users, Activity, Clock, Hash, Trash2, Copy, Edit, FileText, ListTodo, MapPin, Watch, ShieldCheck, CheckCircle, XCircle, Building, User, Archive } from 'lucide-react';
 import InfoItem from './InfoItem';
@@ -293,9 +293,10 @@ export default function SupervisorDashboard({ dockets, onDocketDeleted }: Superv
                         </TableHeader>
                         <TableBody>
                         {docket.timesheets.map((entry) => {
-                            const totalUnproductiveMinutesForEntry = entry.unproductiveEntries?.reduce((total, u) => total + u.minutes, 0) || 0;
-                            const totalUnproductiveHoursForEntry = totalUnproductiveMinutesForEntry / 60;
-                            const totalHours = entry.productiveHours + totalUnproductiveHoursForEntry;
+                            const shiftStart = new Date(entry.shiftStart);
+                            const shiftEnd = new Date(entry.shiftEnd);
+                            const diffMins = differenceInMinutes(shiftEnd, shiftStart);
+                            const totalHours = diffMins / 60;
                             const crewMember = docket.crewMembers.find(cm => cm.id === entry.crewMemberId);
                             return (
                                 <TableRow key={entry.id}>
