@@ -209,7 +209,7 @@ function TimesheetFormContent() {
   }, [selectedZone, locations]);
 
   useEffect(() => {
-    if (searchParams.has('asset')) {
+    if (searchParams.has('asset') && activities.length > 0) {
       const initialData: { [key: string]: any } = {
           productiveHours: 0,
           quantity: 0,
@@ -232,7 +232,7 @@ function TimesheetFormContent() {
         if (activity) setSelectedActivity(activity);
       }
     }
-  }, [searchParams, form, activities]);
+  }, [searchParams, activities]);
 
    useEffect(() => {
     if (selectedSupervisorId) {
@@ -614,3 +614,5 @@ export default function TimesheetForm() {
     </React.Suspense>
   )
 }
+
+    
