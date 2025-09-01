@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
-import { format, set } from "date-fns";
+import { format, set, isEqual } from "date-fns";
 import { CalendarIcon, PlusCircle, Trash2, Loader2, Send } from "lucide-react";
 import type { Activity, User, UnproductiveReason, Location } from "@/lib/types";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -54,26 +54,27 @@ type FormValues = z.infer<typeof formSchema>;
 const DateTimePicker = ({ field }: { field: any }) => {
     const [date, setDate] = useState<Date | undefined>(field.value ? new Date(field.value) : new Date());
     const [time, setTime] = useState(field.value ? format(new Date(field.value), 'HH:mm') : '00:00');
+    const { onChange, value } = field;
 
     useEffect(() => {
-        if (field.value) {
-            const newDate = new Date(field.value);
-            if (date?.getTime() !== newDate.getTime()) {
+        if (value) {
+            const newDate = new Date(value);
+            if (!isEqual(date || 0, newDate)) {
               setDate(newDate);
               setTime(format(newDate, 'HH:mm'));
             }
         }
-    }, [field.value, date]);
+    }, [value, date]);
 
     useEffect(() => {
         if (date) {
             const [hours, minutes] = time.split(':').map(Number);
             const newDate = set(date, { hours, minutes });
-             if (!field.value || field.value.getTime() !== newDate.getTime()) {
-                field.onChange(newDate);
+             if (!value || !isEqual(value, newDate)) {
+                onChange(newDate);
             }
         }
-    }, [date, time, field]);
+    }, [date, time, onChange, value]);
     
     return (
         <div className="flex flex-col gap-2">
@@ -232,7 +233,7 @@ function TimesheetFormContent() {
         if (activity) setSelectedActivity(activity);
       }
     }
-  }, [searchParams, activities]);
+  }, [searchParams, activities, form]);
 
    useEffect(() => {
     if (selectedSupervisorId) {
@@ -306,7 +307,7 @@ function TimesheetFormContent() {
     <div className="container mx-auto max-w-4xl py-8 px-4 md:px-6">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-0">
-          <Card className="shadow-lg pb-20">
+          <Card className="shadow-lg">
             <CardHeader>
               <CardTitle className="font-headline text-3xl">New Crew Docket</CardTitle>
               <CardDescription>
@@ -595,11 +596,13 @@ function TimesheetFormContent() {
                   </FormItem>
                 )}
               />
+            </CardContent>
+            <CardFooter>
                <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={form.formState.isSubmitting || !selectedSupervisorId}>
                     {form.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Send className="mr-2 h-4 w-4" />}
                     Submit Crew Docket
                 </Button>
-            </CardContent>
+            </CardFooter>
           </Card>
         </form>
       </Form>
@@ -614,5 +617,3 @@ export default function TimesheetForm() {
     </React.Suspense>
   )
 }
-
-    
