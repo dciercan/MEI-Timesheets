@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
-import { format, set, isEqual, addHours } from "date-fns";
+import { format, set, isEqual, addHours, isValid, parse } from "date-fns";
 import { CalendarIcon, PlusCircle, Trash2, Loader2, Send } from "lucide-react";
 import type { Activity, User, UnproductiveReason, Location } from "@/lib/types";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -53,50 +53,89 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 const DateTimePicker = ({ field, disabled = false }: { field: any, disabled?: boolean }) => {
-    const { value, onChange } = field;
-    const selectedDate = value ? new Date(value) : undefined;
-    const timeValue = selectedDate ? format(selectedDate, 'HH:mm') : '';
+  const { value, onChange } = field;
 
-    const handleDateChange = (newDate: Date | undefined) => {
-        if (!newDate) return;
-        const [currentHours, currentMinutes] = timeValue.split(':').map(Number);
-        const updatedDate = set(newDate, { hours: isNaN(currentHours) ? 0 : currentHours, minutes: isNaN(currentMinutes) ? 0 : currentMinutes });
-        
-        if (!value || !isEqual(updatedDate, value)) {
-            onChange(updatedDate);
-        }
-    };
+  // Use local state for the time string to avoid re-renders
+  const [timeValue, setTimeValue] = useState(() =>
+    value && isValid(new Date(value)) ? format(new Date(value), "HH:mm") : ""
+  );
 
-    const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const newTimeValue = e.target.value;
-        const [hours, minutes] = newTimeValue.split(':').map(Number);
-        const baseDate = selectedDate || new Date();
-        const updatedDate = set(baseDate, { hours, minutes });
+  useEffect(() => {
+    // Sync local time state if the external form value changes
+    if (value && isValid(new Date(value))) {
+      const formattedTime = format(new Date(value), "HH:mm");
+      if (formattedTime !== timeValue) {
+        setTimeValue(formattedTime);
+      }
+    } else if (!value) {
+      setTimeValue("");
+    }
+  }, [value]);
 
-        if (!value || !isEqual(updatedDate, value)) {
-            onChange(updatedDate);
-        }
-    };
+  const handleDateChange = (newDate: Date | undefined) => {
+    if (!newDate) {
+      onChange(undefined);
+      return;
+    }
+    // Parse time from state, if it's a valid HH:mm format
+    const [hours, minutes] = timeValue.split(":").map(Number);
+    const hasValidTime = !isNaN(hours) && !isNaN(minutes);
     
-    return (
-        <div className="flex flex-col gap-2">
-            <Popover>
-                <PopoverTrigger asChild>
-                    <FormControl>
-                        <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !value && "text-muted-foreground")} disabled={disabled}>
-                            {value ? format(new Date(value), "PPP") : <span>Pick a date</span>}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                    </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar mode="single" selected={selectedDate} onSelect={handleDateChange} disabled={disabled || ((date) => date > new Date() || date < new Date("2000-01-01"))} initialFocus />
-                </PopoverContent>
-            </Popover>
-            <Input type="time" value={timeValue} onChange={handleTimeChange} disabled={disabled}/>
-        </div>
-    );
+    // Combine new date with existing time, or just set the date part if time is invalid/not set
+    const updatedDate = hasValidTime ? set(newDate, { hours, minutes, seconds: 0, milliseconds: 0 }) : set(newDate, {hours: 0, minutes: 0, seconds: 0, milliseconds: 0});
+    
+    onChange(updatedDate);
+  };
+
+  const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newTimeValue = e.target.value;
+    setTimeValue(newTimeValue);
+
+    const baseDate = value && isValid(new Date(value)) ? new Date(value) : new Date();
+    const [hours, minutes] = newTimeValue.split(":").map(Number);
+
+    if (!isNaN(hours) && !isNaN(minutes)) {
+      const updatedDate = set(baseDate, { hours, minutes, seconds: 0, milliseconds: 0 });
+      if (!value || !isEqual(updatedDate, value)) {
+        onChange(updatedDate);
+      }
+    } else if (value) {
+       // If time is cleared, we can reflect this by setting the value to undefined
+       // This depends on desired behavior: should clearing time clear the whole field?
+       // For now, let's keep the date part. A more complex implementation could be used.
+    }
+  };
+  
+  return (
+    <div className="flex flex-col gap-2">
+      <Popover>
+        <PopoverTrigger asChild>
+          <FormControl>
+            <Button
+              variant={"outline"}
+              className={cn("w-full pl-3 text-left font-normal", !value && "text-muted-foreground")}
+              disabled={disabled}
+            >
+              {value && isValid(new Date(value)) ? format(new Date(value), "PPP") : <span>Pick a date</span>}
+              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+            </Button>
+          </FormControl>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={value ? new Date(value) : undefined}
+            onSelect={handleDateChange}
+            disabled={disabled || ((date) => date > new Date() || date < new Date("2000-01-01"))}
+            initialFocus
+          />
+        </PopoverContent>
+      </Popover>
+      <Input type="time" value={timeValue} onChange={handleTimeChange} disabled={disabled} />
+    </div>
+  );
 };
+
 
 
 function TimesheetFormContent() {
@@ -184,13 +223,14 @@ function TimesheetFormContent() {
   const shiftStartValue = form.watch('shiftStart');
 
   useEffect(() => {
-    if (shiftStartValue) {
-        const newEndDate = addHours(shiftStartValue, 10);
-        if (!form.getValues('shiftEnd') || form.getValues('shiftEnd')?.getTime() !== newEndDate.getTime()) {
-             form.setValue('shiftEnd', newEndDate, { shouldValidate: true });
-        }
-    } else {
-        form.setValue('shiftEnd', undefined);
+    if (shiftStartValue && isValid(shiftStartValue)) {
+      const tenHoursLater = addHours(shiftStartValue, 10);
+      const endDateToSet = set(tenHoursLater, { hours: 0, minutes: 0, seconds: 0, milliseconds: 0 });
+  
+      const currentShiftEnd = form.getValues('shiftEnd');
+      if (!currentShiftEnd || !isValid(currentShiftEnd) || !isEqual(set(currentShiftEnd, { hours: 0, minutes: 0, seconds: 0, milliseconds: 0 }), endDateToSet)) {
+        form.setValue('shiftEnd', endDateToSet, { shouldValidate: false, shouldDirty: true });
+      }
     }
   }, [shiftStartValue, form]);
 
@@ -324,7 +364,7 @@ function TimesheetFormContent() {
   return (
     <div className="container mx-auto max-w-4xl py-8 px-4 md:px-6">
       <Form {...form}>
-        <Card className="shadow-lg pb-32">
+        <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="font-headline text-3xl">New Crew Docket</CardTitle>
             <CardDescription>
@@ -639,3 +679,4 @@ export default function TimesheetForm() {
   )
 }
 
+    
