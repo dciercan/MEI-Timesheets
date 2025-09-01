@@ -23,9 +23,10 @@ import { useAuth } from '@/hooks/use-auth';
 
 interface SupervisorDashboardProps {
   dockets: CrewDocketWithDetails[];
+  onDocketDeleted: (docketId: string) => void;
 }
 
-export default function SupervisorDashboard({ dockets }: SupervisorDashboardProps) {
+export default function SupervisorDashboard({ dockets, onDocketDeleted }: SupervisorDashboardProps) {
   const { toast } = useToast();
   const router = useRouter();
   const { user: currentUser } = useAuth();
@@ -50,7 +51,7 @@ export default function SupervisorDashboard({ dockets }: SupervisorDashboardProp
     const result = await deleteCrewDocket(currentUser.id, crewId);
     if (result.success) {
       toast({ title: "Crew Docket deleted." });
-      router.refresh();
+      onDocketDeleted(crewId); // Use the callback to update parent state
     } else {
       toast({ variant: "destructive", title: "Error", description: result.error });
     }
@@ -224,12 +225,10 @@ export default function SupervisorDashboard({ dockets }: SupervisorDashboardProp
                     <AlertDialog>
                         <TooltipProvider>
                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <AlertDialogTrigger asChild>
-                                        <Button variant="outline" size="icon" className="h-9 w-9" disabled={!canDelete}>
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    </AlertDialogTrigger>
+                                <TooltipTrigger asChild disabled={!canDelete}>
+                                    <Button variant="outline" size="icon" className="h-9 w-9">
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
                                     <p>{canDelete ? 'Delete Crew Docket' : 'Cannot delete approved dockets'}</p>

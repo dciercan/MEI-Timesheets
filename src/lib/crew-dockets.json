@@ -18,25 +18,5 @@
     "company": "BuildIt",
     "submittedAt": "2025-09-01T01:16:28.595Z",
     "status": "Submitted"
-  },
-  {
-    "id": "CD-mf0eh8bu-iw78751",
-    "submittedById": "4",
-    "timesheetDate": "2025-09-01T00:47:08.743Z",
-    "crewMemberIds": [
-      "8",
-      "3",
-      "4"
-    ],
-    "zone": "S1",
-    "section": "M011",
-    "asset": "Lights",
-    "subAsset": "Tunnel Lighting",
-    "activityId": "act-nc-15",
-    "quantity": 25,
-    "notes": "",
-    "company": "BuildIt",
-    "submittedAt": "2025-09-01T00:47:43.722Z",
-    "status": "Submitted"
   }
 ]

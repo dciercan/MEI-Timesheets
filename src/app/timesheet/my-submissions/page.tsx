@@ -28,6 +28,10 @@ export default function SupervisorSubmissionsPage() {
         }
     }, [user, isAuthLoading]);
 
+    const handleDocketDeleted = (docketId: string) => {
+        setDockets(currentDockets => currentDockets.filter(docket => docket.id !== docketId));
+    }
+
     if (isAuthLoading || isLoading) {
         return (
             <div className="container mx-auto max-w-screen-2xl py-8 px-4 md:px-6">
@@ -46,7 +50,7 @@ export default function SupervisorSubmissionsPage() {
     
     return (
         <div className="container mx-auto max-w-screen-2xl py-8 px-4 md:px-6">
-            <SupervisorDashboard dockets={dockets} />
+            <SupervisorDashboard dockets={dockets} onDocketDeleted={handleDocketDeleted}/>
         </div>
     );
 }
