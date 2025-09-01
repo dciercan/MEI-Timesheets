@@ -54,10 +54,6 @@ export default function CrewActivityReport({ dockets }: CrewActivityReportProps)
         accessorKey: 'id',
         header: 'Docket ID',
     },
-     { 
-        accessorKey: 'company', 
-        header: 'Company',
-    },
     {
         accessorKey: 'timesheetDate',
         header: 'Date',
@@ -66,6 +62,10 @@ export default function CrewActivityReport({ dockets }: CrewActivityReportProps)
     { 
         accessorKey: 'submittedBy.fullName', 
         header: 'Supervisor',
+    },
+    { 
+        accessorKey: 'company', 
+        header: 'Company',
     },
     { accessorKey: 'zone', header: 'Zone' },
     { accessorKey: 'section', header: 'Section' },
@@ -127,9 +127,9 @@ export default function CrewActivityReport({ dockets }: CrewActivityReportProps)
         const unproductiveMinutes = row.original.timesheets[0]?.unproductiveEntries?.reduce((total, entry) => total + entry.minutes, 0) || 0;
         return {
             'Docket ID': row.original.id,
-            'Company': row.original.company,
             'Date': format(new Date(row.original.timesheetDate), 'dd/MM/yy'),
             'Supervisor': row.original.submittedBy?.fullName || 'N/A',
+            'Company': row.original.company,
             'Zone': row.original.zone,
             'Section': row.original.section,
             'Asset': row.original.asset,
