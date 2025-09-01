@@ -23,7 +23,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/hooks/use-auth";
 import { useSearchParams } from "next/navigation";
-import { Skeleton } from "./ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 
 
 const formSchema = z.object({
@@ -235,7 +235,7 @@ function TimesheetFormContent() {
         if (activity) setSelectedActivity(activity);
       }
     }
-  }, [searchParams, activities, form.reset]);
+  }, [searchParams, activities, form]);
 
    useEffect(() => {
     if (selectedSupervisorId) {
@@ -309,7 +309,7 @@ function TimesheetFormContent() {
     <div className="container mx-auto max-w-4xl py-8 px-4 md:px-6">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-0">
-          <Card className="shadow-lg">
+          <Card className="shadow-lg pb-32">
             <CardHeader>
               <CardTitle className="font-headline text-3xl">New Crew Docket</CardTitle>
               <CardDescription>
@@ -595,14 +595,12 @@ function TimesheetFormContent() {
                   </FormItem>
                 )}
               />
-              </div>
-            </CardContent>
-            <CardFooter>
-                 <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={form.formState.isSubmitting || !selectedSupervisorId}>
+                <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={form.formState.isSubmitting || !selectedSupervisorId}>
                     {form.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Send className="mr-2 h-4 w-4" />}
                     Submit Crew Docket
                 </Button>
-            </CardFooter>
+              </div>
+            </CardContent>
           </Card>
         </form>
       </Form>
@@ -617,3 +615,5 @@ export default function TimesheetForm() {
     </Suspense>
   )
 }
+
+    
