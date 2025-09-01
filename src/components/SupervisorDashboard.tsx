@@ -77,12 +77,6 @@ export default function SupervisorDashboard({ dockets, onDocketDeleted }: Superv
      params.set('activityId', crewDocket.activityId);
      params.set('notes', crewDocket.notes || '');
 
-     if (crewDocket.timesheets.length > 0) {
-        const representativeTimesheet = crewDocket.timesheets[0];
-        params.set('shiftStart', representativeTimesheet.shiftStart.toISOString());
-        params.set('shiftEnd', representativeTimesheet.shiftEnd.toISOString());
-     }
-     
      const crewIds = crewDocket.crewMemberIds.filter(id => id !== crewDocket.submittedById) || [];
      if (crewIds.length > 0) {
         params.set('crewMemberIds', JSON.stringify(crewIds));
