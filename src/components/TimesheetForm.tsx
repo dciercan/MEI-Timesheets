@@ -24,6 +24,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/hooks/use-auth";
 import { useSearchParams } from "next/navigation";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog";
 
 
 const formSchema = z.object({
@@ -46,6 +47,8 @@ const formSchema = z.object({
   submittedById: z.string().min(1, "Supervisor is required."),
 });
 
+type FormValues = z.infer<typeof formSchema>;
+
 function TimesheetFormContent() {
   const { toast } = useToast();
   const { user: loggedInUser } = useAuth();
@@ -59,6 +62,10 @@ function TimesheetFormContent() {
 
   const [selectedCompany, setSelectedCompany] = useState<string>("");
   const [selectedSupervisorId, setSelectedSupervisorId] = useState<string>("");
+
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [formDataToSubmit, setFormDataToSubmit] = useState<FormValues | null>(null);
+
 
    useEffect(() => {
     async function fetchData() {
@@ -107,7 +114,7 @@ function TimesheetFormContent() {
     }
   }, [loggedInUser, isSubbieAdmin]);
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       timesheetDate: new Date(),
@@ -117,7 +124,7 @@ function TimesheetFormContent() {
       asset: "",
       subAsset: "",
       activityId: "",
-      productiveHours: 8,
+      productiveHours: 0,
       quantity: 0,
       unproductiveEntries: [],
       notes: "",
@@ -142,7 +149,7 @@ function TimesheetFormContent() {
   }, [selectedAsset, activities]);
 
   useEffect(() => {
-    if (subAssets.length === 1) {
+    if (subAssets.length === 1 && form.getValues('subAsset') === '') {
       form.setValue("subAsset", subAssets[0]);
     }
   }, [subAssets, form]);
@@ -161,6 +168,8 @@ function TimesheetFormContent() {
     if (searchParams.has('asset')) {
       const initialData: { [key: string]: any } = {
           timesheetDate: new Date(),
+          productiveHours: 0,
+          quantity: 0,
       };
       searchParams.forEach((value, key) => {
         if (key === 'crewMemberIds' || key === 'unproductiveEntries') {
@@ -186,46 +195,57 @@ function TimesheetFormContent() {
     }
    }, [selectedSupervisorId, form]);
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    if (!loggedInUser) {
-        toast({ variant: "destructive", title: "Error", description: "You must be logged in." });
-        return;
-    }
-    try {
-        const result = await addCrewDocket(values);
-
-        if (result.success && result.docketId) {
-             toast({
-                title: "Crew Docket Submitted!",
-                description: `Created docket ${result.docketId}.`,
-            });
-            form.reset({
-                timesheetDate: new Date(),
-                crewMemberIds: [],
-                zone: "",
-                section: "",
-                asset: "",
-                subAsset: "",
-                activityId: "",
-                productiveHours: 8,
-                quantity: 0,
-                unproductiveEntries: [],
-                notes: "",
-                submittedById: (isSubbieAdmin || canSelectCompany) ? "" : selectedSupervisorId,
-            });
-            if (isSubbieAdmin || canSelectCompany) setSelectedSupervisorId("");
-            if (canSelectCompany) setSelectedCompany("");
-            setSelectedActivity(null);
-        } else {
-             toast({
-                variant: "destructive",
-                title: "Submission Failed",
-                description: result.error || "An unknown error occurred.",
-             });
+    const handleActualSubmit = async (values: FormValues) => {
+        if (!loggedInUser) {
+            toast({ variant: "destructive", title: "Error", description: "You must be logged in." });
+            return;
         }
-    } catch (error) {
-      console.error("Submission failed:", error);
-      toast({ variant: "destructive", title: "Submission Failed", description: "An unknown error occurred." });
+        try {
+            const result = await addCrewDocket(values);
+
+            if (result.success && result.docketId) {
+                toast({
+                    title: "Crew Docket Submitted!",
+                    description: `Created docket ${result.docketId}.`,
+                });
+                form.reset({
+                    timesheetDate: new Date(),
+                    crewMemberIds: [],
+                    zone: "",
+                    section: "",
+                    asset: "",
+                    subAsset: "",
+                    activityId: "",
+                    productiveHours: 0,
+                    quantity: 0,
+                    unproductiveEntries: [],
+                    notes: "",
+                    submittedById: (isSubbieAdmin || canSelectCompany) ? "" : selectedSupervisorId,
+                });
+                if (isSubbieAdmin || canSelectCompany) setSelectedSupervisorId("");
+                if (canSelectCompany) setSelectedCompany("");
+                setSelectedActivity(null);
+            } else {
+                toast({
+                    variant: "destructive",
+                    title: "Submission Failed",
+                    description: result.error || "An unknown error occurred.",
+                });
+            }
+        } catch (error) {
+        console.error("Submission failed:", error);
+        toast({ variant: "destructive", title: "Submission Failed", description: "An unknown error occurred." });
+        } finally {
+            setFormDataToSubmit(null);
+        }
+    }
+
+  const onSubmit = async (values: FormValues) => {
+    if (values.quantity === 0 || values.productiveHours === 0) {
+        setFormDataToSubmit(values);
+        setIsConfirmOpen(true);
+    } else {
+        await handleActualSubmit(values);
     }
   };
 
@@ -544,6 +564,29 @@ function TimesheetFormContent() {
           </Card>
         </form>
       </Form>
+      
+      <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Confirm Submission</AlertDialogTitle>
+                    <AlertDialogDescription>
+                       You are about to submit a docket with 0 for quantity or productive hours. Are you sure you want to proceed?
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel onClick={() => setFormDataToSubmit(null)}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => {
+                        if (formDataToSubmit) {
+                           handleActualSubmit(formDataToSubmit);
+                        }
+                        setIsConfirmOpen(false);
+                    }}>
+                        Confirm
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+
     </div>
   );
 }
