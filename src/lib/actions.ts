@@ -163,7 +163,7 @@ export async function addCrewDocket(data: z.infer<typeof addCrewDocketSchema>) {
     const allCrewForSubmission = [...new Set([...docketData.crewMemberIds, docketData.submittedById])];
 
     const newDocket: CrewDocket = {
-        id: `DOCKET-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+        id: `CD-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
         ...docketData,
         company: supervisor.company,
         crewMemberIds: allCrewForSubmission,
@@ -710,4 +710,5 @@ export async function deleteUnproductiveReason(id: string) {
     revalidatePath('/admin/configuration');
     return { success: true };
 }
+
 
