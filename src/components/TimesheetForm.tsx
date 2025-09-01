@@ -8,7 +8,7 @@ import * as z from "zod";
 import { cn } from "@/lib/utils";
 import { addCrewDocket, getActivities, getUsers, getUnproductiveReasons, getLocations } from "@/lib/actions";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -241,6 +241,7 @@ function TimesheetFormContent() {
         toast({ variant: "destructive", title: "Error", description: "You must be logged in." });
         return;
     }
+    
     try {
         const result = await addCrewDocket(values);
 
@@ -250,6 +251,8 @@ function TimesheetFormContent() {
                 description: `Created docket ${result.docketId}.`,
             });
             form.reset({
+                shiftStart: undefined,
+                shiftEnd: undefined,
                 crewMemberIds: [],
                 zone: "",
                 section: "",
@@ -273,8 +276,8 @@ function TimesheetFormContent() {
             });
         }
     } catch (error) {
-    console.error("Submission failed:", error);
-    toast({ variant: "destructive", title: "Submission Failed", description: "An unknown error occurred." });
+        console.error("Submission failed:", error);
+        toast({ variant: "destructive", title: "Submission Failed", description: "An unknown error occurred." });
     }
   };
 
@@ -297,7 +300,7 @@ function TimesheetFormContent() {
   return (
     <div className="container mx-auto max-w-4xl py-8 px-4 md:px-6">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-0">
           <Card className="shadow-lg">
             <CardHeader>
               <CardTitle className="font-headline text-3xl">New Crew Docket</CardTitle>
@@ -305,7 +308,7 @@ function TimesheetFormContent() {
                 Timesheet for: <span className="font-semibold">{selectedSupervisor?.fullName} ({selectedSupervisor?.company})</span>
               </CardDescription>
             </CardHeader>
-             <CardContent className="space-y-6">
+            <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {canSelectCompany && (
                   <FormItem>
@@ -587,14 +590,13 @@ function TimesheetFormContent() {
                   </FormItem>
                 )}
               />
-
-              <div className="pt-4">
-                <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={form.formState.isSubmitting || !selectedSupervisorId}>
-                  {form.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Send className="mr-2 h-4 w-4" />}
-                  Submit Crew Docket
-                </Button>
-              </div>
             </CardContent>
+            <CardFooter>
+              <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={form.formState.isSubmitting || !selectedSupervisorId}>
+                {form.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Send className="mr-2 h-4 w-4" />}
+                Submit Crew Docket
+              </Button>
+            </CardFooter>
           </Card>
         </form>
       </Form>
@@ -609,5 +611,3 @@ export default function TimesheetForm() {
     </React.Suspense>
   )
 }
-
-    
