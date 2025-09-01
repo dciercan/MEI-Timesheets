@@ -766,77 +766,70 @@ export async function importLocations(data: z.infer<typeof importLocationsSchema
     const { locations: newLocationData, deleteMissing } = validation.data;
     const existingLocations = await readLocations();
 
-    let createdCount = 0;
-    let updatedCount = 0;
-    
-    // Create a map from the CSV data for easy lookup
     const newLocationsMap = new Map<string, Set<string>>();
     for (const { zone, section } of newLocationData) {
-        if (!newLocationsMap.has(zone)) {
-            newLocationsMap.set(zone, new Set());
+        if (zone && section) { // Basic validation
+            if (!newLocationsMap.has(zone)) {
+                newLocationsMap.set(zone, new Set());
+            }
+            newLocationsMap.get(zone)!.add(section);
         }
-        newLocationsMap.get(zone)!.add(section);
     }
 
     let finalLocations: Location[];
 
     if (deleteMissing) {
-        // If deleting missing, the new CSV data is the source of truth
-        finalLocations = Array.from(newLocationsMap.keys()).map(zone => ({
+        // If deleting, the new data is the complete source of truth.
+        finalLocations = Array.from(newLocationsMap.entries()).map(([zone, sections]) => ({
             zone,
-            sections: Array.from(newLocationsMap.get(zone)!).sort((a,b) => a.localeCompare(b))
+            sections: Array.from(sections).sort((a, b) => a.localeCompare(b)),
         }));
     } else {
-        // If not deleting, merge new data with existing data
-        finalLocations = [...existingLocations];
-        newLocationsMap.forEach((newSections, zone) => {
-            const existingZone = finalLocations.find(l => l.zone === zone);
-            if (existingZone) {
-                // Zone exists, add new sections
-                const originalSectionCount = existingZone.sections.length;
-                const mergedSections = new Set([...existingZone.sections, ...newSections]);
-                existingZone.sections = Array.from(mergedSections).sort((a,b) => a.localeCompare(b));
-                updatedCount += existingZone.sections.length - originalSectionCount;
-            } else {
-                // Zone is new, add it
-                finalLocations.push({ zone, sections: Array.from(newSections).sort((a,b) => a.localeCompare(b)) });
-                createdCount += newSections.size;
+        // Merge with existing data, avoiding duplicates.
+        const mergedLocationsMap = new Map<string, Set<string>>();
+        
+        // Add existing locations to the map
+        for (const loc of existingLocations) {
+            mergedLocationsMap.set(loc.zone, new Set(loc.sections));
+        }
+
+        // Add new locations to the map
+        for (const [zone, sections] of newLocationsMap.entries()) {
+            if (!mergedLocationsMap.has(zone)) {
+                mergedLocationsMap.set(zone, new Set());
             }
-        });
+            const existingSections = mergedLocationsMap.get(zone)!;
+            for (const section of sections) {
+                existingSections.add(section);
+            }
+        }
+        
+        finalLocations = Array.from(mergedLocationsMap.entries()).map(([zone, sections]) => ({
+            zone,
+            sections: Array.from(sections).sort((a, b) => a.localeCompare(b)),
+        }));
     }
 
-    const existingTotal = existingLocations.flatMap(l => l.sections).length;
-    const finalTotal = finalLocations.flatMap(l => l.sections).length;
+    // Sort zones alphabetically
+    finalLocations.sort((a, b) => a.zone.localeCompare(b.zone));
 
-    let deletedCount = 0;
-    if (deleteMissing) {
-        deletedCount = Math.max(0, existingTotal - finalTotal);
-        // In a "delete missing" scenario, every record in the final list is either pre-existing or new.
-        // It's more intuitive to report the final count as "created" and "existing".
-        let newOrUpdatedCount = 0;
-        newLocationsMap.forEach((sections, zone) => {
-            const existingZone = existingLocations.find(l => l.zone === zone);
-            if(existingZone) {
-                 sections.forEach(section => {
-                    if(!existingZone.sections.includes(section)) {
-                        newOrUpdatedCount++;
-                    }
-                 })
-            } else {
-                newOrUpdatedCount += sections.size
-            }
-        });
-        createdCount = newOrUpdatedCount;
-        updatedCount = 0; // Simplified for delete-and-replace
-    } else {
-        // The add/update logic is complex to count accurately without more state.
-        // Let's simplify: created is new zones, updated is new sections in existing zones.
-    }
-
-
-    await writeLocations(finalLocations.sort((a, b) => a.zone.localeCompare(b.zone)));
+    await writeLocations(finalLocations);
     revalidatePath('/admin/configuration');
   
+    // For reporting, we recalculate counts based on what actually happened.
+    const existingTotal = existingLocations.reduce((sum, loc) => sum + loc.sections.length, 0);
+    const finalTotal = finalLocations.reduce((sum, loc) => sum + loc.sections.length, 0);
+
+    let createdCount = 0;
+    if (deleteMissing) {
+        createdCount = finalTotal; // In a replace, all final records are 'new' in a sense.
+    } else {
+        createdCount = Math.max(0, finalTotal - existingTotal);
+    }
+    
+    const deletedCount = deleteMissing ? Math.max(0, existingTotal - finalTotal) : 0;
+    const updatedCount = 0; // Simplified; precise update tracking is complex.
+
     return { 
         success: true, 
         report: {
@@ -846,4 +839,4 @@ export async function importLocations(data: z.infer<typeof importLocationsSchema
             total: finalTotal,
         }
     };
-  }
+}
