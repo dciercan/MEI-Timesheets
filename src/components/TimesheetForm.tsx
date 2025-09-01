@@ -52,9 +52,9 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 const DateTimePicker = ({ field }: { field: any }) => {
-    const [date, setDate] = useState<Date | undefined>(field.value ? new Date(field.value) : new Date());
-    const [time, setTime] = useState(field.value ? format(new Date(field.value), 'HH:mm') : '00:00');
     const { onChange, value } = field;
+    const [date, setDate] = useState<Date | undefined>(value ? new Date(value) : new Date());
+    const [time, setTime] = useState(value ? format(new Date(value), 'HH:mm') : '00:00');
 
     useEffect(() => {
         if (value) {
@@ -70,7 +70,7 @@ const DateTimePicker = ({ field }: { field: any }) => {
         if (date) {
             const [hours, minutes] = time.split(':').map(Number);
             const newDate = set(date, { hours, minutes });
-             if (!value || !isEqual(value, newDate)) {
+            if (!value || !isEqual(value, newDate)) {
                 onChange(newDate);
             }
         }
@@ -396,42 +396,38 @@ function TimesheetFormContent() {
               </div>
 
                <FormField
-                  control={form.control}
-                  name="crewMemberIds"
-                  render={() => (
-                    <FormItem>
-                      <FormLabel>Crew Members (Supervisor is automatically included)</FormLabel>
-                        <ScrollArea className="h-40 w-full rounded-md border p-4">
-                            <div className="space-y-2">
-                            {crewMembers.map((user) => (
-                                <FormField
-                                key={user.id}
-                                control={form.control}
-                                name="crewMemberIds"
-                                render={({ field }) => (
-                                    <FormItem key={user.id} className="flex flex-row items-start space-x-3 space-y-0">
-                                        <FormControl>
-                                        <Checkbox
-                                            checked={field.value?.includes(user.id)}
-                                            onCheckedChange={(checked) => {
-                                            return checked
-                                                ? field.onChange([...(field.value || []), user.id])
-                                                : field.onChange(field.value?.filter((value) => value !== user.id))
-                                            }}
-                                            disabled={!selectedSupervisorId}
-                                        />
-                                        </FormControl>
-                                        <FormLabel className="font-normal">{user.fullName} ({user.company})</FormLabel>
-                                    </FormItem>
-                                )}
-                                />
-                            ))}
-                            </div>
-                        </ScrollArea>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                control={form.control}
+                name="crewMemberIds"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Crew Members (Supervisor is automatically included)</FormLabel>
+                    <ScrollArea className="h-40 w-full rounded-md border p-4">
+                      <div className="space-y-2">
+                        {crewMembers.map((user) => (
+                          <FormItem key={user.id} className="flex flex-row items-start space-x-3 space-y-0">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value?.includes(user.id)}
+                                onCheckedChange={(checked) => {
+                                  const currentIds = field.value || [];
+                                  if (checked) {
+                                    field.onChange([...currentIds, user.id]);
+                                  } else {
+                                    field.onChange(currentIds.filter((id) => id !== user.id));
+                                  }
+                                }}
+                                disabled={!selectedSupervisorId}
+                              />
+                            </FormControl>
+                            <FormLabel className="font-normal">{user.fullName} ({user.company})</FormLabel>
+                          </FormItem>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
                 
                 <div className="space-y-2">
                   <h3 className="text-lg font-medium font-headline">Location</h3>
