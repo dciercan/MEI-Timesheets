@@ -27,7 +27,7 @@ export default function Welcome({ users }: WelcomeProps) {
   const [damId, setDamId] = useState('');
   const [error, setError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const { login, user } = useAuth();
+  const { login, user, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -35,6 +35,22 @@ export default function Welcome({ users }: WelcomeProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const [isScanning, setIsScanning] = useState(false);
+
+  useEffect(() => {
+    if (user && !isAuthLoading) {
+        let targetUrl: string;
+        if (user.appRole === 'Read Only') {
+            targetUrl = '/reports';
+        } else if (user.appRole === 'MEI Supervisor') {
+            targetUrl = '/timesheet/my-submissions';
+        } else {
+            const isAdmin = user.appRole === 'Admin' || user.appRole === 'Subcontractor Admin';
+            targetUrl = isAdmin ? '/admin/users' : '/timesheet';
+        }
+       router.replace(targetUrl);
+    }
+  }, [user, isAuthLoading, router]);
+
 
   useEffect(() => {
     if (isScanning) {
@@ -148,7 +164,7 @@ export default function Welcome({ users }: WelcomeProps) {
     }
   };
  
-  if (user) {
+  if (user || isAuthLoading) {
      return (
         <div className="flex items-center justify-center min-h-screen bg-background">
          <Loader2 className="h-12 w-12 animate-spin text-primary" />

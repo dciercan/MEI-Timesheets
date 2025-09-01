@@ -306,7 +306,7 @@ function TimesheetFormContent() {
     <div className="container mx-auto max-w-4xl py-8 px-4 md:px-6">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-0">
-          <Card className="shadow-lg mb-20">
+          <Card className="shadow-lg pb-20">
             <CardHeader>
               <CardTitle className="font-headline text-3xl">New Crew Docket</CardTitle>
               <CardDescription>

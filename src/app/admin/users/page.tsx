@@ -15,14 +15,14 @@ export default function UserAdminPage() {
     const [isLoading, setIsLoading] = useState(true);
     
     useEffect(() => {
-        if (currentUser) {
+        if (!isAuthLoading && currentUser) {
             setIsLoading(true);
             getUsers(currentUser).then(fetchedUsers => {
                 setUsers(fetchedUsers);
                 setIsLoading(false);
             });
         }
-    }, [currentUser]);
+    }, [currentUser, isAuthLoading]);
 
     if (isAuthLoading || isLoading || !currentUser) {
         return (
