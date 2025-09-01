@@ -58,10 +58,19 @@ const DateTimePicker = ({ field }: { field: any }) => {
     const [time, setTime] = useState(field.value ? format(new Date(field.value), 'HH:mm') : '00:00');
 
     useEffect(() => {
+        if (field.value) {
+            setDate(new Date(field.value));
+            setTime(format(new Date(field.value), 'HH:mm'));
+        }
+    }, [field.value]);
+
+    useEffect(() => {
         if (date) {
             const [hours, minutes] = time.split(':').map(Number);
             const newDate = set(date, { hours, minutes });
-            field.onChange(newDate);
+             if (field.value?.getTime() !== newDate.getTime()) {
+                field.onChange(newDate);
+            }
         }
     }, [date, time, field]);
 
