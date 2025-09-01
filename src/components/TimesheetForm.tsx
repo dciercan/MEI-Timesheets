@@ -45,7 +45,10 @@ const formSchema = z.object({
   ).optional(),
   notes: z.string().optional(),
   submittedById: z.string().min(1, "Supervisor is required."),
-}).refine((data) => data.shiftEnd > data.shiftStart, {
+}).refine((data) => {
+    if (!data.shiftStart || !data.shiftEnd) return true;
+    return data.shiftEnd > data.shiftStart;
+}, {
     message: "End date/time must be after start date/time.",
     path: ["shiftEnd"],
 });
@@ -55,13 +58,11 @@ type FormValues = z.infer<typeof formSchema>;
 const DateTimePicker = ({ field, disabled = false }: { field: any, disabled?: boolean }) => {
   const { value, onChange } = field;
 
-  // Use local state for the time string to avoid re-renders
   const [timeValue, setTimeValue] = useState(() =>
     value && isValid(new Date(value)) ? format(new Date(value), "HH:mm") : ""
   );
 
   useEffect(() => {
-    // Sync local time state if the external form value changes
     if (value && isValid(new Date(value))) {
       const formattedTime = format(new Date(value), "HH:mm");
       if (formattedTime !== timeValue) {
@@ -77,14 +78,20 @@ const DateTimePicker = ({ field, disabled = false }: { field: any, disabled?: bo
       onChange(undefined);
       return;
     }
-    // Parse time from state, if it's a valid HH:mm format
+    
     const [hours, minutes] = timeValue.split(":").map(Number);
-    const hasValidTime = !isNaN(hours) && !isNaN(minutes);
+    const hasValidTime = timeValue && !isNaN(hours) && !isNaN(minutes);
     
-    // Combine new date with existing time, or just set the date part if time is invalid/not set
-    const updatedDate = hasValidTime ? set(newDate, { hours, minutes, seconds: 0, milliseconds: 0 }) : set(newDate, {hours: 0, minutes: 0, seconds: 0, milliseconds: 0});
-    
-    onChange(updatedDate);
+    if (hasValidTime) {
+        const updatedDate = set(newDate, { hours, minutes, seconds: 0, milliseconds: 0 });
+        onChange(updatedDate);
+    } else {
+        // If there's no valid time, just update with the date part, but keep time undefined
+        // by passing the raw date object. The time part will be zeroed but we won't set it.
+        // A better approach is to not set the value at all until time is picked.
+        const updatedDate = set(newDate, { hours: 0, minutes: 0, seconds: 0, milliseconds: 0 });
+        onChange(updatedDate);
+    }
   };
 
   const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -99,10 +106,6 @@ const DateTimePicker = ({ field, disabled = false }: { field: any, disabled?: bo
       if (!value || !isEqual(updatedDate, value)) {
         onChange(updatedDate);
       }
-    } else if (value) {
-       // If time is cleared, we can reflect this by setting the value to undefined
-       // This depends on desired behavior: should clearing time clear the whole field?
-       // For now, let's keep the date part. A more complex implementation could be used.
     }
   };
   
@@ -225,12 +228,7 @@ function TimesheetFormContent() {
   useEffect(() => {
     if (shiftStartValue && isValid(shiftStartValue)) {
       const tenHoursLater = addHours(shiftStartValue, 10);
-      const endDateToSet = set(tenHoursLater, { hours: 0, minutes: 0, seconds: 0, milliseconds: 0 });
-  
-      const currentShiftEnd = form.getValues('shiftEnd');
-      if (!currentShiftEnd || !isValid(currentShiftEnd) || !isEqual(set(currentShiftEnd, { hours: 0, minutes: 0, seconds: 0, milliseconds: 0 }), endDateToSet)) {
-        form.setValue('shiftEnd', endDateToSet, { shouldValidate: false, shouldDirty: true });
-      }
+      form.setValue('shiftEnd', tenHoursLater, { shouldValidate: true, shouldDirty: true });
     }
   }, [shiftStartValue, form]);
 
@@ -650,7 +648,6 @@ function TimesheetFormContent() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="hidden">Submit</Button>
             </form>
           </CardContent>
            <CardFooter>
@@ -678,5 +675,3 @@ export default function TimesheetForm() {
     </Suspense>
   )
 }
-
-    
