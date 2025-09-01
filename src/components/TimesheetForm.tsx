@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
@@ -321,7 +320,7 @@ function TimesheetFormContent() {
                 Timesheet for: <span className="font-semibold">{selectedSupervisor?.fullName} ({selectedSupervisor?.company})</span>
               </CardDescription>
             </CardHeader>
-             <CardContent className="space-y-6 pb-24 sm:pb-6">
+             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {canSelectCompany && (
                   <FormItem>
@@ -605,7 +604,7 @@ function TimesheetFormContent() {
               />
 
             </CardContent>
-            <CardFooter className="fixed bottom-0 left-0 right-0 bg-background/90 backdrop-blur-sm p-4 border-t sm:relative sm:bg-transparent sm:backdrop-blur-none sm:p-6 sm:border-t-0">
+            <CardFooter>
               <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={form.formState.isSubmitting || !selectedSupervisorId}>
                 {form.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Send className="mr-2 h-4 w-4" />}
                 Submit Crew Docket
