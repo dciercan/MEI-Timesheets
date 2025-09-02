@@ -1,2 +1,22 @@
-
-[]
+[
+  {
+    "id": "CD-mf2bk3lv-5h84gtp",
+    "submittedById": "4",
+    "crewMemberIds": [
+      "13",
+      "12",
+      "4"
+    ],
+    "zone": "S1",
+    "section": "M011",
+    "asset": "AVI",
+    "subAsset": "Automatic Incident Detection Cam",
+    "activityId": "act-1756801105969-t7w",
+    "quantity": 25,
+    "notes": "",
+    "timesheetDate": "2025-08-25T00:00:00.000Z",
+    "company": "BuildIt",
+    "submittedAt": "2025-09-02T09:01:31.075Z",
+    "status": "Submitted"
+  }
+]

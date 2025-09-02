@@ -270,8 +270,8 @@ export default function SupervisorDashboard({ dockets, onDocketDeleted }: Superv
                     <InfoItem icon={Hash} label="Docket ID" value={docket.id} />
                     <InfoItem icon={Building} label="Company" value={docket.company} />
                     <InfoItem icon={User} label="Supervisor" value={docket.submittedBy?.fullName} />
-                    {representativeTimesheet && <InfoItem icon={Clock} label="Shift Start" value={format(new Date(representativeTimesheet.shiftStart), 'Pp')} />}
-                    {representativeTimesheet && <InfoItem icon={Clock} label="Shift End" value={format(new Date(representativeTimesheet.shiftEnd), 'Pp')} />}
+                    {representativeTimesheet && <InfoItem icon={Clock} label="Shift Start" value={format(new Date(representativeTimesheet.shiftStart), 'dd/MM/yyyy, p')} />}
+                    {representativeTimesheet && <InfoItem icon={Clock} label="Shift End" value={format(new Date(representativeTimesheet.shiftEnd), 'dd/MM/yyyy, p')} />}
                     <InfoItem icon={Watch} label="Unproductive Time" value={totalUnproductiveHours} badge="hours per person" />
                     <InfoItem icon={Users} label="Crew Members" value={docket.crewMembers.length} />
                  </div>
