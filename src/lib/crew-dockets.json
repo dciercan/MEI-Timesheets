@@ -1,22 +1,2 @@
-[
-  {
-    "id": "CD-mf2b3pfz-k3gj2ui",
-    "submittedById": "4",
-    "crewMemberIds": [
-      "13",
-      "12",
-      "4"
-    ],
-    "zone": "S1",
-    "section": "M011",
-    "asset": "Cables",
-    "subAsset": "2C+E 10mm2 R-CPE-90 Elastomer - Feature Lighting",
-    "activityId": "act-1756801105971-fyz",
-    "quantity": 30,
-    "notes": "",
-    "timesheetDate": "2025-08-24T00:00:00.000Z",
-    "company": "BuildIt",
-    "submittedAt": "2025-09-02T08:48:46.223Z",
-    "status": "Submitted"
-  }
-]
+
+[]
