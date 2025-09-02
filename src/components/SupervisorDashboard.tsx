@@ -13,7 +13,7 @@ import { deleteCrewDocket, updateDocketStatus } from "@/lib/actions";
 import { useToast } from "@/hooks/use-toast";
 import { format, differenceInMinutes } from "date-fns";
 import { useRouter } from 'next/navigation';
-import { Calendar, Users, Activity, Clock, Hash, Trash2, Copy, Edit, FileText, ListTodo, MapPin, Watch, ShieldCheck, CheckCircle, XCircle, Building, User, Archive } from 'lucide-react';
+import { Calendar, Users, Activity, Clock, Hash, Trash2, Copy, Edit, FileText, ListTodo, MapPin, Watch, ShieldCheck, CheckCircle, XCircle, Building, User, Archive, RefreshCw } from 'lucide-react';
 import InfoItem from './InfoItem';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import EditSubmissionGroupDialog from './EditSubmissionGroupDialog';
@@ -30,6 +30,7 @@ export default function SupervisorDashboard({ dockets, onDocketDeleted }: Superv
   const { toast } = useToast();
   const router = useRouter();
   const { user: currentUser } = useAuth();
+  const [isRefreshing, setIsRefreshing] = React.useState(false);
 
   const [isCrewEditDialogOpen, setIsCrewEditDialogOpen] = React.useState(false);
   const [selectedCrew, setSelectedCrew] = React.useState<CrewDocketWithDetails | null>(null);
@@ -38,6 +39,12 @@ export default function SupervisorDashboard({ dockets, onDocketDeleted }: Superv
     setSelectedCrew(crew);
     setIsCrewEditDialogOpen(true);
   }
+
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    router.refresh();
+    setTimeout(() => setIsRefreshing(false), 1000); // Reset after 1s
+  };
 
   const handleCrewSubmissionUpdated = () => {
     setIsCrewEditDialogOpen(false);
@@ -115,8 +122,16 @@ export default function SupervisorDashboard({ dockets, onDocketDeleted }: Superv
   return (
     <Card className="shadow-lg">
       <CardHeader>
-        <CardTitle className="font-headline text-3xl">{pageTitle}</CardTitle>
-        <CardDescription>{pageDescription}</CardDescription>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <CardTitle className="font-headline text-3xl">{pageTitle}</CardTitle>
+            <CardDescription>{pageDescription}</CardDescription>
+          </div>
+          <Button onClick={handleRefresh} variant="outline" size="icon" disabled={isRefreshing}>
+            <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
+            <span className="sr-only">Refresh</span>
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <Accordion type="single" collapsible className="w-full space-y-4">
@@ -270,8 +285,8 @@ export default function SupervisorDashboard({ dockets, onDocketDeleted }: Superv
                     <InfoItem icon={Hash} label="Docket ID" value={docket.id} />
                     <InfoItem icon={Building} label="Company" value={docket.company} />
                     <InfoItem icon={User} label="Supervisor" value={docket.submittedBy?.fullName} />
-                    {representativeTimesheet && <InfoItem icon={Clock} label="Shift Start" value={format(new Date(representativeTimesheet.shiftStart), 'dd/MM/yyyy, p')} />}
-                    {representativeTimesheet && <InfoItem icon={Clock} label="Shift End" value={format(new Date(representativeTimesheet.shiftEnd), 'dd/MM/yyyy, p')} />}
+                    {representativeTimesheet && <InfoItem icon={Clock} label="Shift Start" value={format(new Date(representativeTimesheet.shiftStart), 'dd/MM/yyyy, h:mm a')} />}
+                    {representativeTimesheet && <InfoItem icon={Clock} label="Shift End" value={format(new Date(representativeTimesheet.shiftEnd), 'dd/MM/yyyy, h:mm a')} />}
                     <InfoItem icon={Watch} label="Unproductive Time" value={totalUnproductiveHours} badge="hours per person" />
                     <InfoItem icon={Users} label="Crew Members" value={docket.crewMembers.length} />
                  </div>

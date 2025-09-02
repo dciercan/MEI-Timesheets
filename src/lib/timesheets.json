@@ -1,5 +1,56 @@
 [
   {
+    "id": "TS-mf2bt7rp-50uenlf",
+    "crewDocketId": "CD-mf2bt7ro-8i1ywu5",
+    "crewMemberId": "4",
+    "company": "BuildIt",
+    "submittedById": "4",
+    "productiveHours": 7,
+    "unproductiveEntries": [
+      {
+        "reasonId": "unprod-04",
+        "hours": 0.5
+      }
+    ],
+    "status": "Submitted",
+    "shiftStart": "2025-08-25T21:07:00.000Z",
+    "shiftEnd": "2025-08-26T07:07:00.000Z"
+  },
+  {
+    "id": "TS-mf2bt7rp-ly5rbbr",
+    "crewDocketId": "CD-mf2bt7ro-8i1ywu5",
+    "crewMemberId": "13",
+    "company": "BuildIt",
+    "submittedById": "4",
+    "productiveHours": 7,
+    "unproductiveEntries": [
+      {
+        "reasonId": "unprod-04",
+        "hours": 0.5
+      }
+    ],
+    "status": "Submitted",
+    "shiftStart": "2025-08-25T21:07:00.000Z",
+    "shiftEnd": "2025-08-26T07:07:00.000Z"
+  },
+  {
+    "id": "TS-mf2bt7rp-7a7zk4i",
+    "crewDocketId": "CD-mf2bt7ro-8i1ywu5",
+    "crewMemberId": "8",
+    "company": "BuildIt",
+    "submittedById": "4",
+    "productiveHours": 7,
+    "unproductiveEntries": [
+      {
+        "reasonId": "unprod-04",
+        "hours": 0.5
+      }
+    ],
+    "status": "Submitted",
+    "shiftStart": "2025-08-25T21:07:00.000Z",
+    "shiftEnd": "2025-08-26T07:07:00.000Z"
+  },
+  {
     "id": "TS-mf2bk3lv-fyo0ofo",
     "crewDocketId": "CD-mf2bk3lv-5h84gtp",
     "crewMemberId": "4",
@@ -12,7 +63,7 @@
         "hours": 0.5
       }
     ],
-    "status": "Submitted",
+    "status": "Approved",
     "shiftStart": "2025-08-24T21:00:00.000Z",
     "shiftEnd": "2025-08-25T07:00:00.000Z"
   },
@@ -29,7 +80,7 @@
         "hours": 0.5
       }
     ],
-    "status": "Submitted",
+    "status": "Approved",
     "shiftStart": "2025-08-24T21:00:00.000Z",
     "shiftEnd": "2025-08-25T07:00:00.000Z"
   },
@@ -46,7 +97,7 @@
         "hours": 0.5
       }
     ],
-    "status": "Submitted",
+    "status": "Approved",
     "shiftStart": "2025-08-24T21:00:00.000Z",
     "shiftEnd": "2025-08-25T07:00:00.000Z"
   }
