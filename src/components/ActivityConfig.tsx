@@ -49,7 +49,6 @@ const activityFormSchema = z.object({
     subAsset: z.string().min(1, 'Sub-Asset is required'),
     activity: z.string().min(1, 'Activity is required'),
     activityUom: z.string().min(1, 'UoM is required'),
-    wbsCode: z.string().min(1, 'WBS Code is required'),
     isActive: z.boolean().default(true),
     // These are part of the model but not edited here
     contract: z.string().optional(),
@@ -79,7 +78,6 @@ export default function ActivityConfig({ activities: initialActivities }: Activi
       subAsset: '',
       activity: '',
       activityUom: '',
-      wbsCode: '',
       isActive: true,
     },
   });
@@ -106,7 +104,7 @@ export default function ActivityConfig({ activities: initialActivities }: Activi
 
   const handleAddNew = () => {
     setSelectedActivity(null);
-    form.reset({ asset: '', subAsset: '', activity: '', activityUom: '', wbsCode: '', isActive: true });
+    form.reset({ asset: '', subAsset: '', activity: '', activityUom: '', isActive: true });
     setIsFormOpen(true);
   };
 
@@ -165,10 +163,6 @@ export default function ActivityConfig({ activities: initialActivities }: Activi
     {
         accessorKey: 'activityUom',
         header: ({ column }) => <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>UoM <ArrowUpDown className="ml-2 h-4 w-4" /></Button>,
-    },
-    {
-        accessorKey: 'wbsCode',
-        header: ({ column }) => <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>WBS Code <ArrowUpDown className="ml-2 h-4 w-4" /></Button>,
     },
     {
         accessorKey: 'isActive',
@@ -366,9 +360,6 @@ export default function ActivityConfig({ activities: initialActivities }: Activi
                         )}/>
                          <FormField control={form.control} name="activityUom" render={({ field }) => (
                             <FormItem><FormLabel>Unit of Measure (UoM)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                        )}/>
-                        <FormField control={form.control} name="wbsCode" render={({ field }) => (
-                            <FormItem><FormLabel>WBS Code</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                         )}/>
                          <FormField
                             control={form.control}

@@ -33,7 +33,6 @@ export default function ActivityImporter({ isOpen, onOpenChange, onImportFinishe
   const [subAssetColumn, setSubAssetColumn] = useState('');
   const [activityColumn, setActivityColumn] = useState('');
   const [activityUomColumn, setActivityUomColumn] = useState('');
-  const [wbsCodeColumn, setWbsCodeColumn] = useState('');
 
   const [deleteMissing, setDeleteMissing] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -50,7 +49,6 @@ export default function ActivityImporter({ isOpen, onOpenChange, onImportFinishe
     setSubAssetColumn('');
     setActivityColumn('');
     setActivityUomColumn('');
-    setWbsCodeColumn('');
     setDeleteMissing(false);
     setIsProcessing(false);
     setImportReport(null);
@@ -114,19 +112,17 @@ export default function ActivityImporter({ isOpen, onOpenChange, onImportFinishe
     setSubAssetColumn(findField(['subasset', 'sub-asset']));
     setActivityColumn(findField(['activity', 'description']));
     setActivityUomColumn(findField(['uom', 'unitofmeasure']));
-    setWbsCodeColumn(findField(['wbscode', 'wbs']));
   };
 
   const mappedData = useMemo(() => {
-    if (!assetColumn || !subAssetColumn || !activityColumn || !activityUomColumn || !wbsCodeColumn) return [];
+    if (!assetColumn || !subAssetColumn || !activityColumn || !activityUomColumn) return [];
     return data.map(row => ({
       asset: row[assetColumn],
       subAsset: row[subAssetColumn],
       activity: row[activityColumn],
       activityUom: row[activityUomColumn],
-      wbsCode: row[wbsCodeColumn],
-    })).filter(item => item.asset && item.subAsset && item.activity && item.activityUom && item.wbsCode);
-  }, [data, assetColumn, subAssetColumn, activityColumn, activityUomColumn, wbsCodeColumn]);
+    })).filter(item => item.asset && item.subAsset && item.activity && item.activityUom);
+  }, [data, assetColumn, subAssetColumn, activityColumn, activityUomColumn]);
 
 
   const handleStartImport = async () => {
@@ -150,7 +146,7 @@ export default function ActivityImporter({ isOpen, onOpenChange, onImportFinishe
     handleClose(false);
   }
   
-  const allColumnsMapped = assetColumn && subAssetColumn && activityColumn && activityUomColumn && wbsCodeColumn;
+  const allColumnsMapped = assetColumn && subAssetColumn && activityColumn && activityUomColumn;
 
   const progress = useMemo(() => {
     switch (step) {
@@ -204,12 +200,11 @@ export default function ActivityImporter({ isOpen, onOpenChange, onImportFinishe
         {step === 'mapColumns' && (
           <div className="space-y-4 py-4">
              <p>Map the columns from your CSV file to the required activity fields.</p>
-             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border rounded-md">
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-md">
                  {renderMappingSelect('Asset', assetColumn, setAssetColumn)}
                  {renderMappingSelect('Sub-Asset', subAssetColumn, setSubAssetColumn)}
                  {renderMappingSelect('Activity', activityColumn, setActivityColumn)}
                  {renderMappingSelect('Activity UoM', activityUomColumn, setActivityUomColumn)}
-                 {renderMappingSelect('WBS Code', wbsCodeColumn, setWbsCodeColumn)}
              </div>
              <DialogFooter>
                 <Button variant="outline" onClick={resetState}>Back to Upload</Button>
@@ -232,7 +227,6 @@ export default function ActivityImporter({ isOpen, onOpenChange, onImportFinishe
                                     <TableHead>Sub-Asset</TableHead>
                                     <TableHead>Activity</TableHead>
                                     <TableHead>UoM</TableHead>
-                                    <TableHead>WBS Code</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -242,7 +236,6 @@ export default function ActivityImporter({ isOpen, onOpenChange, onImportFinishe
                                         <TableCell>{row.subAsset}</TableCell>
                                         <TableCell>{row.activity}</TableCell>
                                         <TableCell>{row.activityUom}</TableCell>
-                                        <TableCell>{row.wbsCode}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>

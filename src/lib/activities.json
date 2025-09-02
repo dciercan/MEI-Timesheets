@@ -9,7 +9,6 @@
     "subAsset": "Variable Message Sign",
     "activity": "Unit Install",
     "activityUom": "Each",
-    "wbsCode": "WBS-NC-101",
     "isActive": false
   },
   {
@@ -21,7 +20,6 @@
     "subAsset": "Variable Message Sign",
     "activity": "Unit Anchor Survey",
     "activityUom": "Each",
-    "wbsCode": "WBS-NC-102",
     "isActive": false
   },
   {
@@ -33,7 +31,6 @@
     "subAsset": "Variable Message Sign",
     "activity": "Unit Anchor Install",
     "activityUom": "Each",
-    "wbsCode": "WBS-NC-103",
     "isActive": false
   },
   {
@@ -45,7 +42,6 @@
     "subAsset": "Variable Message Sign",
     "activity": "Unit Test",
     "activityUom": "Each",
-    "wbsCode": "WBS-NC-104",
     "isActive": false
   },
   {
@@ -57,7 +53,6 @@
     "subAsset": "Lane Usage Sign",
     "activity": "Unit Install",
     "activityUom": "Each",
-    "wbsCode": "WBS-NC-101",
     "isActive": false
   },
   {
@@ -69,7 +64,6 @@
     "subAsset": "Lane Usage Sign",
     "activity": "Unit Anchor Survey",
     "activityUom": "Each",
-    "wbsCode": "WBS-NC-102",
     "isActive": false
   },
   {
@@ -81,7 +75,6 @@
     "subAsset": "Lane Usage Sign",
     "activity": "Unit Anchor Install",
     "activityUom": "Each",
-    "wbsCode": "WBS-NC-103",
     "isActive": false
   },
   {
@@ -93,7 +86,6 @@
     "subAsset": "Lane Usage Sign",
     "activity": "Unit Test",
     "activityUom": "Each",
-    "wbsCode": "WBS-NC-104",
     "isActive": true
   },
   {
@@ -105,7 +97,6 @@
     "subAsset": "CCTV Camera",
     "activity": "Unit Install",
     "activityUom": "Each",
-    "wbsCode": "WBS-NC-201",
     "isActive": true
   },
   {
@@ -117,7 +108,6 @@
     "subAsset": "CCTV Camera",
     "activity": "Unit Anchor Survey",
     "activityUom": "Each",
-    "wbsCode": "WBS-NC-202",
     "isActive": true
   },
   {
@@ -129,7 +119,6 @@
     "subAsset": "CCTV Camera",
     "activity": "Unit Anchor Install",
     "activityUom": "Each",
-    "wbsCode": "WBS-NC-203",
     "isActive": true
   },
   {
@@ -141,7 +130,6 @@
     "subAsset": "CCTV Camera",
     "activity": "Unit Test",
     "activityUom": "Each",
-    "wbsCode": "WBS-NC-204",
     "isActive": true
   },
   {
@@ -153,7 +141,6 @@
     "subAsset": "Traffic Sensor",
     "activity": "Unit Install",
     "activityUom": "Each",
-    "wbsCode": "WBS-NC-301",
     "isActive": true
   },
   {
@@ -165,7 +152,6 @@
     "subAsset": "Traffic Sensor",
     "activity": "Unit Test",
     "activityUom": "Each",
-    "wbsCode": "WBS-NC-304",
     "isActive": true
   },
   {
@@ -177,7 +163,6 @@
     "subAsset": "Tunnel Lighting",
     "activity": "Unit Install",
     "activityUom": "Each",
-    "wbsCode": "WBS-NC-401",
     "isActive": true
   },
   {
@@ -189,7 +174,6 @@
     "subAsset": "Tunnel Lighting",
     "activity": "Unit Test",
     "activityUom": "Each",
-    "wbsCode": "WBS-NC-404",
     "isActive": true
   },
   {
@@ -201,7 +185,6 @@
     "subAsset": "Network Switch",
     "activity": "Unit Install",
     "activityUom": "Each",
-    "wbsCode": "WBS-NC-501",
     "isActive": true
   },
   {
@@ -213,7 +196,6 @@
     "subAsset": "Network Switch",
     "activity": "Unit Test",
     "activityUom": "Each",
-    "wbsCode": "WBS-NC-504",
     "isActive": true
   },
   {
@@ -225,7 +207,6 @@
     "subAsset": "Fiber Optic Cable",
     "activity": "Cable Install",
     "activityUom": "m",
-    "wbsCode": "WBS-C-101",
     "isActive": true
   },
   {
@@ -237,7 +218,6 @@
     "subAsset": "Fiber Optic Cable",
     "activity": "Cable Termination",
     "activityUom": "Core",
-    "wbsCode": "WBS-C-102",
     "isActive": true
   },
   {
@@ -249,7 +229,6 @@
     "subAsset": "Fiber Optic Cable",
     "activity": "Cable Test",
     "activityUom": "Core",
-    "wbsCode": "WBS-C-103",
     "isActive": true
   },
   {
@@ -261,7 +240,6 @@
     "subAsset": "Power Cable LV",
     "activity": "Cable Install",
     "activityUom": "m",
-    "wbsCode": "WBS-C-101",
     "isActive": true
   },
   {
@@ -273,7 +251,6 @@
     "subAsset": "Power Cable LV",
     "activity": "Cable Termination",
     "activityUom": "End",
-    "wbsCode": "WBS-C-102",
     "isActive": true
   },
   {
@@ -285,7 +262,6 @@
     "subAsset": "Power Cable LV",
     "activity": "Cable Test",
     "activityUom": "Circuit",
-    "wbsCode": "WBS-C-103",
     "isActive": true
   },
   {
@@ -297,7 +273,6 @@
     "subAsset": "Cable Ladder",
     "activity": "Unit Install",
     "activityUom": "m",
-    "wbsCode": "WBS-NC-601",
     "isActive": true
   },
   {
@@ -309,7 +284,6 @@
     "subAsset": "Conduit",
     "activity": "Unit Install",
     "activityUom": "m",
-    "wbsCode": "WBS-NC-601",
     "isActive": true
   }
 ]

@@ -643,7 +643,6 @@ const activitySchema = z.object({
     subAsset: z.string().min(1, 'Sub-Asset is required'),
     activity: z.string().min(1, 'Activity is required'),
     activityUom: z.string().min(1, 'UoM is required'),
-    wbsCode: z.string().min(1, 'WBS Code is required'),
     isActive: z.boolean().default(true),
 });
 
@@ -847,7 +846,6 @@ const importActivitiesSchema = z.object({
     subAsset: z.string().trim().min(1),
     activity: z.string().trim().min(1),
     activityUom: z.string().trim().min(1),
-    wbsCode: z.string().trim().min(1),
   })),
   deleteMissing: z.boolean(),
 });
@@ -902,7 +900,6 @@ export async function importActivities(data: z.infer<typeof importActivitiesSche
                 mergedActivitiesMap.set(key, {
                     ...existingActivity,
                     activityUom: value.activityUom,
-                    wbsCode: value.wbsCode,
                 });
                 updatedCount++;
             } else {

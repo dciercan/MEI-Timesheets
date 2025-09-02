@@ -17,7 +17,6 @@ export type Activity = {
   subAsset: string;
   activity: string;
   activityUom: string;
-  wbsCode: string;
   isActive: boolean;
 };
 
