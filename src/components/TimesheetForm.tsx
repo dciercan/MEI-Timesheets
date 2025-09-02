@@ -1,7 +1,8 @@
 
+
 "use client";
 
-import React, { useState, useMemo, useEffect, Suspense } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -16,14 +17,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
-import { format, set, isEqual, addHours, isValid, parse } from "date-fns";
+import { format, set, isEqual, addHours, isValid } from "date-fns";
 import { CalendarIcon, PlusCircle, Trash2, Loader2, Send } from "lucide-react";
 import type { Activity, User, UnproductiveReason, Location } from "@/lib/types";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/hooks/use-auth";
 import { useSearchParams } from "next/navigation";
-import { Skeleton } from "@/components/ui/skeleton";
 
 
 const formSchema = z.object({
@@ -152,7 +152,7 @@ const DateTimePicker = ({ field, disabled = false }: { field: any, disabled?: bo
 
 
 
-function TimesheetFormContent() {
+export default function TimesheetForm() {
   const { toast } = useToast();
   const { user: loggedInUser } = useAuth();
   const searchParams = useSearchParams();
@@ -178,7 +178,7 @@ function TimesheetFormContent() {
         setAllUsers(fetchedUsers);
         setActivities(fetchedActivities);
         setUnproductiveReasons(fetchedUnproductive);
-        setLocations(fetchedLocations);
+        setLocations(fetchedLocations.filter(l => l.isActive)); // Only use active locations
       }
     }
     fetchData();
@@ -252,6 +252,14 @@ function TimesheetFormContent() {
   const selectedAsset = form.watch("asset");
   const selectedSubAsset = form.watch("subAsset");
   const selectedZone = form.watch("zone");
+  
+  const activeZones = useMemo(() => [...new Set(locations.map(l => l.zone))], [locations]);
+  
+  const activeSectionsForSelectedZone = useMemo(() => {
+    if (!selectedZone) return [];
+    return locations.filter(l => l.zone === selectedZone).map(l => l.section);
+  }, [selectedZone, locations]);
+
 
   const assets = useMemo(() => [...new Set(activities.map(a => a.asset))], [activities]);
 
@@ -271,10 +279,6 @@ function TimesheetFormContent() {
     return activities.filter(a => a.asset === selectedAsset && a.subAsset === selectedSubAsset);
   }, [selectedAsset, selectedSubAsset, activities]);
 
-  const sectionsForSelectedZone = useMemo(() => {
-    if (!selectedZone) return [];
-    return locations.find(l => l.zone === selectedZone)?.sections || [];
-  }, [selectedZone, locations]);
 
   useEffect(() => {
     if (searchParams.has('asset') && activities.length > 0) {
@@ -508,7 +512,7 @@ function TimesheetFormContent() {
                           <Select onValueChange={(value) => { field.onChange(value); form.setValue("section", ""); }} value={field.value} disabled={!selectedSupervisorId}>
                             <FormControl><SelectTrigger><SelectValue placeholder="Select a zone" /></SelectTrigger></FormControl>
                             <SelectContent>
-                              {locations.map(loc => <SelectItem key={loc.zone} value={loc.zone}>{loc.zone}</SelectItem>)}
+                              {activeZones.map(zone => <SelectItem key={zone} value={zone}>{zone}</SelectItem>)}
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -524,7 +528,7 @@ function TimesheetFormContent() {
                           <Select onValueChange={field.onChange} value={field.value} disabled={!selectedZone}>
                               <FormControl><SelectTrigger><SelectValue placeholder="Select a section" /></SelectTrigger></FormControl>
                               <SelectContent>
-                                  {sectionsForSelectedZone.map(section => <SelectItem key={section} value={section}>{section}</SelectItem>)}
+                                  {activeSectionsForSelectedZone.map(section => <SelectItem key={section} value={section}>{section}</SelectItem>)}
                               </SelectContent>
                           </Select>
                           <FormMessage />
@@ -661,27 +665,21 @@ function TimesheetFormContent() {
               />
             </CardContent>
             <CardFooter className="md:static fixed bottom-0 left-0 right-0 bg-background/80 md:bg-transparent backdrop-blur-sm md:backdrop-blur-none border-t md:border-t-0 p-4 md:p-6 md:pt-0 z-10 flex justify-center">
-                <Button 
-                    type="submit" 
-                    size="lg" 
-                    className="w-full md:w-1/3" 
-                    disabled={form.formState.isSubmitting || !selectedSupervisorId}
-                >
-                    {form.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Send className="mr-2 h-4 w-4" />}
-                    Submit Crew Docket
-                </Button>
+                <div className="w-full md:w-1/3">
+                    <Button 
+                        type="submit" 
+                        size="lg" 
+                        className="w-full" 
+                        disabled={form.formState.isSubmitting || !selectedSupervisorId}
+                    >
+                        {form.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Send className="mr-2 h-4 w-4" />}
+                        Submit Crew Docket
+                    </Button>
+                </div>
             </CardFooter>
           </Card>
         </form>
       </Form>
     </div>
   );
-}
-
-export default function TimesheetForm() {
-  return (
-    <Suspense fallback={<div className="container mx-auto max-w-4xl py-8 px-4 md:px-6"><Skeleton className="h-96 w-full" /></div>}>
-      <TimesheetFormContent />
-    </Suspense>
-  )
 }

@@ -10,7 +10,9 @@ import {
   useReactTable,
   getPaginationRowModel,
   getSortedRowModel,
-  SortingState
+  SortingState,
+  ColumnFiltersState,
+  getFilteredRowModel,
 } from '@tanstack/react-table';
 import {
   Table,
@@ -21,37 +23,31 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Edit, Trash2, PlusCircle, Loader2, ArrowUpDown, Upload } from 'lucide-react';
+import { MoreHorizontal, Edit, Trash2, PlusCircle, Loader2, ArrowUpDown, Upload, X } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel } from './ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from './ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from './ui/form';
 import { Input } from './ui/input';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/select';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { deleteLocation, getLocations, saveLocation } from '@/lib/actions';
+import { deleteLocation, getLocations, saveLocation, toggleLocationStatus } from '@/lib/actions';
 import type { Location } from '@/lib/types';
-import { Checkbox } from './ui/checkbox';
 import LocationImporter from './LocationImporter';
+import { Switch } from './ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 interface LocationConfigProps {
   locations: Location[];
 }
 
-interface LocationRow {
-    id: string;
-    zone: string;
-    section: string;
-}
-
 const locationFormSchema = z.object({
-    id: z.string().optional(), // Holds original section name for edits
+    id: z.string().optional(),
     zone: z.string().min(1, 'Zone is required'),
     section: z.string().min(1, 'Section is required'),
-    isNewZone: z.boolean().default(false),
+    isActive: z.boolean().default(true),
 });
 type LocationFormData = z.infer<typeof locationFormSchema>;
 
@@ -59,48 +55,49 @@ export default function LocationConfig({ locations: initialLocations }: Location
     const [locations, setLocations] = React.useState(initialLocations);
     const { toast } = useToast();
     const [sorting, setSorting] = React.useState<SortingState>([]);
+    const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
     
     const [isFormOpen, setIsFormOpen] = React.useState(false);
     const [isImporterOpen, setIsImporterOpen] = React.useState(false);
     const [isDeleteAlertOpen, setIsDeleteAlertOpen] = React.useState(false);
-    const [selectedLocation, setSelectedLocation] = React.useState<LocationRow | null>(null);
+    const [selectedLocation, setSelectedLocation] = React.useState<Location | null>(null);
     const [isSaving, setIsSaving] = React.useState(false);
     
     const form = useForm<LocationFormData>({
         resolver: zodResolver(locationFormSchema),
-        defaultValues: { zone: '', section: '', isNewZone: false },
+        defaultValues: { zone: '', section: '', isActive: true },
     });
 
-    const isNewZone = form.watch('isNewZone');
-
-    const data = React.useMemo(() => {
-        return locations.flatMap(loc => 
-            loc.sections.map(sec => ({
-                id: `${loc.zone}-${sec}`,
-                zone: loc.zone,
-                section: sec
-            }))
-        );
-    }, [locations]);
+    const uniqueZones = React.useMemo(() => [...new Set(initialLocations.map(l => l.zone))], [initialLocations]);
 
     const refetchData = async () => {
       const refreshedLocations = await getLocations();
       setLocations(refreshedLocations);
     }
 
+    const handleToggleActive = async (locationId: string, currentStatus: boolean) => {
+        const result = await toggleLocationStatus(locationId, !currentStatus);
+        if (result.success) {
+            toast({ title: `Location status updated.` });
+            await refetchData();
+        } else {
+            toast({ variant: 'destructive', title: 'Error', description: result.error });
+        }
+    }
+
     const handleAddNew = () => {
         setSelectedLocation(null);
-        form.reset({ zone: '', section: '', isNewZone: false });
+        form.reset({ zone: '', section: '', isActive: true });
         setIsFormOpen(true);
     };
     
-    const handleEdit = (location: LocationRow) => {
+    const handleEdit = (location: Location) => {
         setSelectedLocation(location);
-        form.reset({ id: location.section, zone: location.zone, section: location.section, isNewZone: false });
+        form.reset(location);
         setIsFormOpen(true);
     };
 
-    const handleDelete = (location: LocationRow) => {
+    const handleDelete = (location: Location) => {
         setSelectedLocation(location);
         setIsDeleteAlertOpen(true);
     };
@@ -113,7 +110,7 @@ export default function LocationConfig({ locations: initialLocations }: Location
 
     const confirmDelete = async () => {
         if (selectedLocation) {
-            const result = await deleteLocation(selectedLocation.zone, selectedLocation.section);
+            const result = await deleteLocation(selectedLocation.id);
             if (result.success) {
                 toast({ title: 'Location deleted successfully.' });
                 await refetchData();
@@ -139,7 +136,7 @@ export default function LocationConfig({ locations: initialLocations }: Location
     };
 
 
-    const columns: ColumnDef<LocationRow>[] = [
+    const columns: ColumnDef<Location>[] = [
         {
             accessorKey: 'zone',
             header: ({ column }) => <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>Zone <ArrowUpDown className="ml-2 h-4 w-4" /></Button>,
@@ -147,6 +144,20 @@ export default function LocationConfig({ locations: initialLocations }: Location
         {
             accessorKey: 'section',
             header: ({ column }) => <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>Section <ArrowUpDown className="ml-2 h-4 w-4" /></Button>,
+        },
+        {
+            accessorKey: 'isActive',
+            header: 'Active',
+            cell: ({ row }) => {
+                const location = row.original;
+                return (
+                    <Switch
+                        checked={location.isActive}
+                        onCheckedChange={() => handleToggleActive(location.id, location.isActive)}
+                        aria-label="Toggle location status"
+                    />
+                )
+            }
         },
         {
             id: 'actions',
@@ -174,27 +185,57 @@ export default function LocationConfig({ locations: initialLocations }: Location
     ];
 
     const table = useReactTable({
-        data,
+        data: locations,
         columns,
         getCoreRowModel: getCoreRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
         onSortingChange: setSorting,
         getSortedRowModel: getSortedRowModel(),
-        state: { sorting },
+        onColumnFiltersChange: setColumnFilters,
+        getFilteredRowModel: getFilteredRowModel(),
+        state: { sorting, columnFilters },
         initialState: { pagination: { pageSize: 10 } },
     });
+    
+    const zoneFilterValue = table.getColumn('zone')?.getFilterValue() as string;
 
   return (
     <>
-        <div className='flex justify-end gap-2 py-4'>
-            <Button onClick={() => setIsImporterOpen(true)} variant="outline">
-                <Upload className="mr-2 h-4 w-4" />
-                Import from CSV
-            </Button>
-            <Button onClick={handleAddNew}>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Add Location
-            </Button>
+        <div className='flex items-center justify-between py-4'>
+            <div className="flex items-center gap-2">
+                <Select 
+                    value={zoneFilterValue ?? ''}
+                    onValueChange={(value) => {
+                        table.getColumn('zone')?.setFilterValue(value === 'all-zones' ? '' : value);
+                    }}
+                >
+                    <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Filter by zone..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all-zones">All Zones</SelectItem>
+                        {uniqueZones.map(zone => (
+                            <SelectItem key={zone} value={zone}>{zone}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                 {zoneFilterValue && (
+                    <Button variant="ghost" onClick={() => table.getColumn('zone')?.setFilterValue('')}>
+                        Clear
+                        <X className="ml-2 h-4 w-4" />
+                    </Button>
+                )}
+            </div>
+            <div className="flex gap-2">
+                <Button onClick={() => setIsImporterOpen(true)} variant="outline">
+                    <Upload className="mr-2 h-4 w-4" />
+                    Import from CSV
+                </Button>
+                <Button onClick={handleAddNew}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add Location
+                </Button>
+            </div>
         </div>
         <div className="rounded-md border">
             <Table>
@@ -250,37 +291,15 @@ export default function LocationConfig({ locations: initialLocations }: Location
                 <DialogHeader>
                     <DialogTitle>{selectedLocation ? 'Edit Location' : 'Add New Location'}</DialogTitle>
                     <DialogDescription>
-                        {selectedLocation ? "Update the location details below." : "Add a new Section to an existing Zone, or create a new Zone."}
+                        {selectedLocation ? "Update the location details below." : "Add a new location."}
                     </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
-                        {!selectedLocation && (
-                             <FormField
-                                control={form.control}
-                                name="isNewZone"
-                                render={({ field }) => (
-                                    <FormItem className='flex items-center gap-2'>
-                                        <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-                                        <FormLabel>Create a new Zone</FormLabel>
-                                    </FormItem>
-                                )}
-                            />
-                        )}
-                       
                         <FormField control={form.control} name="zone" render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Zone</FormLabel>
-                                {isNewZone ? (
-                                     <FormControl><Input placeholder="e.g. S6" {...field} /></FormControl>
-                                ) : (
-                                    <Select onValueChange={field.onChange} value={field.value} disabled={!!selectedLocation}>
-                                        <FormControl><SelectTrigger><SelectValue placeholder="Select a zone" /></SelectTrigger></FormControl>
-                                        <SelectContent>
-                                            {locations.map(l => <SelectItem key={l.zone} value={l.zone}>{l.zone}</SelectItem>)}
-                                        </SelectContent>
-                                    </Select>
-                                )}
+                                <FormControl><Input placeholder="e.g. S6" {...field} /></FormControl>
                                 <FormMessage />
                             </FormItem>
                         )}/>
@@ -291,6 +310,26 @@ export default function LocationConfig({ locations: initialLocations }: Location
                                 <FormMessage />
                             </FormItem>
                         )}/>
+                        <FormField
+                            control={form.control}
+                            name="isActive"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                                    <div className="space-y-0.5">
+                                        <FormLabel>Active</FormLabel>
+                                        <DialogDescription>
+                                            Inactive locations will not appear on the timesheet entry form.
+                                        </DialogDescription>
+                                    </div>
+                                    <FormControl>
+                                        <Switch
+                                            checked={field.value}
+                                            onCheckedChange={field.onChange}
+                                        />
+                                    </FormControl>
+                                </FormItem>
+                            )}
+                        />
                         <DialogFooter>
                             <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
                             <Button type="submit" disabled={isSaving}>
@@ -309,7 +348,7 @@ export default function LocationConfig({ locations: initialLocations }: Location
                 <AlertDialogHeader>
                     <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete the section <span className='font-bold'>{selectedLocation?.section}</span> from zone <span className='font-bold'>{selectedLocation?.zone}</span>. If this is the last section in the zone, the zone will also be deleted.
+                        This action cannot be undone. This will permanently delete the location <span className='font-bold'>{selectedLocation?.zone} / {selectedLocation?.section}</span>.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

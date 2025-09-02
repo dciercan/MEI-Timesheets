@@ -83,6 +83,8 @@ export type CrewDocketWithDetails = CrewDocket & {
 };
 
 export type Location = {
+  id: string;
   zone: string;
-  sections: string[];
+  section: string;
+  isActive: boolean;
 }

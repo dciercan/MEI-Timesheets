@@ -103,19 +103,20 @@ export async function getUnproductiveReasons(): Promise<UnproductiveReason[]> {
 }
 
 export async function getLocations(): Promise<Location[]> {
-    return readLocations();
+    const locations = await readLocations();
+    return locations.sort((a, b) => a.zone.localeCompare(b.zone) || a.section.localeCompare(b.section));
 }
 
 export async function getZones(): Promise<string[]> {
     const locations = await readLocations();
-    return locations.map(l => l.zone).sort((a,b) => a.localeCompare(b));
+    return [...new Set(locations.map(l => l.zone))].sort((a,b) => a.localeCompare(b));
 }
 
 export async function getSections(): Promise<string[]> {
     const locations = await readLocations();
     const allSections = new Set<string>();
     locations.forEach(l => {
-        l.sections.forEach(s => allSections.add(s));
+        allSections.add(l.section);
     });
     return Array.from(allSections).sort((a,b) => a.localeCompare(b));
 }
@@ -295,19 +296,18 @@ export async function updateCrewDocket(data: z.infer<typeof updateCrewDocketSche
 }
 
 
-export async function deleteCrewDocket(requestingUserId: string, crewDocketId: string) {
+export async function deleteCrewDocket(crewDocketId: string) {
     const allDockets = await readCrewDockets();
     const allTimesheets = await readTimesheets();
-    const allUsers = await readUsers();
+    const currentUser = await getCurrentUser();
 
     const docketToDelete = allDockets.find(d => d.id === crewDocketId);
     if (!docketToDelete) {
         return { success: false, error: "Crew docket not found." };
     }
 
-    const currentUser = allUsers.find(u => u.id === requestingUserId);
     if (!currentUser) {
-        return { success: false, error: "Requesting user not found." };
+        return { success: false, error: "User not found." };
     }
 
     const isOwner = docketToDelete.submittedById === currentUser.id;
@@ -416,7 +416,7 @@ export async function getCrewDockets(
 
     if (isSparkUser) {
         if (currentUser.appRole === 'MEI Supervisor') {
-            filteredDockets = allDockets.filter(d => d.status === 'Submitted');
+            filteredDockets = allDockets.filter(d => d.status === 'Submitted' || d.status === 'Approved');
         } else {
             filteredDockets = allDockets;
         }
@@ -573,78 +573,67 @@ export async function getAvailableModels() {
 
 // CONFIGURATION ACTIONS
 const locationSchema = z.object({
-  id: z.string().optional(), // Used to identify which location is being edited
+  id: z.string().optional(),
   zone: z.string().min(1, 'Zone is required'),
   section: z.string().min(1, 'Section is required'),
-  isNewZone: z.boolean().optional()
+  isActive: z.boolean().default(true),
 });
 
 export async function saveLocation(data: z.infer<typeof locationSchema>) {
     const validation = locationSchema.safeParse(data);
     if (!validation.success) return { success: false, error: "Invalid data" };
     
-    const { id, zone, section, isNewZone } = validation.data;
+    const { id, zone, section, isActive } = validation.data;
     const locations = await readLocations();
 
-    if (isNewZone) {
-         if (locations.some(l => l.zone === zone)) {
-            return { success: false, error: 'This Zone already exists.' };
-        }
-        locations.push({ zone: zone, sections: [section] });
-    } else {
-        const zoneToUpdate = locations.find(l => l.zone === zone);
-        if (!zoneToUpdate) {
-            return { success: false, error: 'Zone not found.' };
-        }
-
-        if (id) { // Editing existing section
-            const originalSection = id; // The id passed is the original section name
-            if (zoneToUpdate.sections.includes(section) && section !== originalSection) {
-                 return { success: false, error: 'This Section already exists in this Zone.' };
+    const generatedId = `${zone}-${section}`;
+    
+    if (id) { // Editing existing location
+        const index = locations.findIndex(l => l.id === id);
+        if (index > -1) {
+            // Check if the new ID conflicts with another existing location
+            if (generatedId !== id && locations.some(l => l.id === generatedId)) {
+                return { success: false, error: 'This Zone/Section combination already exists.' };
             }
-            const sectionIndex = zoneToUpdate.sections.findIndex(s => s === originalSection);
-            if (sectionIndex > -1) {
-                zoneToUpdate.sections[sectionIndex] = section;
-            } else {
-                 return { success: false, error: 'Original section not found for editing.' };
-            }
-        } else { // Adding new section to existing zone
-             if (zoneToUpdate.sections.includes(section)) {
-                return { success: false, error: 'This Section already exists in this Zone.' };
-            }
-            zoneToUpdate.sections.push(section);
+            locations[index] = { id: generatedId, zone, section, isActive };
+        } else {
+            return { success: false, error: 'Location not found for editing.' };
         }
+    } else { // Adding new location
+        if (locations.some(l => l.id === generatedId)) {
+            return { success: false, error: 'This Zone/Section combination already exists.' };
+        }
+        locations.push({ id: generatedId, zone, section, isActive });
     }
     
-    await writeLocations(locations.sort((a, b) => a.zone.localeCompare(b.zone)));
+    await writeLocations(locations);
     revalidatePath('/admin/configuration');
     return { success: true };
 }
 
-export async function deleteLocation(zone: string, section: string) {
+export async function deleteLocation(id: string) {
     const locations = await readLocations();
-    const zoneToUpdate = locations.find(l => l.zone === zone);
+    const newLocations = locations.filter(l => l.id !== id);
 
-    if (!zoneToUpdate) {
-        return { success: false, error: 'Zone not found.' };
+    if (locations.length === newLocations.length) {
+        return { success: false, error: 'Location not found.' };
     }
 
-    const initialSectionCount = zoneToUpdate.sections.length;
-    zoneToUpdate.sections = zoneToUpdate.sections.filter(s => s !== section);
-    
-    if(zoneToUpdate.sections.length === 0) {
-        // If the last section is removed, remove the zone itself
-        const zoneIndex = locations.findIndex(l => l.zone === zone);
-        locations.splice(zoneIndex, 1);
-    }
-
-    if (zoneToUpdate.sections.length === initialSectionCount && locations.some(l => l.zone === zone)) {
-        return { success: false, error: 'Section not found in the specified zone.' };
-    }
-
-    await writeLocations(locations);
+    await writeLocations(newLocations);
     revalidatePath('/admin/configuration');
     return { success: true };
+}
+
+export async function toggleLocationStatus(id: string, newStatus: boolean) {
+    const locations = await readLocations();
+    const index = locations.findIndex(l => l.id === id);
+    if (index > -1) {
+        locations[index].isActive = newStatus;
+        await writeLocations(locations);
+        revalidatePath('/admin/configuration');
+        return { success: true };
+    }
+    return { success: false, error: 'Location not found.' };
 }
 
 
@@ -760,65 +749,71 @@ export async function importLocations(data: z.infer<typeof importLocationsSchema
   
     const { locations: importedRows, deleteMissing } = validation.data;
     const existingLocations = await readLocations();
-    const existingSectionCount = existingLocations.reduce((sum, loc) => sum + loc.sections.length, 0);
-
-    const newLocationsMap = new Map<string, Set<string>>();
+  
+    // Create a map of new locations for efficient lookup.
+    // The key is a composite "zone-section" to handle uniqueness.
+    const newLocationsMap = new Map<string, { zone: string; section: string }>();
     for (const { zone, section } of importedRows) {
-        if (!newLocationsMap.has(zone)) {
-            newLocationsMap.set(zone, new Set());
+        const key = `${zone}-${section}`;
+        if (!newLocationsMap.has(key)) {
+            newLocationsMap.set(key, { zone, section });
         }
-        newLocationsMap.get(zone)!.add(section);
     }
-
-    let finalLocations: Location[];
-
+  
+    let finalLocations: Location[] = [];
+  
     if (deleteMissing) {
         // If deleting, the new data is the complete source of truth.
-        finalLocations = Array.from(newLocationsMap.entries()).map(([zone, sections]) => ({
-            zone,
-            sections: Array.from(sections).sort((a, b) => a.localeCompare(b)),
+        // All imported locations are considered active.
+        finalLocations = Array.from(newLocationsMap.values()).map(loc => ({
+            id: `${loc.zone}-${loc.section}`,
+            ...loc,
+            isActive: true
         }));
     } else {
-        // Merge with existing data, avoiding duplicates.
-        const mergedLocationsMap = new Map<string, Set<string>>();
-        
-        // Add existing locations to the map
+        // Merge with existing data.
+        const mergedLocationsMap = new Map<string, Location>();
+  
+        // Add all existing locations to the map first.
         for (const loc of existingLocations) {
-            mergedLocationsMap.set(loc.zone, new Set(loc.sections));
+            mergedLocationsMap.set(loc.id, loc);
         }
-
-        // Add new locations to the map
-        for (const [zone, sections] of newLocationsMap.entries()) {
-            const existingSections = mergedLocationsMap.get(zone) || new Set();
-            for (const section of sections) {
-                existingSections.add(section);
+  
+        // Add or update with new locations. If it exists, we just ensure it's there.
+        // If it doesn't, we add it as active.
+        for (const [key, value] of newLocationsMap.entries()) {
+            if (!mergedLocationsMap.has(key)) {
+                mergedLocationsMap.set(key, {
+                    id: key,
+                    zone: value.zone,
+                    section: value.section,
+                    isActive: true
+                });
             }
-            mergedLocationsMap.set(zone, existingSections);
         }
-        
-        finalLocations = Array.from(mergedLocationsMap.entries()).map(([zone, sections]) => ({
-            zone,
-            sections: Array.from(sections).sort((a, b) => a.localeCompare(b)),
-        }));
+        finalLocations = Array.from(mergedLocationsMap.values());
     }
-
-    // Sort zones alphabetically
-    finalLocations.sort((a, b) => a.zone.localeCompare(b.zone));
-
+  
+    // Sort for consistency
+    finalLocations.sort((a, b) => a.id.localeCompare(b.id));
+    
     await writeLocations(finalLocations);
     revalidatePath('/admin/configuration');
   
-    // For reporting, we recalculate counts based on what actually happened.
-    const finalSectionCount = finalLocations.reduce((sum, loc) => sum + loc.sections.length, 0);
-
+    // Accurate reporting based on what was actually changed.
+    const initialCount = existingLocations.length;
+    const finalCount = finalLocations.length;
     let createdCount = 0;
     let deletedCount = 0;
 
     if (deleteMissing) {
-        createdCount = finalSectionCount;
-        deletedCount = Math.max(0, existingSectionCount - finalSectionCount);
+        const existingIds = new Set(existingLocations.map(l => l.id));
+        const finalIds = new Set(finalLocations.map(l => l.id));
+        
+        createdCount = finalLocations.filter(l => !existingIds.has(l.id)).length;
+        deletedCount = existingLocations.filter(l => !finalIds.has(l.id)).length;
     } else {
-        createdCount = Math.max(0, finalSectionCount - existingSectionCount);
+        createdCount = Math.max(0, finalCount - initialCount);
     }
     
     return { 
@@ -827,9 +822,9 @@ export async function importLocations(data: z.infer<typeof importLocationsSchema
             created: createdCount,
             updated: 0, 
             deleted: deletedCount,
-            total: finalSectionCount,
+            total: finalCount,
         }
     };
 }
-
     
+

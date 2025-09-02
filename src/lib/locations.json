@@ -1,322 +1,933 @@
+
 [
   {
+    "id": "LPR RAMPS-Bends/Sets",
     "zone": "LPR RAMPS",
-    "sections": [
-      "Bends/Sets",
-      "M020 S1",
-      "M020 S2",
-      "M030 S1",
-      "M030 S2"
-    ]
+    "section": "Bends/Sets",
+    "isActive": true
   },
   {
+    "id": "LPR RAMPS-M020 S1",
+    "zone": "LPR RAMPS",
+    "section": "M020 S1",
+    "isActive": true
+  },
+  {
+    "id": "LPR RAMPS-M020 S2",
+    "zone": "LPR RAMPS",
+    "section": "M020 S2",
+    "isActive": true
+  },
+  {
+    "id": "LPR RAMPS-M030 S1",
+    "zone": "LPR RAMPS",
+    "section": "M030 S1",
+    "isActive": true
+  },
+  {
+    "id": "LPR RAMPS-M030 S2",
+    "zone": "LPR RAMPS",
+    "section": "M030 S2",
+    "isActive": true
+  },
+  {
+    "id": "MAN RAMPS-Bends/Sets",
     "zone": "MAN RAMPS",
-    "sections": [
-      "Bends/Sets",
-      "M040 S1",
-      "M040 S2",
-      "M050 S1"
-    ]
+    "section": "Bends/Sets",
+    "isActive": true
   },
   {
+    "id": "MAN RAMPS-M040 S1",
+    "zone": "MAN RAMPS",
+    "section": "M040 S1",
+    "isActive": true
+  },
+  {
+    "id": "MAN RAMPS-M040 S2",
+    "zone": "MAN RAMPS",
+    "section": "M040 S2",
+    "isActive": true
+  },
+  {
+    "id": "MAN RAMPS-M050 S1",
+    "zone": "MAN RAMPS",
+    "section": "M050 S1",
+    "isActive": true
+  },
+  {
+    "id": "S1-Bends/Sets",
     "zone": "S1",
-    "sections": [
-      "Bends/Sets",
-      "M011",
-      "M01J"
-    ]
+    "section": "Bends/Sets",
+    "isActive": true
   },
   {
+    "id": "S1-M011",
+    "zone": "S1",
+    "section": "M011",
+    "isActive": true
+  },
+  {
+    "id": "S1-M01J",
+    "zone": "S1",
+    "section": "M01J",
+    "isActive": true
+  },
+  {
+    "id": "S10-Bends/Sets",
     "zone": "S10",
-    "sections": [
-      "Bends/Sets",
-      "CENTRAL CORRIDOR",
-      "M011",
-      "M01J"
-    ]
+    "section": "Bends/Sets",
+    "isActive": true
   },
   {
+    "id": "S10-CENTRAL CORRIDOR",
+    "zone": "S10",
+    "section": "CENTRAL CORRIDOR",
+    "isActive": true
+  },
+  {
+    "id": "S10-M011",
+    "zone": "S10",
+    "section": "M011",
+    "isActive": true
+  },
+  {
+    "id": "S10-M01J",
+    "zone": "S10",
+    "section": "M01J",
+    "isActive": true
+  },
+  {
+    "id": "S11-Bends/Sets",
     "zone": "S11",
-    "sections": [
-      "Bends/Sets",
-      "M011",
-      "M01J",
-      "XP20",
-      "XP21"
-    ]
+    "section": "Bends/Sets",
+    "isActive": true
   },
   {
+    "id": "S11-M011",
+    "zone": "S11",
+    "section": "M011",
+    "isActive": true
+  },
+  {
+    "id": "S11-M01J",
+    "zone": "S11",
+    "section": "M01J",
+    "isActive": true
+  },
+  {
+    "id": "S11-XP20",
+    "zone": "S11",
+    "section": "XP20",
+    "isActive": true
+  },
+  {
+    "id": "S11-XP21",
+    "zone": "S11",
+    "section": "XP21",
+    "isActive": true
+  },
+  {
+    "id": "S12-Bends/Sets",
     "zone": "S12",
-    "sections": [
-      "Bends/Sets",
-      "M011",
-      "M01J",
-      "XP22",
-      "XP23"
-    ]
+    "section": "Bends/Sets",
+    "isActive": true
   },
   {
+    "id": "S12-M011",
+    "zone": "S12",
+    "section": "M011",
+    "isActive": true
+  },
+  {
+    "id": "S12-M01J",
+    "zone": "S12",
+    "section": "M01J",
+    "isActive": true
+  },
+  {
+    "id": "S12-XP22",
+    "zone": "S12",
+    "section": "XP22",
+    "isActive": true
+  },
+  {
+    "id": "S12-XP23",
+    "zone": "S12",
+    "section": "XP23",
+    "isActive": true
+  },
+  {
+    "id": "S13-Bends/Sets",
     "zone": "S13",
-    "sections": [
-      "Bends/Sets",
-      "M011",
-      "M01J",
-      "XP24",
-      "XP25"
-    ]
+    "section": "Bends/Sets",
+    "isActive": true
   },
   {
+    "id": "S13-M011",
+    "zone": "S13",
+    "section": "M011",
+    "isActive": true
+  },
+  {
+    "id": "S13-M01J",
+    "zone": "S13",
+    "section": "M01J",
+    "isActive": true
+  },
+  {
+    "id": "S13-XP24",
+    "zone": "S13",
+    "section": "XP24",
+    "isActive": true
+  },
+  {
+    "id": "S13-XP25",
+    "zone": "S13",
+    "section": "XP25",
+    "isActive": true
+  },
+  {
+    "id": "S14-Bends/Sets",
     "zone": "S14",
-    "sections": [
-      "Bends/Sets",
-      "M011",
-      "M01J",
-      "XP26",
-      "XP27"
-    ]
+    "section": "Bends/Sets",
+    "isActive": true
   },
   {
+    "id": "S14-M011",
+    "zone": "S14",
+    "section": "M011",
+    "isActive": true
+  },
+  {
+    "id": "S14-M01J",
+    "zone": "S14",
+    "section": "M01J",
+    "isActive": true
+  },
+  {
+    "id": "S14-XP26",
+    "zone": "S14",
+    "section": "XP26",
+    "isActive": true
+  },
+  {
+    "id": "S14-XP27",
+    "zone": "S14",
+    "section": "XP27",
+    "isActive": true
+  },
+  {
+    "id": "S15-Bends/Sets",
     "zone": "S15",
-    "sections": [
-      "Bends/Sets",
-      "M011",
-      "M01J",
-      "XP28",
-      "XP29"
-    ]
+    "section": "Bends/Sets",
+    "isActive": true
   },
   {
+    "id": "S15-M011",
+    "zone": "S15",
+    "section": "M011",
+    "isActive": true
+  },
+  {
+    "id": "S15-M01J",
+    "zone": "S15",
+    "section": "M01J",
+    "isActive": true
+  },
+  {
+    "id": "S15-XP28",
+    "zone": "S15",
+    "section": "XP28",
+    "isActive": true
+  },
+  {
+    "id": "S15-XP29",
+    "zone": "S15",
+    "section": "XP29",
+    "isActive": true
+  },
+  {
+    "id": "S16-Bends/Sets",
     "zone": "S16",
-    "sections": [
-      "Bends/Sets",
-      "M011",
-      "M01J",
-      "XP30",
-      "XP31"
-    ]
+    "section": "Bends/Sets",
+    "isActive": true
   },
   {
+    "id": "S16-M011",
+    "zone": "S16",
+    "section": "M011",
+    "isActive": true
+  },
+  {
+    "id": "S16-M01J",
+    "zone": "S16",
+    "section": "M01J",
+    "isActive": true
+  },
+  {
+    "id": "S16-XP30",
+    "zone": "S16",
+    "section": "XP30",
+    "isActive": true
+  },
+  {
+    "id": "S16-XP31",
+    "zone": "S16",
+    "section": "XP31",
+    "isActive": true
+  },
+  {
+    "id": "S17-Bends/Sets",
     "zone": "S17",
-    "sections": [
-      "Bends/Sets",
-      "M011",
-      "M01J",
-      "XP32",
-      "XP33"
-    ]
+    "section": "Bends/Sets",
+    "isActive": true
   },
   {
+    "id": "S17-M011",
+    "zone": "S17",
+    "section": "M011",
+    "isActive": true
+  },
+  {
+    "id": "S17-M01J",
+    "zone": "S17",
+    "section": "M01J",
+    "isActive": true
+  },
+  {
+    "id": "S17-XP32",
+    "zone": "S17",
+    "section": "XP32",
+    "isActive": true
+  },
+  {
+    "id": "S17-XP33",
+    "zone": "S17",
+    "section": "XP33",
+    "isActive": true
+  },
+  {
+    "id": "S18-Bends/Sets",
     "zone": "S18",
-    "sections": [
-      "Bends/Sets",
-      "M011",
-      "M01J",
-      "XP34",
-      "XP35"
-    ]
+    "section": "Bends/Sets",
+    "isActive": true
   },
   {
+    "id": "S18-M011",
+    "zone": "S18",
+    "section": "M011",
+    "isActive": true
+  },
+  {
+    "id": "S18-M01J",
+    "zone": "S18",
+    "section": "M01J",
+    "isActive": true
+  },
+  {
+    "id": "S18-XP34",
+    "zone": "S18",
+    "section": "XP34",
+    "isActive": true
+  },
+  {
+    "id": "S18-XP35",
+    "zone": "S18",
+    "section": "XP35",
+    "isActive": true
+  },
+  {
+    "id": "S19-Bends/Sets",
     "zone": "S19",
-    "sections": [
-      "Bends/Sets",
-      "M011",
-      "M01J",
-      "XP36",
-      "XP37"
-    ]
+    "section": "Bends/Sets",
+    "isActive": true
   },
   {
+    "id": "S19-M011",
+    "zone": "S19",
+    "section": "M011",
+    "isActive": true
+  },
+  {
+    "id": "S19-M01J",
+    "zone": "S19",
+    "section": "M01J",
+    "isActive": true
+  },
+  {
+    "id": "S19-XP36",
+    "zone": "S19",
+    "section": "XP36",
+    "isActive": true
+  },
+  {
+    "id": "S19-XP37",
+    "zone": "S19",
+    "section": "XP37",
+    "isActive": true
+  },
+  {
+    "id": "S2-Bends/Sets",
     "zone": "S2",
-    "sections": [
-      "Bends/Sets",
-      "M011",
-      "M01J",
-      "XP01",
-      "XP02"
-    ]
+    "section": "Bends/Sets",
+    "isActive": true
   },
   {
+    "id": "S2-M011",
+    "zone": "S2",
+    "section": "M011",
+    "isActive": true
+  },
+  {
+    "id": "S2-M01J",
+    "zone": "S2",
+    "section": "M01J",
+    "isActive": true
+  },
+  {
+    "id": "S2-XP01",
+    "zone": "S2",
+    "section": "XP01",
+    "isActive": true
+  },
+  {
+    "id": "S2-XP02",
+    "zone": "S2",
+    "section": "XP02",
+    "isActive": true
+  },
+  {
+    "id": "S20-Bends/Sets",
     "zone": "S20",
-    "sections": [
-      "Bends/Sets",
-      "M011",
-      "M01J",
-      "XP38",
-      "XP39"
-    ]
+    "section": "Bends/Sets",
+    "isActive": true
   },
   {
+    "id": "S20-M011",
+    "zone": "S20",
+    "section": "M011",
+    "isActive": true
+  },
+  {
+    "id": "S20-M01J",
+    "zone": "S20",
+    "section": "M01J",
+    "isActive": true
+  },
+  {
+    "id": "S20-XP38",
+    "zone": "S20",
+    "section": "XP38",
+    "isActive": true
+  },
+  {
+    "id": "S20-XP39",
+    "zone": "S20",
+    "section": "XP39",
+    "isActive": true
+  },
+  {
+    "id": "S21-Bends/Sets",
     "zone": "S21",
-    "sections": [
-      "Bends/Sets",
-      "M011",
-      "M01J",
-      "XP40",
-      "XP41"
-    ]
+    "section": "Bends/Sets",
+    "isActive": true
   },
   {
+    "id": "S21-M011",
+    "zone": "S21",
+    "section": "M011",
+    "isActive": true
+  },
+  {
+    "id": "S21-M01J",
+    "zone": "S21",
+    "section": "M01J",
+    "isActive": true
+  },
+  {
+    "id": "S21-XP40",
+    "zone": "S21",
+    "section": "XP40",
+    "isActive": true
+  },
+  {
+    "id": "S21-XP41",
+    "zone": "S21",
+    "section": "XP41",
+    "isActive": true
+  },
+  {
+    "id": "S22-Bends/Sets",
     "zone": "S22",
-    "sections": [
-      "Bends/Sets",
-      "M011",
-      "M01J",
-      "XP42",
-      "XP43"
-    ]
+    "section": "Bends/Sets",
+    "isActive": true
   },
   {
+    "id": "S22-M011",
+    "zone": "S22",
+    "section": "M011",
+    "isActive": true
+  },
+  {
+    "id": "S22-M01J",
+    "zone": "S22",
+    "section": "M01J",
+    "isActive": true
+  },
+  {
+    "id": "S22-XP42",
+    "zone": "S22",
+    "section": "XP42",
+    "isActive": true
+  },
+  {
+    "id": "S22-XP43",
+    "zone": "S22",
+    "section": "XP43",
+    "isActive": true
+  },
+  {
+    "id": "S23-Bends/Sets",
     "zone": "S23",
-    "sections": [
-      "Bends/Sets",
-      "M011",
-      "M01J",
-      "XP44",
-      "XP45"
-    ]
+    "section": "Bends/Sets",
+    "isActive": true
   },
   {
+    "id": "S23-M011",
+    "zone": "S23",
+    "section": "M011",
+    "isActive": true
+  },
+  {
+    "id": "S23-M01J",
+    "zone": "S23",
+    "section": "M01J",
+    "isActive": true
+  },
+  {
+    "id": "S23-XP44",
+    "zone": "S23",
+    "section": "XP44",
+    "isActive": true
+  },
+  {
+    "id": "S23-XP45",
+    "zone": "S23",
+    "section": "XP45",
+    "isActive": true
+  },
+  {
+    "id": "S24-Bends/Sets",
     "zone": "S24",
-    "sections": [
-      "Bends/Sets",
-      "M011",
-      "M01J",
-      "XP46",
-      "XP47",
-      "XP48"
-    ]
+    "section": "Bends/Sets",
+    "isActive": true
   },
   {
+    "id": "S24-M011",
+    "zone": "S24",
+    "section": "M011",
+    "isActive": true
+  },
+  {
+    "id": "S24-M01J",
+    "zone": "S24",
+    "section": "M01J",
+    "isActive": true
+  },
+  {
+    "id": "S24-XP46",
+    "zone": "S24",
+    "section": "XP46",
+    "isActive": true
+  },
+  {
+    "id": "S24-XP47",
+    "zone": "S24",
+    "section": "XP47",
+    "isActive": true
+  },
+  {
+    "id": "S24-XP48",
+    "zone": "S24",
+    "section": "XP48",
+    "isActive": true
+  },
+  {
+    "id": "S25-Bends/Sets",
     "zone": "S25",
-    "sections": [
-      "Bends/Sets",
-      "CENTRAL CORRIDOR",
-      "M011",
-      "M01J"
-    ]
+    "section": "Bends/Sets",
+    "isActive": true
   },
   {
+    "id": "S25-CENTRAL CORRIDOR",
+    "zone": "S25",
+    "section": "CENTRAL CORRIDOR",
+    "isActive": true
+  },
+  {
+    "id": "S25-M011",
+    "zone": "S25",
+    "section": "M011",
+    "isActive": true
+  },
+  {
+    "id": "S25-M01J",
+    "zone": "S25",
+    "section": "M01J",
+    "isActive": true
+  },
+  {
+    "id": "S26-Bends/Sets",
     "zone": "S26",
-    "sections": [
-      "Bends/Sets",
-      "M011",
-      "M01J",
-      "XP52",
-      "XP53"
-    ]
+    "section": "Bends/Sets",
+    "isActive": true
   },
   {
+    "id": "S26-M011",
+    "zone": "S26",
+    "section": "M011",
+    "isActive": true
+  },
+  {
+    "id": "S26-M01J",
+    "zone": "S26",
+    "section": "M01J",
+    "isActive": true
+  },
+  {
+    "id": "S26-XP52",
+    "zone": "S26",
+    "section": "XP52",
+    "isActive": true
+  },
+  {
+    "id": "S26-XP53",
+    "zone": "S26",
+    "section": "XP53",
+    "isActive": true
+  },
+  {
+    "id": "S27-Bends/Sets",
     "zone": "S27",
-    "sections": [
-      "Bends/Sets",
-      "M011",
-      "M01J",
-      "XP54"
-    ]
+    "section": "Bends/Sets",
+    "isActive": true
   },
   {
+    "id": "S27-M011",
+    "zone": "S27",
+    "section": "M011",
+    "isActive": true
+  },
+  {
+    "id": "S27-M01J",
+    "zone": "S27",
+    "section": "M01J",
+    "isActive": true
+  },
+  {
+    "id": "S27-XP54",
+    "zone": "S27",
+    "section": "XP54",
+    "isActive": true
+  },
+  {
+    "id": "S28-Bends/Sets",
     "zone": "S28",
-    "sections": [
-      "Bends/Sets",
-      "CENTRAL CORRIDOR",
-      "M011",
-      "M01J"
-    ]
+    "section": "Bends/Sets",
+    "isActive": true
   },
   {
+    "id": "S28-CENTRAL CORRIDOR",
+    "zone": "S28",
+    "section": "CENTRAL CORRIDOR",
+    "isActive": true
+  },
+  {
+    "id": "S28-M011",
+    "zone": "S28",
+    "section": "M011",
+    "isActive": true
+  },
+  {
+    "id": "S28-M01J",
+    "zone": "S28",
+    "section": "M01J",
+    "isActive": true
+  },
+  {
+    "id": "S29-Bends/Sets",
     "zone": "S29",
-    "sections": [
-      "Bends/Sets",
-      "CENTRAL CORRIDOR",
-      "M011",
-      "M01J"
-    ]
+    "section": "Bends/Sets",
+    "isActive": true
   },
   {
+    "id": "S29-CENTRAL CORRIDOR",
+    "zone": "S29",
+    "section": "CENTRAL CORRIDOR",
+    "isActive": true
+  },
+  {
+    "id": "S29-M011",
+    "zone": "S29",
+    "section": "M011",
+    "isActive": true
+  },
+  {
+    "id": "S29-M01J",
+    "zone": "S29",
+    "section": "M01J",
+    "isActive": true
+  },
+  {
+    "id": "S3-Bends/Sets",
     "zone": "S3",
-    "sections": [
-      "Bends/Sets",
-      "M011",
-      "M01J",
-      "XP03",
-      "XP04"
-    ]
+    "section": "Bends/Sets",
+    "isActive": true
   },
   {
+    "id": "S3-M011",
+    "zone": "S3",
+    "section": "M011",
+    "isActive": true
+  },
+  {
+    "id": "S3-M01J",
+    "zone": "S3",
+    "section": "M01J",
+    "isActive": true
+  },
+  {
+    "id": "S3-XP03",
+    "zone": "S3",
+    "section": "XP03",
+    "isActive": true
+  },
+  {
+    "id": "S3-XP04",
+    "zone": "S3",
+    "section": "XP04",
+    "isActive": true
+  },
+  {
+    "id": "S30-Bends/Sets",
     "zone": "S30",
-    "sections": [
-      "Bends/Sets",
-      "CENTRAL CORRIDOR",
-      "M011",
-      "M01J"
-    ]
+    "section": "Bends/Sets",
+    "isActive": true
   },
   {
+    "id": "S30-CENTRAL CORRIDOR",
+    "zone": "S30",
+    "section": "CENTRAL CORRIDOR",
+    "isActive": true
+  },
+  {
+    "id": "S30-M011",
+    "zone": "S30",
+    "section": "M011",
+    "isActive": true
+  },
+  {
+    "id": "S30-M01J",
+    "zone": "S30",
+    "section": "M01J",
+    "isActive": true
+  },
+  {
+    "id": "S31-Bends/Sets",
     "zone": "S31",
-    "sections": [
-      "Bends/Sets",
-      "CENTRAL CORRIDOR",
-      "M011",
-      "M01J"
-    ]
+    "section": "Bends/Sets",
+    "isActive": true
   },
   {
+    "id": "S31-CENTRAL CORRIDOR",
+    "zone": "S31",
+    "section": "CENTRAL CORRIDOR",
+    "isActive": true
+  },
+  {
+    "id": "S31-M011",
+    "zone": "S31",
+    "section": "M011",
+    "isActive": true
+  },
+  {
+    "id": "S31-M01J",
+    "zone": "S31",
+    "section": "M01J",
+    "isActive": true
+  },
+  {
+    "id": "S4-Bends/Sets",
     "zone": "S4",
-    "sections": [
-      "Bends/Sets",
-      "M011",
-      "M01J",
-      "XP05",
-      "XP06"
-    ]
+    "section": "Bends/Sets",
+    "isActive": true
   },
   {
+    "id": "S4-M011",
+    "zone": "S4",
+    "section": "M011",
+    "isActive": true
+  },
+  {
+    "id": "S4-M01J",
+    "zone": "S4",
+    "section": "M01J",
+    "isActive": true
+  },
+  {
+    "id": "S4-XP05",
+    "zone": "S4",
+    "section": "XP05",
+    "isActive": true
+  },
+  {
+    "id": "S4-XP06",
+    "zone": "S4",
+    "section": "XP06",
+    "isActive": true
+  },
+  {
+    "id": "S5-Bends/Sets",
     "zone": "S5",
-    "sections": [
-      "Bends/Sets",
-      "M011",
-      "M01J",
-      "XP07",
-      "XP08"
-    ]
+    "section": "Bends/Sets",
+    "isActive": true
   },
   {
+    "id": "S5-M011",
+    "zone": "S5",
+    "section": "M011",
+    "isActive": true
+  },
+  {
+    "id": "S5-M01J",
+    "zone": "S5",
+    "section": "M01J",
+    "isActive": true
+  },
+  {
+    "id": "S5-XP07",
+    "zone": "S5",
+    "section": "XP07",
+    "isActive": true
+  },
+  {
+    "id": "S5-XP08",
+    "zone": "S5",
+    "section": "XP08",
+    "isActive": true
+  },
+  {
+    "id": "S6-Bends/Sets",
     "zone": "S6",
-    "sections": [
-      "Bends/Sets",
-      "M011",
-      "M01J",
-      "XP09",
-      "XP10"
-    ]
+    "section": "Bends/Sets",
+    "isActive": true
   },
   {
+    "id": "S6-M011",
+    "zone": "S6",
+    "section": "M011",
+    "isActive": true
+  },
+  {
+    "id": "S6-M01J",
+    "zone": "S6",
+    "section": "M01J",
+    "isActive": true
+  },
+  {
+    "id": "S6-XP09",
+    "zone": "S6",
+    "section": "XP09",
+    "isActive": true
+  },
+  {
+    "id": "S6-XP10",
+    "zone": "S6",
+    "section": "XP10",
+    "isActive": true
+  },
+  {
+    "id": "S7-Bends/Sets",
     "zone": "S7",
-    "sections": [
-      "Bends/Sets",
-      "M011",
-      "M01J",
-      "XP11",
-      "XP12"
-    ]
+    "section": "Bends/Sets",
+    "isActive": true
   },
   {
+    "id": "S7-M011",
+    "zone": "S7",
+    "section": "M011",
+    "isActive": true
+  },
+  {
+    "id": "S7-M01J",
+    "zone": "S7",
+    "section": "M01J",
+    "isActive": true
+  },
+  {
+    "id": "S7-XP11",
+    "zone": "S7",
+    "section": "XP11",
+    "isActive": true
+  },
+  {
+    "id": "S7-XP12",
+    "zone": "S7",
+    "section": "XP12",
+    "isActive": true
+  },
+  {
+    "id": "S8-Bends/Sets",
     "zone": "S8",
-    "sections": [
-      "Bends/Sets",
-      "CENTRAL CORRIDOR",
-      "M011",
-      "M01J",
-      "XP13"
-    ]
+    "section": "Bends/Sets",
+    "isActive": true
   },
   {
+    "id": "S8-CENTRAL CORRIDOR",
+    "zone": "S8",
+    "section": "CENTRAL CORRIDOR",
+    "isActive": true
+  },
+  {
+    "id": "S8-M011",
+    "zone": "S8",
+    "section": "M011",
+    "isActive": true
+  },
+  {
+    "id": "S8-M01J",
+    "zone": "S8",
+    "section": "M01J",
+    "isActive": true
+  },
+  {
+    "id": "S8-XP13",
+    "zone": "S8",
+    "section": "XP13",
+    "isActive": true
+  },
+  {
+    "id": "S9-Bends/Sets",
     "zone": "S9",
-    "sections": [
-      "Bends/Sets",
-      "CENTRAL CORRIDOR",
-      "M011",
-      "M01J"
-    ]
+    "section": "Bends/Sets",
+    "isActive": true
+  },
+  {
+    "id": "S9-CENTRAL CORRIDOR",
+    "zone": "S9",
+    "section": "CENTRAL CORRIDOR",
+    "isActive": true
+  },
+  {
+    "id": "S9-M011",
+    "zone": "S9",
+    "section": "M011",
+    "isActive": true
+  },
+  {
+    "id": "S9-M01J",
+    "zone": "S9",
+    "section": "M01J",
+    "isActive": true
   }
 ]
