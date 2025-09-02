@@ -29,7 +29,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 const formSchema = z.object({
   shiftStart: z.coerce.date({ required_error: "A start date is required." }),
   shiftEnd: z.coerce.date({ required_error: "An end date is required." }),
-  crewMemberIds: z.array(z.string()),
+  crewMemberIds: z.array(z.string()), // Can be empty if supervisor is only crew member
   zone: z.string().min(1, "Zone is required."),
   section: z.string().min(1, "Section is required."),
   asset: z.string().min(1, "Please select an asset."),
@@ -660,11 +660,11 @@ function TimesheetFormContent() {
                 )}
               />
             </CardContent>
-            <CardFooter className="md:static fixed bottom-0 left-0 right-0 bg-background/80 md:bg-transparent backdrop-blur-sm md:backdrop-blur-none border-t md:border-t-0 p-4 md:p-6 md:pt-0 z-10">
+            <CardFooter className="md:static fixed bottom-0 left-0 right-0 bg-background/80 md:bg-transparent backdrop-blur-sm md:backdrop-blur-none border-t md:border-t-0 p-4 md:p-6 md:pt-0 z-10 flex justify-center">
                 <Button 
                     type="submit" 
                     size="lg" 
-                    className="w-full" 
+                    className="w-full md:w-1/3" 
                     disabled={form.formState.isSubmitting || !selectedSupervisorId}
                 >
                     {form.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Send className="mr-2 h-4 w-4" />}
