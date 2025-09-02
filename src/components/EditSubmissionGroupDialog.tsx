@@ -10,7 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { updateCrewDocket, getUsers, getLocations, getActivities } from "@/lib/actions";
+import { updateCrewDocket, getUsers, getLocations, getActivities, getUnproductiveReasons } from "@/lib/actions";
 import type { CrewDocketWithDetails, Activity, User, Location, UnproductiveReason } from "@/lib/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -105,10 +105,7 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, docket,
   const [activities, setActivities] = useState<Activity[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [unproductiveReasons, setUnproductiveReasons] = useState<UnproductiveReason[]>([]);
-  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(() => {
-      const initialActivity = activities.find(a => a.id === docket.activityId) || null;
-      return initialActivity;
-  });
+  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
 
   const representativeTimesheet = docket.timesheets[0] || {};
 
@@ -139,6 +136,8 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, docket,
   const selectedAsset = form.watch("asset");
   const selectedSubAsset = form.watch("subAsset");
   const selectedZone = form.watch("zone");
+  
+  const uniqueZones = useMemo(() => [...new Set(locations.map(l => l.zone))], [locations]);
 
   const assets = useMemo(() => [...new Set(activities.map(a => a.asset))], [activities]);
   
@@ -148,19 +147,19 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, docket,
   }, [selectedAsset, activities]);
 
   useEffect(() => {
-    if (subAssets.length === 1) {
+    if (subAssets.length === 1 && !form.getValues('subAsset')) {
       form.setValue("subAsset", subAssets[0]);
     }
   }, [subAssets, form]);
 
   const filteredActivities = useMemo(() => {
     if (!selectedAsset || !selectedSubAsset) return [];
-    return activities.filter(a => a.asset === selectedAsset && a.subAsset === selectedSubAsset);
+    return activities.filter(a => a.asset === selectedAsset && a.subAsset === selectedSubAsset && a.isActive);
   }, [selectedAsset, selectedSubAsset, activities]);
 
   const sectionsForSelectedZone = useMemo(() => {
     if (!selectedZone) return [];
-    return locations.find(l => l.zone === selectedZone)?.sections || [];
+    return locations.filter(l => l.zone === selectedZone && l.isActive).map(l => l.section);
   }, [selectedZone, locations]);
 
   useEffect(() => {
@@ -170,16 +169,18 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, docket,
           getUsers(loggedInUser),
           getLocations(),
           getActivities(),
-          getUsers()
+          getUnproductiveReasons()
         ]);
         setAllUsers(fetchedUsers);
         setLocations(fetchedLocations);
         setActivities(fetchedActivities);
-        setUnproductiveReasons(unproductiveReasons);
+        setUnproductiveReasons(fetchedReasons);
       }
     }
-    loadData();
-  }, [loggedInUser]);
+    if (isOpen) {
+      loadData();
+    }
+  }, [isOpen, loggedInUser]);
 
   useEffect(() => {
     if (isOpen && activities.length > 0) {
@@ -206,12 +207,13 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, docket,
 
   const crewMembers = useMemo(() => {
     if (!loggedInUser) return [];
-    const companyToShow = loggedInUser.appRole === 'Admin' ? docket.company : loggedInUser.company;
+    // The company context is the company of the docket being edited.
+    const companyToShow = docket.company;
     return allUsers
       .filter(u => 
         u.company === companyToShow && 
         (u.appRole === 'Crew Member' || u.appRole === 'Crew Supervisor') &&
-        u.id !== docket.submittedById
+        u.id !== docket.submittedById // Exclude the supervisor who submitted it.
       )
       .sort((a, b) => a.fullName.localeCompare(b.fullName));
   }, [allUsers, loggedInUser, docket]);
@@ -298,7 +300,7 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, docket,
                         <Select onValueChange={(value) => { field.onChange(value); form.setValue("section", ""); }} value={field.value}>
                           <FormControl><SelectTrigger><SelectValue placeholder="Select a zone" /></SelectTrigger></FormControl>
                           <SelectContent>
-                            {locations.map(loc => <SelectItem key={loc.zone} value={loc.zone}>{loc.zone}</SelectItem>)}
+                            {uniqueZones.map(zone => <SelectItem key={zone} value={zone}>{zone}</SelectItem>)}
                           </SelectContent>
                         </Select>
                         <FormMessage />

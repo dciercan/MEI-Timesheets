@@ -1,1 +1,42 @@
-[]
+[
+  {
+    "id": "CD-mf2appys-qcsk9v8",
+    "submittedById": "4",
+    "crewMemberIds": [
+      "13",
+      "8",
+      "4"
+    ],
+    "zone": "S2",
+    "section": "XP01",
+    "asset": "Cable Containment",
+    "subAsset": "Fire Rated Cable Ladder (600) - Vertical - LEP",
+    "activityId": "act-1756801105971-yqn",
+    "quantity": 33,
+    "notes": "",
+    "timesheetDate": "2025-08-24T00:00:00.000Z",
+    "company": "BuildIt",
+    "submittedAt": "2025-09-02T08:37:53.716Z",
+    "status": "Rejected"
+  },
+  {
+    "id": "CD-mf2akzb4-zn5hv2f",
+    "submittedById": "4",
+    "crewMemberIds": [
+      "13",
+      "12",
+      "4"
+    ],
+    "zone": "S1",
+    "section": "M011",
+    "asset": "AID",
+    "subAsset": "Automatic Incident Detection Cam (PoE)",
+    "activityId": "act-1756801105969-s0n",
+    "quantity": 25,
+    "notes": "",
+    "timesheetDate": "2025-08-24T00:00:00.000Z",
+    "company": "BuildIt",
+    "submittedAt": "2025-09-02T08:34:12.544Z",
+    "status": "Submitted"
+  }
+]
