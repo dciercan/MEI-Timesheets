@@ -10,7 +10,7 @@
     "activity": "Unit Install",
     "activityUom": "Each",
     "wbsCode": "WBS-NC-101",
-    "isActive": true
+    "isActive": false
   },
   {
     "id": "act-nc-02",
@@ -22,7 +22,7 @@
     "activity": "Unit Anchor Survey",
     "activityUom": "Each",
     "wbsCode": "WBS-NC-102",
-    "isActive": true
+    "isActive": false
   },
   {
     "id": "act-nc-03",
@@ -34,7 +34,7 @@
     "activity": "Unit Anchor Install",
     "activityUom": "Each",
     "wbsCode": "WBS-NC-103",
-    "isActive": true
+    "isActive": false
   },
   {
     "id": "act-nc-04",
@@ -46,7 +46,7 @@
     "activity": "Unit Test",
     "activityUom": "Each",
     "wbsCode": "WBS-NC-104",
-    "isActive": true
+    "isActive": false
   },
   {
     "id": "act-nc-05",
@@ -58,7 +58,7 @@
     "activity": "Unit Install",
     "activityUom": "Each",
     "wbsCode": "WBS-NC-101",
-    "isActive": true
+    "isActive": false
   },
   {
     "id": "act-nc-06",
@@ -70,7 +70,7 @@
     "activity": "Unit Anchor Survey",
     "activityUom": "Each",
     "wbsCode": "WBS-NC-102",
-    "isActive": true
+    "isActive": false
   },
   {
     "id": "act-nc-07",
@@ -82,7 +82,7 @@
     "activity": "Unit Anchor Install",
     "activityUom": "Each",
     "wbsCode": "WBS-NC-103",
-    "isActive": true
+    "isActive": false
   },
   {
     "id": "act-nc-08",
