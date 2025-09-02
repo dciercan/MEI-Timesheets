@@ -6,6 +6,7 @@ import UnproductiveTimeConfig from "@/components/UnproductiveTimeConfig";
 import { getActivities, getUnproductiveReasons, getLocations } from "@/lib/actions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Map, ListChecks, Clock } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 export const dynamic = 'force-dynamic';
 
@@ -27,14 +28,17 @@ export default async function ConfigurationPage() {
                     <TabsTrigger value="locations">
                         <Map className="mr-2" />
                         Locations
+                        <Badge variant="secondary" className="ml-2">{locations.length}</Badge>
                     </TabsTrigger>
                     <TabsTrigger value="activities">
                         <ListChecks className="mr-2" />
                         Activities
+                        <Badge variant="secondary" className="ml-2">{activities.length}</Badge>
                     </TabsTrigger>
                     <TabsTrigger value="unproductive">
                         <Clock className="mr-2" />
                         Unproductive Time
+                        <Badge variant="secondary" className="ml-2">{unproductiveReasons.length}</Badge>
                     </TabsTrigger>
                 </TabsList>
                 <TabsContent value="locations">
