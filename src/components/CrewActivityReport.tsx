@@ -63,7 +63,7 @@ export default function CrewActivityReport({ dockets }: CrewActivityReportProps)
         accessorKey: 'submittedBy.fullName', 
         header: 'Supervisor',
     },
-    { 
+     { 
         accessorKey: 'company', 
         header: 'Company',
     },
@@ -81,14 +81,14 @@ export default function CrewActivityReport({ dockets }: CrewActivityReportProps)
         cell: ({ row }) => `${row.original.quantity} ${row.original.activity?.activityUom || ''}`.trim()
     },
     { 
-        accessorKey: 'productiveHours', 
-        header: 'Productive Hours',
-        cell: ({ row }) => row.original.timesheets[0]?.productiveHours || 0
-    },
-    { 
         accessorKey: 'crewMembers', 
         header: 'Crew Size',
         cell: ({ row }) => row.original.crewMembers.length
+    },
+    { 
+        accessorKey: 'productiveHours', 
+        header: 'Productive Hours',
+        cell: ({ row }) => row.original.timesheets[0]?.productiveHours || 0
     },
     { 
         id: 'unproductiveHours',
@@ -136,8 +136,8 @@ export default function CrewActivityReport({ dockets }: CrewActivityReportProps)
             'Sub-Asset': row.original.subAsset,
             'Activity': row.original.activity?.activity || 'N/A',
             'Quantity': `${row.original.quantity} ${row.original.activity?.activityUom || ''}`.trim(),
-            'Productive Hours': row.original.timesheets[0]?.productiveHours || 0,
             'Crew Size': row.original.crewMembers.length,
+            'Productive Hours': row.original.timesheets[0]?.productiveHours || 0,
             'Unproductive Hours': (unproductiveMinutes / 60).toFixed(2),
             'Status': row.original.status,
         }
