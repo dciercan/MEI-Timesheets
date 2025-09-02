@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo, useEffect, Suspense } from "react";
@@ -373,7 +372,7 @@ function TimesheetFormContent() {
   return (
     <div className="container mx-auto max-w-4xl py-8 px-4 md:px-6">
       <Form {...form}>
-        <Card className="shadow-lg pb-32">
+        <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="font-headline text-3xl">New Crew Docket</CardTitle>
             <CardDescription>
@@ -381,7 +380,7 @@ function TimesheetFormContent() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 pb-24">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {canSelectCompany && (
                   <FormItem>
@@ -660,15 +659,19 @@ function TimesheetFormContent() {
                 )}
               />
 
-                <Button 
-                    type="submit" 
-                    size="lg" 
-                    className="w-full sm:w-auto" 
-                    disabled={form.formState.isSubmitting || !selectedSupervisorId}
-                >
-                    {form.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Send className="mr-2 h-4 w-4" />}
-                    Submit Crew Docket
-                </Button>
+              <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-sm border-t border-border z-10">
+                <div className="container mx-auto max-w-4xl px-0">
+                    <Button 
+                        type="submit" 
+                        size="lg" 
+                        className="w-full" 
+                        disabled={form.formState.isSubmitting || !selectedSupervisorId}
+                    >
+                        {form.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Send className="mr-2 h-4 w-4" />}
+                        Submit Crew Docket
+                    </Button>
+                </div>
+              </div>
             </form>
           </CardContent>
         </Card>
@@ -684,5 +687,3 @@ export default function TimesheetForm() {
     </Suspense>
   )
 }
-
-    
