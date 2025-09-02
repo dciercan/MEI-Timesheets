@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -22,7 +23,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, ArrowUpDown, Edit, Trash2, PlusCircle, Loader2, X } from 'lucide-react';
+import { MoreHorizontal, ArrowUpDown, Edit, Trash2, PlusCircle, Loader2, X, Upload } from 'lucide-react';
 import type { Activity } from '@/lib/types';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel } from './ui/dropdown-menu';
 import { Input } from './ui/input';
@@ -33,8 +34,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { deleteActivity, getActivities, saveActivity } from '@/lib/actions';
+import { deleteActivity, getActivities, saveActivity, toggleActivityStatus } from '@/lib/actions';
 import { useRouter } from 'next/navigation';
+import ActivityImporter from './ActivityImporter';
+import { Switch } from './ui/switch';
 
 interface ActivityConfigProps {
   activities: Activity[];
@@ -47,6 +50,7 @@ const activityFormSchema = z.object({
     activity: z.string().min(1, 'Activity is required'),
     activityUom: z.string().min(1, 'UoM is required'),
     wbsCode: z.string().min(1, 'WBS Code is required'),
+    isActive: z.boolean().default(true),
     // These are part of the model but not edited here
     contract: z.string().optional(),
     zone: z.string().optional(),
@@ -63,6 +67,7 @@ export default function ActivityConfig({ activities: initialActivities }: Activi
   const router = useRouter();
 
   const [isFormOpen, setIsFormOpen] = React.useState(false);
+  const [isImporterOpen, setIsImporterOpen] = React.useState(false);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = React.useState(false);
   const [selectedActivity, setSelectedActivity] = React.useState<Activity | null>(null);
   const [isSaving, setIsSaving] = React.useState(false);
@@ -75,6 +80,7 @@ export default function ActivityConfig({ activities: initialActivities }: Activi
       activity: '',
       activityUom: '',
       wbsCode: '',
+      isActive: true,
     },
   });
 
@@ -82,10 +88,25 @@ export default function ActivityConfig({ activities: initialActivities }: Activi
     const data = await getActivities();
     setActivities(data);
   }
+  
+  const handleImportFinished = async () => {
+    setIsImporterOpen(false);
+    await refetchData();
+  }
+
+  const handleToggleActive = async (activityId: string, currentStatus: boolean) => {
+    const result = await toggleActivityStatus(activityId, !currentStatus);
+    if (result.success) {
+        toast({ title: `Activity status updated.` });
+        await refetchData();
+    } else {
+        toast({ variant: 'destructive', title: 'Error', description: result.error });
+    }
+  }
 
   const handleAddNew = () => {
     setSelectedActivity(null);
-    form.reset({ asset: '', subAsset: '', activity: '', activityUom: '', wbsCode: '' });
+    form.reset({ asset: '', subAsset: '', activity: '', activityUom: '', wbsCode: '', isActive: true });
     setIsFormOpen(true);
   };
 
@@ -148,6 +169,20 @@ export default function ActivityConfig({ activities: initialActivities }: Activi
     {
         accessorKey: 'wbsCode',
         header: ({ column }) => <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>WBS Code <ArrowUpDown className="ml-2 h-4 w-4" /></Button>,
+    },
+    {
+        accessorKey: 'isActive',
+        header: 'Active',
+        cell: ({ row }) => {
+            const activity = row.original;
+            return (
+                <Switch
+                    checked={activity.isActive}
+                    onCheckedChange={() => handleToggleActive(activity.id, activity.isActive)}
+                    aria-label="Toggle activity status"
+                />
+            )
+        }
     },
     {
       id: 'actions',
@@ -231,7 +266,11 @@ export default function ActivityConfig({ activities: initialActivities }: Activi
 
   return (
     <>
-        <div className="flex items-center justify-end py-4">
+        <div className="flex items-center justify-end py-4 space-x-2">
+            <Button onClick={() => setIsImporterOpen(true)} variant="outline">
+                <Upload className="mr-2 h-4 w-4" />
+                Import from CSV
+            </Button>
             <Button onClick={handleAddNew}>
                 <PlusCircle className="mr-2 h-4 w-4"/>
                 Add Activity
@@ -247,7 +286,7 @@ export default function ActivityConfig({ activities: initialActivities }: Activi
                     {header.isPlaceholder ? null : (
                         <div>
                             {flexRender(header.column.columnDef.header, header.getContext())}
-                            {header.column.getCanFilter() && !header.isPlaceholder && header.id !== 'actions' && (
+                            {header.column.getCanFilter() && !header.isPlaceholder && header.id !== 'actions' && header.id !== 'isActive' && (
                                 <div className="mt-2">
                                     <FilterInput columnId={header.column.id} />
                                 </div>
@@ -298,6 +337,13 @@ export default function ActivityConfig({ activities: initialActivities }: Activi
         </div>
       </div>
 
+       {/* Importer Dialog */}
+       <ActivityImporter 
+            isOpen={isImporterOpen} 
+            onOpenChange={setIsImporterOpen} 
+            onImportFinished={handleImportFinished}
+        />
+
        {/* Form Dialog */}
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
             <DialogContent>
@@ -324,6 +370,26 @@ export default function ActivityConfig({ activities: initialActivities }: Activi
                         <FormField control={form.control} name="wbsCode" render={({ field }) => (
                             <FormItem><FormLabel>WBS Code</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                         )}/>
+                         <FormField
+                            control={form.control}
+                            name="isActive"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                                    <div className="space-y-0.5">
+                                        <FormLabel>Active</FormLabel>
+                                        <DialogDescription>
+                                            Inactive activities will not appear on the timesheet entry form.
+                                        </DialogDescription>
+                                    </div>
+                                    <FormControl>
+                                        <Switch
+                                            checked={field.value}
+                                            onCheckedChange={field.onChange}
+                                        />
+                                    </FormControl>
+                                </FormItem>
+                            )}
+                        />
                        
                         <DialogFooter>
                             <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>

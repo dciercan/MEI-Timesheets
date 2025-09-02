@@ -18,6 +18,7 @@ export type Activity = {
   activity: string;
   activityUom: string;
   wbsCode: string;
+  isActive: boolean;
 };
 
 export type UnproductiveReason = {

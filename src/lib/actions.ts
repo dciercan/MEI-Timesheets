@@ -644,6 +644,7 @@ const activitySchema = z.object({
     activity: z.string().min(1, 'Activity is required'),
     activityUom: z.string().min(1, 'UoM is required'),
     wbsCode: z.string().min(1, 'WBS Code is required'),
+    isActive: z.boolean().default(true),
 });
 
 export async function saveActivity(data: z.infer<typeof activitySchema>) {
@@ -662,7 +663,7 @@ export async function saveActivity(data: z.infer<typeof activitySchema>) {
         }
     } else {
         const newActivity: Activity = {
-            id: `act-${Date.now()}`,
+            id: `act-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
             contract: 'C-456', // Default value
             zone: 'S1', // Default value
             section: 'M011', // Default value
@@ -686,6 +687,19 @@ export async function deleteActivity(id: string) {
     revalidatePath('/admin/configuration');
     return { success: true };
 }
+
+export async function toggleActivityStatus(id: string, newStatus: boolean) {
+    const activities = await readActivities();
+    const index = activities.findIndex(a => a.id === id);
+    if (index > -1) {
+        activities[index].isActive = newStatus;
+        await writeActivities(activities);
+        revalidatePath('/admin/configuration');
+        return { success: true };
+    }
+    return { success: false, error: 'Activity not found.' };
+}
+
 
 const unproductiveReasonSchema = z.object({
     id: z.string().optional(),
@@ -827,4 +841,101 @@ export async function importLocations(data: z.infer<typeof importLocationsSchema
     };
 }
     
+const importActivitiesSchema = z.object({
+  activities: z.array(z.object({
+    asset: z.string().trim().min(1),
+    subAsset: z.string().trim().min(1),
+    activity: z.string().trim().min(1),
+    activityUom: z.string().trim().min(1),
+    wbsCode: z.string().trim().min(1),
+  })),
+  deleteMissing: z.boolean(),
+});
 
+export async function importActivities(data: z.infer<typeof importActivitiesSchema>) {
+    const validation = importActivitiesSchema.safeParse(data);
+    if (!validation.success) {
+      console.error("Import activities validation error:", validation.error.flatten());
+      return { success: false, error: "Invalid data format. Ensure all required columns are mapped and every row has values." };
+    }
+  
+    const { activities: importedRows, deleteMissing } = validation.data;
+    const existingActivities = await readActivities();
+  
+    // Use a composite key for uniqueness: asset-subAsset-activity
+    const createKey = (act: { asset: string; subAsset: string; activity: string; }) => 
+        `${act.asset}-${act.subAsset}-${act.activity}`.toLowerCase();
+
+    const newActivitiesMap = new Map<string, Omit<Activity, 'id'>>();
+    for (const row of importedRows) {
+        const key = createKey(row);
+        if (!newActivitiesMap.has(key)) {
+            newActivitiesMap.set(key, {
+                ...row,
+                isActive: true,
+                contract: 'C-456', // Default value
+                zone: 'S1', // Default value
+                section: 'M011', // Default value
+            });
+        }
+    }
+  
+    let finalActivities: Activity[] = [];
+    let createdCount = 0;
+    let updatedCount = 0;
+  
+    if (deleteMissing) {
+        finalActivities = Array.from(newActivitiesMap.values()).map(act => ({
+            ...act,
+            id: `act-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`
+        }));
+    } else {
+        const mergedActivitiesMap = new Map<string, Activity>();
+        for (const act of existingActivities) {
+            mergedActivitiesMap.set(createKey(act), act);
+        }
+
+        for (const [key, value] of newActivitiesMap.entries()) {
+            if (mergedActivitiesMap.has(key)) {
+                // Update existing activity
+                const existingActivity = mergedActivitiesMap.get(key)!;
+                mergedActivitiesMap.set(key, {
+                    ...existingActivity,
+                    activityUom: value.activityUom,
+                    wbsCode: value.wbsCode,
+                });
+                updatedCount++;
+            } else {
+                // Add new activity
+                mergedActivitiesMap.set(key, {
+                    ...value,
+                    id: `act-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+                });
+                createdCount++;
+            }
+        }
+        finalActivities = Array.from(mergedActivitiesMap.values());
+    }
+  
+    finalActivities.sort((a, b) => a.asset.localeCompare(b.asset) || a.subAsset.localeCompare(b.subAsset) || a.activity.localeCompare(b.activity));
+    
+    await writeActivities(finalActivities);
+    revalidatePath('/admin/configuration');
+
+    const deletedCount = deleteMissing ? Math.max(0, existingActivities.length - newActivitiesMap.size) : 0;
+    if (deleteMissing) {
+      const existingKeys = new Set(existingActivities.map(createKey));
+      createdCount = Array.from(newActivitiesMap.keys()).filter(key => !existingKeys.has(key)).length;
+      updatedCount = newActivitiesMap.size - createdCount;
+    }
+
+    return { 
+        success: true, 
+        report: {
+            created: createdCount,
+            updated: updatedCount,
+            deleted: deletedCount,
+            total: finalActivities.length,
+        }
+    };
+}

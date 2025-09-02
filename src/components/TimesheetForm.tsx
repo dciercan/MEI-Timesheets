@@ -176,7 +176,7 @@ export default function TimesheetForm() {
           getLocations(),
         ]);
         setAllUsers(fetchedUsers);
-        setActivities(fetchedActivities);
+        setActivities(fetchedActivities.filter(a => a.isActive));
         setUnproductiveReasons(fetchedUnproductive);
         setLocations(fetchedLocations.filter(l => l.isActive)); // Only use active locations
       }
