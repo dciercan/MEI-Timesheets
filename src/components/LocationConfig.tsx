@@ -68,7 +68,11 @@ export default function LocationConfig({ locations: initialLocations }: Location
         defaultValues: { zone: '', section: '', isActive: true },
     });
 
-    const uniqueZones = React.useMemo(() => [...new Set(initialLocations.map(l => l.zone))], [initialLocations]);
+    const uniqueZones = React.useMemo(() => [...new Set(initialLocations.map(l => l.zone))].sort((a, b) => {
+        const numA = parseInt(a.replace(/[^0-9]/g, ''), 10) || 0;
+        const numB = parseInt(b.replace(/[^0-9]/g, ''), 10) || 0;
+        return numA - numB;
+    }), [initialLocations]);
 
     const refetchData = async () => {
       const refreshedLocations = await getLocations();

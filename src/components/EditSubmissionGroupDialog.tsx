@@ -190,7 +190,11 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, docket,
   const selectedSubAsset = form.watch("subAsset");
   const selectedZone = form.watch("zone");
   
-  const uniqueZones = useMemo(() => [...new Set(locations.map(l => l.zone))], [locations]);
+  const uniqueZones = useMemo(() => [...new Set(locations.map(l => l.zone))].sort((a, b) => {
+    const numA = parseInt(a.replace(/[^0-9]/g, ''), 10) || 0;
+    const numB = parseInt(b.replace(/[^0-9]/g, ''), 10) || 0;
+    return numA - numB;
+  }), [locations]);
 
   const assets = useMemo(() => [...new Set(activities.map(a => a.asset))], [activities]);
   

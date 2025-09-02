@@ -262,7 +262,11 @@ export default function TimesheetForm() {
   const selectedSubAsset = form.watch("subAsset");
   const selectedZone = form.watch("zone");
   
-  const activeZones = useMemo(() => [...new Set(locations.map(l => l.zone))], [locations]);
+  const activeZones = useMemo(() => [...new Set(locations.map(l => l.zone))].sort((a, b) => {
+    const numA = parseInt(a.replace(/[^0-9]/g, ''), 10) || 0;
+    const numB = parseInt(b.replace(/[^0-9]/g, ''), 10) || 0;
+    return numA - numB;
+  }), [locations]);
   
   const activeSectionsForSelectedZone = useMemo(() => {
     if (!selectedZone) return [];
