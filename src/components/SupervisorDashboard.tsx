@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -51,7 +50,7 @@ export default function SupervisorDashboard({ dockets, onDocketDeleted }: Superv
     const result = await deleteCrewDocket(currentUser.id, crewId);
     if (result.success) {
       toast({ title: "Crew Docket deleted." });
-      onDocketDeleted(crewId); // Use the callback to update parent state
+      onDocketDeleted(crewId);
     } else {
       toast({ variant: "destructive", title: "Error", description: result.error });
     }
@@ -215,7 +214,7 @@ export default function SupervisorDashboard({ dockets, onDocketDeleted }: Superv
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button variant="outline" size="icon" className="h-9 w-9" disabled={!canDelete} asChild>
-                                <AlertDialogTrigger>
+                                <AlertDialogTrigger disabled={!canDelete}>
                                      <Trash2 className="h-4 w-4" />
                                 </AlertDialogTrigger>
                             </Button>
@@ -321,4 +320,3 @@ export default function SupervisorDashboard({ dockets, onDocketDeleted }: Superv
     </Card>
   );
 }
-

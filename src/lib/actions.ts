@@ -415,21 +415,16 @@ export async function getCrewDockets(
     const isSparkUser = ['Admin', 'MEI Supervisor', 'Read Only'].includes(currentUser.appRole);
 
     if (isSparkUser) {
-        // Spark Admins, Supervisors and Read Only see all dockets from all companies
-        filteredDockets = allDockets;
+        if (currentUser.appRole === 'MEI Supervisor') {
+            filteredDockets = allDockets.filter(d => d.status === 'Submitted');
+        } else {
+            filteredDockets = allDockets;
+        }
     } else if (currentUser.appRole === 'Subcontractor Admin') {
-        // Subcontractor Admin sees all dockets for their company
         filteredDockets = allDockets.filter(s => s.company === currentUser.company);
     } else if (currentUser.appRole === 'Crew Supervisor') {
-         // Crew Supervisor on the "My Crew Dockets" page sees only dockets they have submitted.
-         // On the approval dashboard, MEI Supervisors need to see submitted dockets from others.
-        if (currentUser.appRole === 'MEI Supervisor') {
-             filteredDockets = allDockets.filter(d => d.status === 'Submitted');
-        } else {
-             filteredDockets = allDockets.filter(s => s.submittedById === currentUser.id);
-        }
+         filteredDockets = allDockets.filter(s => s.submittedById === currentUser.id);
     } else {
-         // Default to no dockets if role is not recognized or just a crew member
         filteredDockets = [];
     }
     
@@ -820,14 +815,9 @@ export async function importLocations(data: z.infer<typeof importLocationsSchema
     let deletedCount = 0;
 
     if (deleteMissing) {
-        // If we replaced the data, compare old and new sets
-        const existingSections = new Set(existingLocations.flatMap(l => `${l.zone}::${l.sections.join(',')}`));
-        const finalSections = new Set(finalLocations.flatMap(l => `${l.zone}::${l.sections.join(',')}`));
-        
-        createdCount = finalSectionCount; // All final sections are considered "created" in a replace operation
-        deletedCount = existingSectionCount; // All old sections are considered "deleted"
+        createdCount = finalSectionCount;
+        deletedCount = Math.max(0, existingSectionCount - finalSectionCount);
     } else {
-        // If merging, the number created is the difference in total counts
         createdCount = Math.max(0, finalSectionCount - existingSectionCount);
     }
     
@@ -835,7 +825,7 @@ export async function importLocations(data: z.infer<typeof importLocationsSchema
         success: true, 
         report: {
             created: createdCount,
-            updated: 0, // Simplified, no direct update logic
+            updated: 0, 
             deleted: deletedCount,
             total: finalSectionCount,
         }
