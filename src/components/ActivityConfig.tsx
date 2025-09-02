@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -23,7 +22,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, ArrowUpDown, Edit, Trash2, PlusCircle, Loader2 } from 'lucide-react';
+import { MoreHorizontal, ArrowUpDown, Edit, Trash2, PlusCircle, Loader2, X } from 'lucide-react';
 import type { Activity } from '@/lib/types';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel } from './ui/dropdown-menu';
 import { Input } from './ui/input';
@@ -201,15 +200,32 @@ export default function ActivityConfig({ activities: initialActivities }: Activi
             column?.setFilterValue(value);
         }
     };
+    
+    const handleClear = () => {
+        setValue('');
+        column?.setFilterValue('');
+    }
 
     return (
-        <Input
-            placeholder={`Filter ${columnId}...`}
-            value={value}
-            onChange={(event) => setValue(event.target.value)}
-            onKeyDown={handleKeyDown}
-            className="max-w-full h-8"
-        />
+        <div className="relative">
+            <Input
+                placeholder={`Filter ${columnId}...`}
+                value={value}
+                onChange={(event) => setValue(event.target.value)}
+                onKeyDown={handleKeyDown}
+                className="max-w-full h-8 pr-8"
+            />
+            {value && (
+                <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="absolute h-8 w-8 right-0 top-0"
+                    onClick={handleClear}
+                >
+                    <X className="h-4 w-4" />
+                </Button>
+            )}
+        </div>
     )
   }
 
