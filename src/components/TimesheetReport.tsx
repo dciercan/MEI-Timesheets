@@ -30,6 +30,9 @@ import { format, differenceInMinutes } from 'date-fns';
 import { Badge } from './ui/badge';
 import { cn } from '@/lib/utils';
 import Papa from 'papaparse';
+import { formatInTimeZone } from 'date-fns-tz';
+
+const MELBOURNE_TZ = 'Australia/Melbourne';
 
 interface TimesheetReportProps {
   timesheets: TimesheetWithDetails[];
@@ -61,17 +64,17 @@ export default function TimesheetReport({ timesheets }: TimesheetReportProps) {
         accessorKey: 'shiftStart',
         id: 'timesheetDate',
         header: 'Date',
-        cell: ({ row }) => format(new Date(row.original.shiftStart), 'dd/MM/yy')
+        cell: ({ row }) => formatInTimeZone(new Date(row.original.shiftStart), MELBOURNE_TZ, 'dd/MM/yy')
     },
     {
         accessorKey: 'shiftStart',
         header: 'Shift Start',
-        cell: ({ row }) => format(new Date(row.original.shiftStart), 'dd/MM/yy HH:mm')
+        cell: ({ row }) => formatInTimeZone(new Date(row.original.shiftStart), MELBOURNE_TZ, 'dd/MM/yy HH:mm')
     },
     {
         accessorKey: 'shiftEnd',
         header: 'Shift End',
-        cell: ({ row }) => format(new Date(row.original.shiftEnd), 'dd/MM/yy HH:mm')
+        cell: ({ row }) => formatInTimeZone(new Date(row.original.shiftEnd), MELBOURNE_TZ, 'dd/MM/yy HH:mm')
     },
     {
         accessorKey: 'crewMember.fullName',
@@ -141,9 +144,9 @@ export default function TimesheetReport({ timesheets }: TimesheetReportProps) {
         return {
             'TS ID': row.original.id,
             'CD ID': row.original.crewDocketId,
-            'Date': format(new Date(row.original.shiftStart), 'dd/MM/yy'),
-            'Shift Start': format(new Date(row.original.shiftStart), 'yyyy-MM-dd HH:mm'),
-            'Shift End': format(new Date(row.original.shiftEnd), 'yyyy-MM-dd HH:mm'),
+            'Date': formatInTimeZone(new Date(row.original.shiftStart), MELBOURNE_TZ, 'dd/MM/yy'),
+            'Shift Start': formatInTimeZone(new Date(row.original.shiftStart), MELBOURNE_TZ, 'yyyy-MM-dd HH:mm'),
+            'Shift End': formatInTimeZone(new Date(row.original.shiftEnd), MELBOURNE_TZ, 'yyyy-MM-dd HH:mm'),
             'Crew Member': row.original.crewMember?.fullName,
             'Supervisor': row.original.submittedBy?.fullName,
             'Prod Hours': productiveHours,
@@ -237,4 +240,3 @@ export default function TimesheetReport({ timesheets }: TimesheetReportProps) {
     </>
   );
 }
-

@@ -10,6 +10,9 @@ import path from 'path';
 import { cookies } from 'next/headers';
 import { listModels } from 'genkit';
 import { startOfDay } from 'date-fns';
+import { zonedTimeToUtc } from 'date-fns-tz';
+
+const MELBOURNE_TZ = 'Australia/Melbourne';
 
 // In a real app, you would use a proper database.
 const crewDocketsDbPath = path.join(process.cwd(), 'src', 'lib', 'crew-dockets.json');
@@ -177,10 +180,12 @@ export async function addCrewDocket(data: z.infer<typeof addCrewDocketSchema>) {
     
     const allCrewForSubmission = [...new Set([...docketData.crewMemberIds, docketData.submittedById])];
 
+    const melbourneShiftStart = zonedTimeToUtc(shiftStart, MELBOURNE_TZ);
+
     const newDocket: CrewDocket = {
         id: `CD-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 9)}`,
         ...docketData,
-        timesheetDate: startOfDay(shiftStart),
+        timesheetDate: startOfDay(melbourneShiftStart),
         company: supervisor.company,
         crewMemberIds: allCrewForSubmission,
         submittedAt: new Date(),
@@ -261,11 +266,13 @@ export async function updateCrewDocket(data: z.infer<typeof updateCrewDocketSche
     const originalDocket = allDockets[docketIndex];
     const allCrewForSubmission = [...new Set([...docketUpdates.crewMemberIds, originalDocket.submittedById])];
     
+    const melbourneShiftStart = zonedTimeToUtc(shiftStart, MELBOURNE_TZ);
+
     // Update the docket
     const updatedDocket: CrewDocket = {
         ...originalDocket,
         ...docketUpdates,
-        timesheetDate: startOfDay(shiftStart),
+        timesheetDate: startOfDay(melbourneShiftStart),
         crewMemberIds: allCrewForSubmission,
         // If a rejected docket is edited, it should go back to "Submitted"
         status: originalDocket.status === 'Rejected' ? 'Submitted' : originalDocket.status,
