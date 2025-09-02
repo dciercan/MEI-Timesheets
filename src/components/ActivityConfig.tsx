@@ -190,11 +190,24 @@ export default function ActivityConfig({ activities: initialActivities }: Activi
 
   const FilterInput = ({ columnId }: { columnId: string }) => {
     const column = table.getColumn(columnId);
+    const [value, setValue] = React.useState((column?.getFilterValue() as string) ?? '');
+
+    React.useEffect(() => {
+        setValue((column?.getFilterValue() as string) ?? '');
+    }, [column?.getFilterValue()])
+
+    const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+        if (event.key === 'Enter') {
+            column?.setFilterValue(value);
+        }
+    };
+
     return (
         <Input
             placeholder={`Filter ${columnId}...`}
-            value={(column?.getFilterValue() as string) ?? ''}
-            onChange={(event) => column?.setFilterValue(event.target.value)}
+            value={value}
+            onChange={(event) => setValue(event.target.value)}
+            onKeyDown={handleKeyDown}
             className="max-w-full h-8"
         />
     )
