@@ -182,6 +182,14 @@ export default function SubcontractorUserAdmin({ initialUsers, currentUser }: Us
 
   const columns: ColumnDef<User>[] = [
     {
+      accessorKey: 'company',
+      header: 'Company',
+    },
+    {
+      accessorKey: 'DAMid',
+      header: 'DAMid',
+    },
+    {
       accessorKey: 'fullName',
       header: ({ column }) => {
         return (
@@ -194,14 +202,6 @@ export default function SubcontractorUserAdmin({ initialUsers, currentUser }: Us
           </Button>
         );
       },
-    },
-     {
-      accessorKey: 'DAMid',
-      header: 'DAMid',
-    },
-    {
-      accessorKey: 'company',
-      header: 'Company',
     },
     {
       accessorKey: 'appRole',

@@ -186,6 +186,14 @@ export default function SparkUserAdmin({ initialUsers, currentUser }: UserAdminP
 
   const columns: ColumnDef<User>[] = [
     {
+      accessorKey: 'company',
+      header: 'Company',
+    },
+    {
+        accessorKey: 'DAMid',
+        header: 'DAMid',
+    },
+    {
       accessorKey: 'fullName',
       header: ({ column }) => {
         return (
@@ -198,14 +206,6 @@ export default function SparkUserAdmin({ initialUsers, currentUser }: UserAdminP
           </Button>
         );
       },
-    },
-    {
-        accessorKey: 'DAMid',
-        header: 'DAMid',
-    },
-    {
-      accessorKey: 'company',
-      header: 'Company',
     },
     {
       accessorKey: 'appRole',
