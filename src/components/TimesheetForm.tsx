@@ -310,6 +310,11 @@ function TimesheetFormContent() {
 
 
   const onSubmit = async (values: FormValues) => {
+    // Prevent double submission on iOS
+    if (form.formState.isSubmitting) {
+      return;
+    }
+    
     if (!loggedInUser) {
         toast({ variant: "destructive", title: "Error", description: "You must be logged in." });
         return;
@@ -663,8 +668,15 @@ function TimesheetFormContent() {
                 <Button 
                     type="submit" 
                     size="lg" 
-                    className="w-full sm:w-auto" 
+                    className="w-full sm:w-auto touch-manipulation" 
                     disabled={form.formState.isSubmitting || !selectedSupervisorId}
+                    onClick={(e) => {
+                      // iOS Safari sometimes needs explicit handling
+                      if (form.formState.isSubmitting) {
+                        e.preventDefault();
+                        return;
+                      }
+                    }}
                 >
                     {form.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Send className="mr-2 h-4 w-4" />}
                     Submit Crew Docket
