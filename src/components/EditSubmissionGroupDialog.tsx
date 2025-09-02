@@ -84,7 +84,7 @@ const DateTimePicker = ({ field, disabled }: { field: any, disabled?: boolean })
                 <PopoverTrigger asChild>
                     <FormControl>
                         <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")} disabled={disabled}>
-                            {field.value ? format(new Date(field.value), "PPP") : <span>Pick a date</span>}
+                            {field.value ? format(new Date(field.value), "dd/MM/yy") : <span>Pick a date</span>}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
                     </FormControl>
@@ -124,7 +124,7 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, docket,
         quantity: docket.quantity || 0,
         notes: docket.notes || '',
         productiveHours: representativeTimesheet.productiveHours || 0,
-        unproductiveEntries: representativeTimesheet.unproductiveEntries || [],
+        unproductiveEntries: representativeTimesheet.unproductiveEntries?.map(entry => ({...entry, hours: entry.hours || 0})) || [],
     }
   });
   
