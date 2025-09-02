@@ -13,7 +13,6 @@ import {
   getFilteredRowModel,
   SortingState,
   ColumnFiltersState,
-  GlobalFilterTableState,
 } from '@tanstack/react-table';
 import {
   Table,
@@ -60,7 +59,7 @@ type ActivityFormData = z.infer<typeof activityFormSchema>;
 export default function ActivityConfig({ activities: initialActivities }: ActivityConfigProps) {
   const [activities, setActivities] = React.useState(initialActivities);
   const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [globalFilter, setGlobalFilter] = React.useState('');
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const { toast } = useToast();
   const router = useRouter();
 
@@ -183,21 +182,27 @@ export default function ActivityConfig({ activities: initialActivities }: Activi
     getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
-    onGlobalFilterChange: setGlobalFilter,
+    onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
-    state: { sorting, globalFilter },
+    state: { sorting, columnFilters },
     initialState: { pagination: { pageSize: 10 } },
   });
 
+  const FilterInput = ({ columnId }: { columnId: string }) => {
+    const column = table.getColumn(columnId);
+    return (
+        <Input
+            placeholder={`Filter ${columnId}...`}
+            value={(column?.getFilterValue() as string) ?? ''}
+            onChange={(event) => column?.setFilterValue(event.target.value)}
+            className="max-w-full h-8"
+        />
+    )
+  }
+
   return (
     <>
-        <div className="flex items-center justify-between py-4">
-            <Input
-                placeholder="Search all columns..."
-                value={globalFilter ?? ''}
-                onChange={(event) => setGlobalFilter(event.target.value)}
-                className="max-w-sm"
-            />
+        <div className="flex items-center justify-end py-4">
             <Button onClick={handleAddNew}>
                 <PlusCircle className="mr-2 h-4 w-4"/>
                 Add Activity
@@ -210,7 +215,16 @@ export default function ActivityConfig({ activities: initialActivities }: Activi
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <TableHead key={header.id}>
-                    {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                    {header.isPlaceholder ? null : (
+                        <div>
+                            {flexRender(header.column.columnDef.header, header.getContext())}
+                            {header.column.getCanFilter() && !header.isPlaceholder && header.id !== 'actions' && (
+                                <div className="mt-2">
+                                    <FilterInput columnId={header.column.id} />
+                                </div>
+                            )}
+                        </div>
+                    )}
                   </TableHead>
                 ))}
               </TableRow>
