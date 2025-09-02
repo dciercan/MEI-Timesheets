@@ -145,7 +145,7 @@ const DateTimePicker = ({ field, disabled = false }: { field: any, disabled?: bo
           />
         </PopoverContent>
       </Popover>
-      <Input type="time" value={timeValue} onChange={handleTimeChange} disabled={disabled} />
+      <Input type="time" value={timeValue} onChange={handleTimeChange} disabled={disabled} step={300} />
     </div>
   );
 };

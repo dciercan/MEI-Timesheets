@@ -93,7 +93,7 @@ const DateTimePicker = ({ field, disabled }: { field: any, disabled?: boolean })
                     <Calendar mode="single" selected={date} onSelect={setDate} disabled={(date) => date > new Date() || date < new Date("2000-01-01")} initialFocus />
                 </PopoverContent>
             </Popover>
-            <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} disabled={disabled} />
+            <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} disabled={disabled} step={300} />
         </div>
     );
 };
