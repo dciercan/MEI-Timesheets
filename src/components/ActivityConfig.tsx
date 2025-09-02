@@ -13,6 +13,7 @@ import {
   getFilteredRowModel,
   SortingState,
   ColumnFiltersState,
+  GlobalFilterTableState,
 } from '@tanstack/react-table';
 import {
   Table,
@@ -59,7 +60,7 @@ type ActivityFormData = z.infer<typeof activityFormSchema>;
 export default function ActivityConfig({ activities: initialActivities }: ActivityConfigProps) {
   const [activities, setActivities] = React.useState(initialActivities);
   const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+  const [globalFilter, setGlobalFilter] = React.useState('');
   const { toast } = useToast();
   const router = useRouter();
 
@@ -140,15 +141,15 @@ export default function ActivityConfig({ activities: initialActivities }: Activi
     },
     {
         accessorKey: 'activity',
-        header: 'Activity',
+        header: ({ column }) => <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>Activity <ArrowUpDown className="ml-2 h-4 w-4" /></Button>,
     },
     {
         accessorKey: 'activityUom',
-        header: 'UoM',
+        header: ({ column }) => <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>UoM <ArrowUpDown className="ml-2 h-4 w-4" /></Button>,
     },
     {
         accessorKey: 'wbsCode',
-        header: 'WBS Code',
+        header: ({ column }) => <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>WBS Code <ArrowUpDown className="ml-2 h-4 w-4" /></Button>,
     },
     {
       id: 'actions',
@@ -182,9 +183,9 @@ export default function ActivityConfig({ activities: initialActivities }: Activi
     getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
-    onColumnFiltersChange: setColumnFilters,
+    onGlobalFilterChange: setGlobalFilter,
     getFilteredRowModel: getFilteredRowModel(),
-    state: { sorting, columnFilters },
+    state: { sorting, globalFilter },
     initialState: { pagination: { pageSize: 10 } },
   });
 
@@ -192,9 +193,9 @@ export default function ActivityConfig({ activities: initialActivities }: Activi
     <>
         <div className="flex items-center justify-between py-4">
             <Input
-                placeholder="Filter by activity..."
-                value={(table.getColumn('activity')?.getFilterValue() as string) ?? ''}
-                onChange={(event) => table.getColumn('activity')?.setFilterValue(event.target.value)}
+                placeholder="Search all columns..."
+                value={globalFilter ?? ''}
+                onChange={(event) => setGlobalFilter(event.target.value)}
                 className="max-w-sm"
             />
             <Button onClick={handleAddNew}>
@@ -300,4 +301,3 @@ export default function ActivityConfig({ activities: initialActivities }: Activi
     </>
   );
 }
-
