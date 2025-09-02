@@ -58,10 +58,10 @@ export default function TimesheetReport({ timesheets }: TimesheetReportProps) {
         header: 'CD ID',
     },
     {
-        accessorKey: 'crewDocket.timesheetDate',
+        accessorKey: 'shiftStart',
         id: 'timesheetDate',
         header: 'Date',
-        cell: ({ row }) => format(new Date(row.original.crewDocket.timesheetDate), 'dd/MM/yy')
+        cell: ({ row }) => format(new Date(row.original.shiftStart), 'dd/MM/yy')
     },
     {
         accessorKey: 'shiftStart',
@@ -141,7 +141,7 @@ export default function TimesheetReport({ timesheets }: TimesheetReportProps) {
         return {
             'TS ID': row.original.id,
             'CD ID': row.original.crewDocketId,
-            'Date': format(new Date(row.original.crewDocket.timesheetDate), 'dd/MM/yy'),
+            'Date': format(new Date(row.original.shiftStart), 'dd/MM/yy'),
             'Shift Start': format(new Date(row.original.shiftStart), 'yyyy-MM-dd HH:mm'),
             'Shift End': format(new Date(row.original.shiftEnd), 'yyyy-MM-dd HH:mm'),
             'Crew Member': row.original.crewMember?.fullName,
@@ -237,3 +237,4 @@ export default function TimesheetReport({ timesheets }: TimesheetReportProps) {
     </>
   );
 }
+
