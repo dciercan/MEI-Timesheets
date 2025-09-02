@@ -61,63 +61,55 @@ const DateTimePicker = ({ field, disabled = false }: { field: any, disabled?: bo
   const [dateValue, setDateValue] = useState<Date | undefined>(
     value && isValid(new Date(value)) ? new Date(value) : undefined
   );
-  const [timeValue, setTimeValue] = useState<string>(
-    value && isValid(new Date(value)) ? format(new Date(value), "HH:mm") : ""
+  
+  const [hour, setHour] = useState<string | undefined>(
+    value && isValid(new Date(value)) ? format(new Date(value), "HH") : undefined
+  );
+  const [minute, setMinute] = useState<string | undefined>(
+    value && isValid(new Date(value)) ? format(new Date(value), "mm") : undefined
   );
 
   useEffect(() => {
     if (value && isValid(new Date(value))) {
       const newDate = new Date(value);
-      if (!dateValue || !isEqual(newDate, dateValue)) {
-        setDateValue(newDate);
-      }
-      const newTime = format(newDate, "HH:mm");
-      if (newTime !== timeValue) {
-        setTimeValue(newTime);
-      }
-    } else if (!value) {
+      setDateValue(newDate);
+      setHour(format(newDate, "HH"));
+      const currentMinute = parseInt(format(newDate, "mm"), 10);
+      const roundedMinute = Math.round(currentMinute / 5) * 5;
+      setMinute(roundedMinute.toString().padStart(2, '0'));
+    } else {
       setDateValue(undefined);
-      setTimeValue("");
+      setHour(undefined);
+      setMinute(undefined);
     }
   }, [value]);
 
-  const handleDateChange = (newDate: Date | undefined) => {
-    setDateValue(newDate);
-    if (newDate) {
-        if (timeValue) {
-            const [hours, minutes] = timeValue.split(":").map(Number);
-            if (!isNaN(hours) && !isNaN(minutes)) {
-                const updatedDate = set(newDate, { hours, minutes, seconds: 0, milliseconds: 0 });
-                onChange(updatedDate);
-                return;
-            }
-        }
-        // If no time is set, or time is invalid, only update the date part internally but don't call onChange yet.
-        // We let the time input trigger the final combined date-time value.
-        // For the purpose of the form, if there's no time, the value is incomplete.
-         onChange(undefined);
+  const updateDateTime = (newDate?: Date, newHour?: string, newMinute?: string) => {
+    const d = newDate || dateValue;
+    const h = newHour || hour;
+    const m = newMinute || minute;
+
+    if (d && h !== undefined && m !== undefined) {
+      const updatedDate = set(d, { hours: parseInt(h, 10), minutes: parseInt(m, 10), seconds: 0, milliseconds: 0 });
+      onChange(updatedDate);
     } else {
       onChange(undefined);
     }
   };
 
-  const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newTimeValue = e.target.value;
-    setTimeValue(newTimeValue);
+  const handleDateChange = (newDate: Date | undefined) => {
+    setDateValue(newDate);
+    updateDateTime(newDate, hour, minute);
+  };
 
-    if (dateValue) {
-      const [hours, minutes] = newTimeValue.split(":").map(Number);
-      if (!isNaN(hours) && !isNaN(minutes)) {
-        const updatedDate = set(dateValue, { hours, minutes, seconds: 0, milliseconds: 0 });
-        if (!value || !isEqual(updatedDate, value)) {
-          onChange(updatedDate);
-        }
-      } else {
-        onChange(undefined);
-      }
-    } else {
-        onChange(undefined);
-    }
+  const handleHourChange = (newHour: string) => {
+    setHour(newHour);
+    updateDateTime(dateValue, newHour, minute);
+  };
+  
+  const handleMinuteChange = (newMinute: string) => {
+    setMinute(newMinute);
+    updateDateTime(dateValue, hour, newMinute);
   };
   
   return (
@@ -127,11 +119,11 @@ const DateTimePicker = ({ field, disabled = false }: { field: any, disabled?: bo
           <FormControl>
             <Button
               variant={"outline"}
-              className={cn("w-full pl-3 text-left font-normal", !dateValue && "text-muted-foreground")}
+              className={cn("w-full justify-start pl-3 text-left font-normal", !dateValue && "text-muted-foreground")}
               disabled={disabled}
             >
+              <CalendarIcon className="mr-2 h-4 w-4" />
               {dateValue ? format(dateValue, "dd/MMMM/yyyy") : <span>Pick a date</span>}
-              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
             </Button>
           </FormControl>
         </PopoverTrigger>
@@ -145,7 +137,24 @@ const DateTimePicker = ({ field, disabled = false }: { field: any, disabled?: bo
           />
         </PopoverContent>
       </Popover>
-      <Input type="time" value={timeValue} onChange={handleTimeChange} disabled={disabled} step="300" />
+      <div className="flex gap-2">
+        <Select value={hour} onValueChange={handleHourChange} disabled={disabled || !dateValue}>
+            <SelectTrigger><SelectValue placeholder="Hour" /></SelectTrigger>
+            <SelectContent>
+            {[...Array(24).keys()].map(h => (
+                <SelectItem key={h} value={h.toString().padStart(2, '0')}>{h.toString().padStart(2, '0')}</SelectItem>
+            ))}
+            </SelectContent>
+        </Select>
+        <Select value={minute} onValueChange={handleMinuteChange} disabled={disabled || !dateValue}>
+            <SelectTrigger><SelectValue placeholder="Min" /></SelectTrigger>
+            <SelectContent>
+            {['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'].map(m => (
+                <SelectItem key={m} value={m}>{m}</SelectItem>
+            ))}
+            </SelectContent>
+        </Select>
+      </div>
     </div>
   );
 };

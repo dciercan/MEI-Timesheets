@@ -17,7 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { format, set } from "date-fns";
+import { format, set, isValid } from "date-fns";
 import { CalendarIcon, Loader2, PlusCircle, Trash2 } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
 import { Checkbox } from "./ui/checkbox";
@@ -58,42 +58,95 @@ interface EditSubmissionCrewDialogProps {
 }
 
 const DateTimePicker = ({ field, disabled }: { field: any, disabled?: boolean }) => {
-    const [date, setDate] = useState<Date | undefined>(field.value ? new Date(field.value) : undefined);
-    const [time, setTime] = useState(field.value ? format(new Date(field.value), 'HH:mm') : '00:00');
+    const { value, onChange } = field;
+
+    const [dateValue, setDateValue] = useState<Date | undefined>(
+        value && isValid(new Date(value)) ? new Date(value) : undefined
+    );
+
+    const [hour, setHour] = useState<string | undefined>(
+        value && isValid(new Date(value)) ? format(new Date(value), "HH") : undefined
+    );
+    const [minute, setMinute] = useState<string | undefined>(
+        value && isValid(new Date(value)) ? format(new Date(value), "mm") : undefined
+    );
 
     useEffect(() => {
-        if (field.value) {
-            setDate(new Date(field.value));
-            setTime(format(new Date(field.value), 'HH:mm'));
+        if (value && isValid(new Date(value))) {
+            const newDate = new Date(value);
+            setDateValue(newDate);
+            setHour(format(newDate, "HH"));
+            const currentMinute = parseInt(format(newDate, "mm"), 10);
+            const roundedMinute = Math.round(currentMinute / 5) * 5;
+            setMinute(roundedMinute.toString().padStart(2, '0'));
+        } else {
+            setDateValue(undefined);
+            setHour(undefined);
+            setMinute(undefined);
         }
-    }, [field.value]);
+    }, [value]);
 
-    useEffect(() => {
-        if (date) {
-            const [hours, minutes] = time.split(':').map(Number);
-            const newDate = set(date, { hours, minutes });
-            if (field.value?.getTime() !== newDate.getTime()) {
-              field.onChange(newDate);
-            }
+    const updateDateTime = (newDate?: Date, newHour?: string, newMinute?: string) => {
+        const d = newDate || dateValue;
+        const h = newHour || hour;
+        const m = newMinute || minute;
+
+        if (d && h !== undefined && m !== undefined) {
+            const updatedDate = set(d, { hours: parseInt(h, 10), minutes: parseInt(m, 10), seconds: 0, milliseconds: 0 });
+            onChange(updatedDate);
+        } else {
+            onChange(undefined);
         }
-    }, [date, time, field]);
+    };
+
+    const handleDateChange = (newDate: Date | undefined) => {
+        setDateValue(newDate);
+        updateDateTime(newDate, hour, minute);
+    };
+
+    const handleHourChange = (newHour: string) => {
+        setHour(newHour);
+        updateDateTime(dateValue, newHour, minute);
+    };
+
+    const handleMinuteChange = (newMinute: string) => {
+        setMinute(newMinute);
+        updateDateTime(dateValue, hour, newMinute);
+    };
 
     return (
         <div className="flex flex-col gap-2">
             <Popover>
                 <PopoverTrigger asChild>
                     <FormControl>
-                        <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")} disabled={disabled}>
-                            {field.value ? format(new Date(field.value), "dd/MM/yy") : <span>Pick a date</span>}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        <Button variant={"outline"} className={cn("w-full justify-start pl-3 text-left font-normal", !dateValue && "text-muted-foreground")} disabled={disabled}>
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {dateValue ? format(dateValue, "dd/MM/yy") : <span>Pick a date</span>}
                         </Button>
                     </FormControl>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar mode="single" selected={date} onSelect={setDate} disabled={(date) => date > new Date() || date < new Date("2000-01-01")} initialFocus />
+                    <Calendar mode="single" selected={dateValue} onSelect={handleDateChange} disabled={(date) => date > new Date() || date < new Date("2000-01-01")} initialFocus />
                 </PopoverContent>
             </Popover>
-            <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} disabled={disabled} step="300" />
+             <div className="flex gap-2">
+                <Select value={hour} onValueChange={handleHourChange} disabled={disabled || !dateValue}>
+                    <SelectTrigger><SelectValue placeholder="Hour" /></SelectTrigger>
+                    <SelectContent>
+                    {[...Array(24).keys()].map(h => (
+                        <SelectItem key={h} value={h.toString().padStart(2, '0')}>{h.toString().padStart(2, '0')}</SelectItem>
+                    ))}
+                    </SelectContent>
+                </Select>
+                <Select value={minute} onValueChange={handleMinuteChange} disabled={disabled || !dateValue}>
+                    <SelectTrigger><SelectValue placeholder="Min" /></SelectTrigger>
+                    <SelectContent>
+                    {['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'].map(m => (
+                        <SelectItem key={m} value={m}>{m}</SelectItem>
+                    ))}
+                    </SelectContent>
+                </Select>
+            </div>
         </div>
     );
 };
