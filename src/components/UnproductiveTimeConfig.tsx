@@ -54,7 +54,7 @@ export default function UnproductiveTimeConfig({ reasons: initialReasons }: Unpr
 
   const form = useForm<ReasonFormData>({
     resolver: zodResolver(reasonFormSchema),
-    defaultValues: { code: '', reason: '', uom: 'min' },
+    defaultValues: { code: '', reason: '', uom: 'hours' },
   });
 
   const refetchData = async () => {
@@ -64,7 +64,7 @@ export default function UnproductiveTimeConfig({ reasons: initialReasons }: Unpr
 
   const handleAddNew = () => {
     setSelectedReason(null);
-    form.reset({ code: '', reason: '', uom: 'min' });
+    form.reset({ code: '', reason: '', uom: 'hours' });
     setIsFormOpen(true);
   };
   
@@ -237,4 +237,3 @@ export default function UnproductiveTimeConfig({ reasons: initialReasons }: Unpr
     </>
   );
 }
-

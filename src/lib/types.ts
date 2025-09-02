@@ -29,7 +29,7 @@ export type UnproductiveReason = {
 
 export type UnproductiveEntry = {
   reasonId: string;
-  minutes: number;
+  hours: number;
 };
 
 export type TimesheetStatus = 'Submitted' | 'Approved' | 'Rejected' | 'For Payment' | 'Paid';

@@ -11,8 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { updateCrewDocket, getUsers, getLocations, getActivities } from "@/lib/actions";
-import type { CrewDocketWithDetails, Activity, User, Location } from "@/lib/types";
-import { unproductiveReasons } from "@/lib/data";
+import type { CrewDocketWithDetails, Activity, User, Location, UnproductiveReason } from "@/lib/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -40,7 +39,7 @@ const formSchema = z.object({
   unproductiveEntries: z.array(
     z.object({
       reasonId: z.string().min(1, "Please select a reason."),
-      minutes: z.coerce.number().min(1, "Minutes must be greater than 0."),
+      hours: z.coerce.number().min(0.1, "Hours must be greater than 0."),
     })
   ).optional(),
   notes: z.string().optional(),
@@ -105,6 +104,7 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, docket,
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
+  const [unproductiveReasons, setUnproductiveReasons] = useState<UnproductiveReason[]>([]);
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(() => {
       const initialActivity = activities.find(a => a.id === docket.activityId) || null;
       return initialActivity;
@@ -166,14 +166,16 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, docket,
   useEffect(() => {
     async function loadData() {
       if(loggedInUser) {
-        const [fetchedUsers, fetchedLocations, fetchedActivities] = await Promise.all([
+        const [fetchedUsers, fetchedLocations, fetchedActivities, fetchedReasons] = await Promise.all([
           getUsers(loggedInUser),
           getLocations(),
           getActivities(),
+          getUsers()
         ]);
         setAllUsers(fetchedUsers);
         setLocations(fetchedLocations);
         setActivities(fetchedActivities);
+        setUnproductiveReasons(unproductiveReasons);
       }
     }
     loadData();
@@ -413,11 +415,11 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, docket,
                                 />
                                 <FormField
                                 control={form.control}
-                                name={`unproductiveEntries.${index}.minutes`}
+                                name={`unproductiveEntries.${index}.hours`}
                                 render={({ field }) => (
                                     <FormItem>
-                                    <FormLabel>Time (minutes)</FormLabel>
-                                    <FormControl><Input type="number" step="1" placeholder="e.g., 30" {...field} /></FormControl>
+                                    <FormLabel>Time (hours)</FormLabel>
+                                    <FormControl><Input type="number" step="0.1" placeholder="e.g., 0.5" {...field} /></FormControl>
                                     <FormMessage />
                                     </FormItem>
                                 )}
@@ -429,7 +431,7 @@ export default function EditSubmissionCrewDialog({ isOpen, onOpenChange, docket,
                       </Button>
                     </div>
                   ))}
-                  <Button type="button" variant="outline" size="sm" onClick={() => append({ reasonId: "", minutes: 30 })}>
+                  <Button type="button" variant="outline" size="sm" onClick={() => append({ reasonId: "", hours: 0.5 })}>
                     <PlusCircle className="mr-2 h-4 w-4" /> Add Unproductive Time
                   </Button>
                 </div>

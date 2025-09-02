@@ -67,8 +67,14 @@ async function writeUsers(users: User[]): Promise<void> {
 }
 
 async function readActivities(): Promise<Activity[]> {
-    const data = await fs.readFile(activitiesDbPath, 'utf-8');
-    return JSON.parse(data);
+    try {
+        await fs.access(activitiesDbPath);
+        const data = await fs.readFile(activitiesDbPath, 'utf-8');
+        if (data.trim() === '') return [];
+        return JSON.parse(data);
+    } catch (error) {
+        return [];
+    }
 }
 
 async function writeActivities(activities: Activity[]): Promise<void> {
@@ -138,7 +144,7 @@ const addCrewDocketSchema = z.object({
   unproductiveEntries: z.array(
     z.object({
       reasonId: z.string().min(1, "Please select a reason."),
-      minutes: z.coerce.number().min(1, "Minutes must be greater than 0."),
+      hours: z.coerce.number().min(0.1, "Hours must be greater than 0."),
     })
   ).optional(),
   notes: z.string().optional(),
@@ -225,7 +231,7 @@ const updateCrewDocketSchema = z.object({
   unproductiveEntries: z.array(
     z.object({
       reasonId: z.string().min(1, "Please select a reason."),
-      minutes: z.coerce.number().min(1, "Minutes must be greater than 0."),
+      hours: z.coerce.number().min(0.1, "Hours must be greater than 0."),
     })
   ).optional(),
   notes: z.string().optional(),

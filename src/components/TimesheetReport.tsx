@@ -86,9 +86,9 @@ export default function TimesheetReport({ timesheets }: TimesheetReportProps) {
         header: 'Prod Hours'
     },
     {
-        id: 'unproductiveMinutes',
-        header: 'Unprod Mins',
-        cell: ({ row }) => row.original.unproductiveEntries?.reduce((acc, entry) => acc + entry.minutes, 0) || 0
+        id: 'unproductiveHours',
+        header: 'Unprod Hours',
+        cell: ({ row }) => row.original.unproductiveEntries?.reduce((acc, entry) => acc + entry.hours, 0) || 0
     },
      {
         id: 'totalHours',
@@ -131,7 +131,7 @@ export default function TimesheetReport({ timesheets }: TimesheetReportProps) {
   const handleExport = () => {
     const dataToExport = table.getFilteredRowModel().rows.map(row => {
       const productiveHours = row.original.productiveHours || 0;
-      const unproductiveMinutes = row.original.unproductiveEntries?.reduce((acc, entry) => acc + entry.minutes, 0) || 0;
+      const unproductiveHours = row.original.unproductiveEntries?.reduce((acc, entry) => acc + entry.hours, 0) || 0;
       
       const shiftStart = new Date(row.original.shiftStart);
       const shiftEnd = new Date(row.original.shiftEnd);
@@ -147,7 +147,7 @@ export default function TimesheetReport({ timesheets }: TimesheetReportProps) {
             'Crew Member': row.original.crewMember?.fullName,
             'Supervisor': row.original.submittedBy?.fullName,
             'Prod Hours': productiveHours,
-            'Unprod Mins': unproductiveMinutes,
+            'Unprod Hours': unproductiveHours,
             'Total Hours': totalHours.toFixed(2),
             'Status': row.original.status,
             'Company': row.original.company,
@@ -237,5 +237,3 @@ export default function TimesheetReport({ timesheets }: TimesheetReportProps) {
     </>
   );
 }
-
-

@@ -40,7 +40,7 @@ const formSchema = z.object({
   unproductiveEntries: z.array(
     z.object({
       reasonId: z.string().min(1, "Please select a reason."),
-      minutes: z.coerce.number().min(1, "Minutes must be greater than 0."),
+      hours: z.coerce.number().min(0.1, "Hours must be greater than 0."),
     })
   ).optional(),
   notes: z.string().optional(),
@@ -633,11 +633,11 @@ export default function TimesheetForm() {
                                 />
                                 <FormField
                                 control={form.control}
-                                name={`unproductiveEntries.${index}.minutes`}
+                                name={`unproductiveEntries.${index}.hours`}
                                 render={({ field }) => (
                                     <FormItem>
-                                    <FormLabel>Time (minutes)</FormLabel>
-                                    <FormControl><Input type="number" step="1" placeholder="e.g., 30" {...field} /></FormControl>
+                                    <FormLabel>Time (hours)</FormLabel>
+                                    <FormControl><Input type="number" step="0.1" placeholder="e.g., 0.5" {...field} /></FormControl>
                                     <FormMessage />
                                     </FormItem>
                                 )}
@@ -646,7 +646,7 @@ export default function TimesheetForm() {
                       <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)}><Trash2 className="h-4 w-4" /><span className="sr-only">Remove</span></Button>
                     </div>
                   ))}
-                  <Button type="button" variant="outline" onClick={() => append({ reasonId: "", minutes: 30 })} disabled={!selectedSupervisorId}>
+                  <Button type="button" variant="outline" onClick={() => append({ reasonId: "", hours: 0.5 })} disabled={!selectedSupervisorId}>
                     <PlusCircle className="mr-2 h-4 w-4" /> Add Unproductive Time
                   </Button>
                 </div>

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -47,7 +48,7 @@ export default function SupervisorDashboard({ dockets, onDocketDeleted }: Superv
 
   const handleDeleteCrew = async (crewId: string) => {
     if (!currentUser) return;
-    const result = await deleteCrewDocket(currentUser.id, crewId);
+    const result = await deleteCrewDocket(crewId);
     if (result.success) {
       toast({ title: "Crew Docket deleted." });
       onDocketDeleted(crewId);
@@ -120,7 +121,7 @@ export default function SupervisorDashboard({ dockets, onDocketDeleted }: Superv
       <CardContent>
         <Accordion type="single" collapsible className="w-full space-y-4">
           {dockets.map((docket) => {
-            const totalUnproductiveMinutes = docket.timesheets[0]?.unproductiveEntries?.reduce((total, entry) => total + entry.minutes, 0) || 0;
+            const totalUnproductiveHours = docket.timesheets[0]?.unproductiveEntries?.reduce((total, entry) => total + entry.hours, 0) || 0;
             const productiveHours = docket.timesheets[0]?.productiveHours || 0;
             const canApproveReject = isMeiSupervisor && docket.status === 'Submitted';
             const canEdit = currentUser?.appRole === 'Crew Supervisor' && (docket.status === 'Rejected' || docket.status === 'Submitted');
@@ -271,7 +272,7 @@ export default function SupervisorDashboard({ dockets, onDocketDeleted }: Superv
                     <InfoItem icon={User} label="Supervisor" value={docket.submittedBy?.fullName} />
                     {representativeTimesheet && <InfoItem icon={Clock} label="Shift Start" value={format(new Date(representativeTimesheet.shiftStart), 'Pp')} />}
                     {representativeTimesheet && <InfoItem icon={Clock} label="Shift End" value={format(new Date(representativeTimesheet.shiftEnd), 'Pp')} />}
-                    <InfoItem icon={Watch} label="Unproductive Time" value={totalUnproductiveMinutes} badge="minutes per person" />
+                    <InfoItem icon={Watch} label="Unproductive Time" value={totalUnproductiveHours} badge="hours per person" />
                     <InfoItem icon={Users} label="Crew Members" value={docket.crewMembers.length} />
                  </div>
                 
