@@ -130,7 +130,7 @@ const DateTimePicker = ({ field, disabled = false }: { field: any, disabled?: bo
               className={cn("w-full pl-3 text-left font-normal", !dateValue && "text-muted-foreground")}
               disabled={disabled}
             >
-              {dateValue ? format(dateValue, "PPP") : <span>Pick a date</span>}
+              {dateValue ? format(dateValue, "dd/MMMM/yyyy") : <span>Pick a date</span>}
               <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
             </Button>
           </FormControl>
